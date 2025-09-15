@@ -34,8 +34,8 @@ class MyApp extends StatelessWidget {
         ),
 
       //home: ProposalScreen(),
-        home: CustomBottomNav(),
-    //  home: AppGround(),
+       // home: CustomBottomNav(),
+    home: AppGround(),
         //home: InvestmentsScreen(),
        // home: InvestmentDetailScreen(),
       //home: ResetPasswordView(),
