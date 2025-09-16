@@ -1,4 +1,5 @@
 
+import 'package:alejandroloi/feature/auctions/auction_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -35,19 +36,19 @@ class MyApp extends StatelessWidget {
 
       //home: ProposalScreen(),
        // home: CustomBottomNav(),
-    home: AppGround(),
+       home: AppGround(),
         //home: InvestmentsScreen(),
-       // home: InvestmentDetailScreen(),
-      //home: ResetPasswordView(),
-      //home: OtpCodeViewScreen(email: '',),
-      // home:  ForgetPasswordView(),
-
-       // home: UploadPhotosView(),
+        // home: InvestmentDetailScreen(),
+        //home: ResetPasswordView(),
+        //home: OtpCodeViewScreen(email: '',),
+        // home:  ForgetPasswordView(),
+        // home: UploadPhotosView(),
         //home: SignUpScreenView(),
-      //  home: LoginScreenView(),
-//        // home: SplashScreen(),
-// home: PersonalInfoAddView(),
-//home: SplashScreen(),
+        //  home: LoginScreenView(),
+        // home: SplashScreen(),
+        // home: PersonalInfoAddView(),
+        //home: SplashScreen(),
+        // home: AuctionScreen(),
       ),
     );
   }

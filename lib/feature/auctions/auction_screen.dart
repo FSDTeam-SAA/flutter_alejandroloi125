@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:alejandroloi/feature/auctions/auction_detail.dart';
 import 'package:flutter/material.dart';
 
 // void main() => runApp(const AuctionScreen());
@@ -245,6 +246,8 @@ class _AuctionsScreenState extends State<AuctionsScreen>
                   repository: _repo,
                   query: _queryCtrl.text,
                 ),
+
+
               ],
             ),
           ),
@@ -467,7 +470,13 @@ class LiveAuctionCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
 
     return InkWell(
-      onTap: () {},
+      onTap: () {
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const AuctionDetailScreen()),
+        );
+
+      },
       borderRadius: BorderRadius.circular(14),
       child: Ink(
         decoration: BoxDecoration(
@@ -564,7 +573,11 @@ class UpcomingAuctionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return InkWell(
-      onTap: () {},
+      onTap: () {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const AuctionDetailScreen()),
+        );
+      },
       borderRadius: BorderRadius.circular(14),
       child: Ink(
         decoration: BoxDecoration(
@@ -626,6 +639,8 @@ class UpcomingAuctionTile extends StatelessWidget {
   }
 }
 
+
+
 class EndedAuctionTile extends StatelessWidget {
   const EndedAuctionTile({super.key, required this.a});
   final Auction a;
@@ -634,7 +649,11 @@ class EndedAuctionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return InkWell(
-      onTap: () {},
+      onTap: () {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const AuctionDetailScreen()),
+        );
+      },
       borderRadius: BorderRadius.circular(14),
       child: Ink(
         decoration: BoxDecoration(

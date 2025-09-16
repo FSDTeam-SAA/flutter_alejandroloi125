@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 
-void main() => runApp(const AuctionDetailScreen());
+// void main() => runApp(const AuctionDetailScreen());
 
 class AuctionDetailScreen extends StatelessWidget {
   const AuctionDetailScreen({super.key});
