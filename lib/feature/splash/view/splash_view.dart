@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+
+import '../../auth/view/login_screen_view.dart';
 
 
 
@@ -19,7 +23,7 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Future<void> _navigateBasedOnAuth() async {
-    await Future.delayed(const Duration(seconds: 5));
+    // await Future.delayed(const Duration(seconds: 5));
    // Get.to(OnboardingScreen());
     //Get.to(SignInScreenView());
     // splash delay
@@ -34,6 +38,14 @@ class _SplashScreenState extends State<SplashScreen> {
       //Get.to(AppGroundView());
       Get.offAll(() => OnboardingScreen());
     }*/
+
+    await Future.delayed(const Duration(seconds: 1));
+    Get.off(
+          () => LoginScreenView(),
+      transition: Transition.rightToLeft,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override

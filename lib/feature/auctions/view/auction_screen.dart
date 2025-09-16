@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:alejandroloi/feature/auctions/auction_detail.dart';
+import 'package:alejandroloi/feature/auctions/view/auction_detail.dart';
 import 'package:flutter/material.dart';
 
 // void main() => runApp(const AuctionScreen());

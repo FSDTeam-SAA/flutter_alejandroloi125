@@ -4,8 +4,15 @@ import 'package:alejandroloi/core/common/widgets/save_botton.dart';
 import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/images.dart';
 import 'package:alejandroloi/core/util/styles.dart';
+import 'package:alejandroloi/feature/auth/view/sign_up_screen.dart';
 
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+
+import 'forget_password_view.dart';
+import 'package:flutter/gestures.dart'; // <—
+
 
 class LoginScreenView extends StatelessWidget {
   LoginScreenView({super.key});
@@ -47,9 +54,16 @@ class LoginScreenView extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Text(
-                    "Forget Password",
-                    style: bodyText1.copyWith(color: AppColors.bottomColor1),
+                  TextButton(
+                    onPressed: () => Get.to(() => const ForgetPasswordView(),
+                      transition: Transition.rightToLeft,
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeInOut,
+                    ),
+                    child: Text(
+                      "Forget Password",
+                      style: bodyText1.copyWith(color: AppColors.bottomColor1),
+                    ),
                   ),
                 ],
               ),
@@ -82,7 +96,20 @@ class LoginScreenView extends StatelessWidget {
           text: TextSpan(style: const TextStyle(color: Colors.white, fontSize: 16,), // root style
             children: [
               const TextSpan(text: "Don’t have an account? "),
-              TextSpan(text: "Sign Up", style: TextStyle(color: AppColors.bottomColor1, fontWeight: FontWeight.bold,),),
+              TextSpan(
+                text: "Sign Up",
+                style: TextStyle(color: AppColors.bottomColor1, fontWeight: FontWeight.bold,
+
+              ),
+                recognizer: TapGestureRecognizer()
+                  ..onTap = () => Get.to(() =>  SignUpScreenView(),
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeInOut,
+                  ),
+              ),
+
+
             ],
           ),
         ),

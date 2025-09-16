@@ -1,5 +1,5 @@
 
-import 'package:alejandroloi/feature/auctions/auction_screen.dart';
+// import 'package:alejandroloi/feature/auctions/auction_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -9,6 +9,7 @@ import 'feature/app_ground.dart';
 import 'feature/create_service/view/create_services_view.dart';
 import 'feature/investments/view/investment_screen.dart';
 import 'feature/project/view/project.dart';
+import 'feature/splash/view/splash_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -48,12 +49,12 @@ class MyApp extends StatelessWidget {
         // home: UploadPhotosView(),
         //home: SignUpScreenView(),
         //  home: LoginScreenView(),
-        // home: SplashScreen(),
+        home: SplashScreen(),
         // home: PersonalInfoAddView(),
-        //home: SplashScreen(),
+        // home: SplashScreen(),
         // home: AuctionScreen(),
         // home: ProjectScreen(),
-        home: CreateServicesView(),
+        // home: CreateServicesView(),
       ),
     );
   }

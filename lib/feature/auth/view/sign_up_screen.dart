@@ -5,7 +5,11 @@ import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/images.dart';
 import 'package:alejandroloi/core/util/styles.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:flutter/gestures.dart';
 
+import 'login_screen_view.dart'; // <—
 class SignUpScreenView extends StatelessWidget {
    SignUpScreenView({super.key});
 
@@ -80,7 +84,23 @@ class SignUpScreenView extends StatelessWidget {
           text: TextSpan(style: const TextStyle(color: Colors.white, fontSize: 16,), // root style
             children: [
               const TextSpan(text: "Already have an account? "),
-              TextSpan(text: "Sign In", style: TextStyle(color: AppColors.bottomColor1, fontWeight: FontWeight.bold,),),
+              TextSpan(
+                text: "Sign In",
+                style: TextStyle(
+                  color: AppColors.bottomColor1,
+                  fontWeight: FontWeight.bold,
+                ),
+                recognizer: TapGestureRecognizer()
+                  ..onTap = () => Get.to(() =>  LoginScreenView(),
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeInOut,
+                  ),
+
+
+
+              ),
+
             ],
           ),
         ),

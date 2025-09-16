@@ -4,8 +4,41 @@ import 'package:alejandroloi/core/util/styles.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class ForgetPasswordView extends StatelessWidget {
+import 'otp_code_view.dart';
+
+class ForgetPasswordView extends StatefulWidget {
   const ForgetPasswordView({super.key});
+
+  @override
+  State<ForgetPasswordView> createState() => _ForgetPasswordViewState();
+}
+
+class _ForgetPasswordViewState extends State<ForgetPasswordView> {
+
+  final emailController = TextEditingController();
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    super.dispose();
+  }
+
+  void _goToOtp() {
+    final email = emailController.text.trim();
+    if (email.isEmpty) {
+      Get.snackbar('Email required', 'Please enter your email');
+      return;
+    }
+    // push OTP screen (use Get.off if you don't want to return to Forgot)
+    Get.to(() => OtpCodeViewScreen(email: email),
+      transition: Transition.rightToLeft,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeInOut,
+    );
+    // or: Get.off(() => OtpCodeViewScreen(email: email));
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -26,12 +59,14 @@ class ForgetPasswordView extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text("Select which contact details should we use to reset your password",style: text16,),
-            
+
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 15),
-            child: CustomTextField(prefixIcon: Icons.email_outlined,hintText: "Email",),
+            child: CustomTextField(prefixIcon: Icons.email_outlined,hintText: "Email",controller: emailController,),
           ),
-            bottomWidget(text: "Continue")
+            // bottomWidget(text: "Continue")
+
+            GestureDetector(onTap: _goToOtp, child: bottomWidget(text: "Continue")),
 
 
 

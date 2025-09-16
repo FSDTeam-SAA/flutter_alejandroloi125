@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pinput/pinput.dart';
 
+import 'create_new_password.dart';
 import 'forget_password_view.dart';
+import 'login_screen_view.dart';
 
 class OtpCodeViewScreen extends StatelessWidget {
   final String email;
@@ -76,7 +78,24 @@ final otpController = TextEditingController();
                   ],
                 ),
               ),
-        bottomWidget(text: "Verify")
+        GestureDetector(
+          onTap: () {
+            final code = otpController.text.trim();
+            if (code.length != 6) {
+              Get.snackbar('Invalid code', 'Enter the 6-digit code');
+              return;
+            }
+            Get.off(() => CreateNewPasswordScreen(),
+              transition: Transition.rightToLeft,
+              duration: const Duration(milliseconds: 350),
+              curve: Curves.easeInOut,
+            );
+          },
+          child: bottomWidget(
+              text: "Verify",
+            
+          ),
+        ),
 
 
 
