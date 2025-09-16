@@ -1,6 +1,8 @@
 import 'package:alejandroloi/core/common/widgets/pilltabs.dart';
 import 'package:flutter/material.dart';
 
+import 'event_live_service_view.dart';
+
 class EventView extends StatefulWidget {
   const EventView({super.key});
 
@@ -30,10 +32,7 @@ class _EventViewState extends State<EventView>
       backgroundColor: Colors.black,
 
       appBar: AppBar(
-        title: const Text(
-          "My Event",
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text("My Event", style: TextStyle(color: Colors.white),),
         backgroundColor: Colors.transparent,
         elevation: 0,
 
@@ -45,7 +44,7 @@ class _EventViewState extends State<EventView>
             child: TabBarView(
               controller: _tabController,
               children: const [
-                Center(child: Text("Live Services")),
+                EventLiveServiceView(),
                 Center(child: Text("Upcoming Services")),
                 Center(child: Text("Ended Services")),
               ],

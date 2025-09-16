@@ -6,6 +6,8 @@ import 'package:alejandroloi/feature/profile/view/profile_screen_view.dart';
 import 'package:alejandroloi/feature/service/view/service_view.dart';
 import 'package:flutter/material.dart';
 
+import 'create_service/view/create_services_view.dart';
+
 class AppGround extends StatefulWidget {  // নাম পরিবর্তন
   const AppGround({super.key});
 
@@ -24,7 +26,7 @@ class _AppGroundState extends State<AppGround> {  // State নামও update
     _pages = [
       SafeArea(child: HomeScreenView()),
       SafeArea(child: ServiceView()),
-      const SafeArea(child: Center(child: Text("Add New"))),
+      const SafeArea(child: CreateServicesView()),
       SafeArea(child: EventView()),
       const SafeArea(child: ProfileScreenView()),
     ];

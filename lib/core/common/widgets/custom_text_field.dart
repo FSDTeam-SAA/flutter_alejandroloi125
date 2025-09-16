@@ -9,9 +9,10 @@ class CustomTextField extends StatefulWidget {
   final bool isPassword;
    final Function ?validator;
   final TextInputType keyboardType;
+  final int?mexLine;
 
   const CustomTextField({
-    Key? key,
+    super.key,
    this.controller,
     required this.hintText,
     this.prefixIcon,
@@ -19,7 +20,8 @@ class CustomTextField extends StatefulWidget {
     this.isPassword = false,
     this.validator,
     this.keyboardType = TextInputType.text,
-  }) : super(key: key);
+    this.mexLine
+  });
 
   @override
   State<CustomTextField> createState() => _CustomTextFieldState();
@@ -34,7 +36,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
 
       height: 52,
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(10),  color: Color(0xFF1C1C1C),),
-      child: TextField(
+      child: TextField(  maxLines: widget.mexLine ?? 1,
         style: const TextStyle(color: Colors.white),
         cursorColor: Colors.white,
         controller: widget.controller,
