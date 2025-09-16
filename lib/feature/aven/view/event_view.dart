@@ -1,7 +1,7 @@
 import 'package:alejandroloi/core/common/widgets/pilltabs.dart';
 import 'package:flutter/material.dart';
 
-import 'event_live_service_view.dart';
+import '../../investments/view/create_investments.dart';
 
 class EventView extends StatefulWidget {
   const EventView({super.key});
@@ -44,7 +44,7 @@ class _EventViewState extends State<EventView>
             child: TabBarView(
               controller: _tabController,
               children: const [
-                EventLiveServiceView(),
+                CreateInvestmentsView(),
                 Center(child: Text("Upcoming Services")),
                 Center(child: Text("Ended Services")),
               ],

@@ -1,4 +1,4 @@
-import 'package:alejandroloi/feature/project/proposal.dart';
+import 'package:alejandroloi/feature/project/view/proposal.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

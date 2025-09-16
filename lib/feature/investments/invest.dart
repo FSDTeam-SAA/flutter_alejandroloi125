@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../project/project.dart' show ProjectScreen;
+import '../project/view/project.dart' show ProjectScreen;
 
 class InvestScreen extends StatefulWidget {
   const InvestScreen({super.key});

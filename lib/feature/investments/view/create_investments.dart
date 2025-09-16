@@ -6,8 +6,8 @@ import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/styles.dart';
 import 'package:flutter/material.dart';
 
-class EventLiveServiceView extends StatelessWidget {
-  const EventLiveServiceView({super.key});
+class CreateInvestmentsView extends StatelessWidget {
+  const CreateInvestmentsView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -23,7 +23,7 @@ class EventLiveServiceView extends StatelessWidget {
              Row(children: [    ImagePickerSlot(),
                SizedBox(width: 15),
                ImagePickerSlot(),
-          
+
           ],
                ),
               Padding(
@@ -37,10 +37,12 @@ class EventLiveServiceView extends StatelessWidget {
                 alignment: WrapAlignment.start,
                 children: List.generate(
                   10, (index) => Chip(label: Text("Item $index",style: TextStyle(color: Colors.white),), backgroundColor: Color(0xFF595959),
-          
+
                 ),
                 ),
               ),
+
+
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text("Description",style: bodyText1,),
@@ -55,11 +57,7 @@ class EventLiveServiceView extends StatelessWidget {
                      hintText: "Describe your Investment in detail",
                     // helperText: "Optional: provide more details",
                      border: InputBorder.none,
-                     hintStyle: const TextStyle(
-                       color: Color(0xFFBFBFBF),
-                       fontWeight: FontWeight.w400,
-                       fontSize: 16,
-                     ),
+                     hintStyle: const TextStyle(color: Color(0xFFBFBFBF), fontWeight: FontWeight.w400, fontSize: 16,),
                    ),
                  ),
                )
@@ -86,24 +84,18 @@ class EventLiveServiceView extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text("Investment Terms",style: bodyText1,),
               ),
+
               Container(decoration: BoxDecoration(color: AppColors.fieldColor,borderRadius: BorderRadius.circular(6)),
-                child: Padding(
-                  padding: const EdgeInsets.all(8.0),
+                child: Padding(padding: const EdgeInsets.all(8.0),
                 child: TextField(
                   maxLines: 10,
                   textAlignVertical: TextAlignVertical.top,
                   decoration: InputDecoration(
                     hintText: "Describe the investment terms and potential returns.",
-                    hintStyle: const TextStyle(
-                      color: Color(0xFFBFBFBF),
-                      fontWeight: FontWeight.w400,
-                      fontSize: 16,
-                    ),
+                    hintStyle: const TextStyle(color: Color(0xFFBFBFBF), fontWeight: FontWeight.w400, fontSize: 16,),
                     border: InputBorder.none,
                   ),
-                )
-                  ,
-                ),
+                )),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 15),

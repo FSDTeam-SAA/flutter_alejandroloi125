@@ -5,7 +5,7 @@ import 'package:alejandroloi/core/util/styles.dart';
 import 'package:alejandroloi/feature/home/widgets/botton_card.dart';
 import 'package:alejandroloi/feature/home/widgets/investdesk_card.dart';
 import 'package:alejandroloi/feature/home/widgets/project_card.dart';
-import 'package:alejandroloi/feature/investments/investment_screen.dart';
+import 'package:alejandroloi/feature/investments/view/investment_screen.dart';
 import 'package:alejandroloi/feature/investments/widgets/progrees.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
