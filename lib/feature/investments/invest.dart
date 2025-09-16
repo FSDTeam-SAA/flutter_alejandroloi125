@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../project/project.dart' show ProjectScreen;
+import '../project/view/project.dart' show ProjectScreen;
 
 class InvestScreen extends StatefulWidget {
   const InvestScreen({super.key});
@@ -52,31 +52,19 @@ class _InvestScreenState extends State<InvestScreen> {
             // project box
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: card,
-                borderRadius: BorderRadius.circular(8),
-              ),
+              decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(8),),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Urban Farming Initiative',
-                      style:
-                      TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                  const Text('Urban Farming Initiative', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                   const SizedBox(height: 8),
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: LinearProgressIndicator(
-                      value: 0.45,
-                      backgroundColor: Colors.white.withOpacity(.1),
-                      color: accent,
-                      minHeight: 8,
+                    child: LinearProgressIndicator(value: 0.45, backgroundColor: Colors.white.withOpacity(.1), color: accent, minHeight: 8,
                     ),
                   ),
                   const SizedBox(height: 6),
-                  Text('45% funded',
-                      style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.white.withOpacity(.7))),
+                  Text('45% funded', style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(.7))),
                 ],
               ),
             ),
@@ -163,8 +151,7 @@ class _InvestScreenState extends State<InvestScreen> {
                   activeColor: accent,
                 ),
                 const Expanded(
-                  child: Text('Save payment details for future purchases',
-                      style: TextStyle(fontSize: 13)),
+                  child: Text('Save payment details for future purchases', style: TextStyle(fontSize: 13)),
                 ),
               ],
             ),
@@ -196,9 +183,7 @@ class _InvestScreenState extends State<InvestScreen> {
                   children: [
                     const Icon(Icons.add, color: accent),
                     const SizedBox(width: 8),
-                    const Text('Add New Card',
-                        style: TextStyle(
-                            fontWeight: FontWeight.w600, color: accent)),
+                    const Text('Add New Card', style: TextStyle(fontWeight: FontWeight.w600, color: accent)),
                   ],
                 ),
               ),
@@ -214,9 +199,7 @@ class _InvestScreenState extends State<InvestScreen> {
                   activeColor: accent,
                 ),
                 const Expanded(
-                  child: Text(
-                    'I agree to the investment terms and conditions, including the risks associated with this investment.',
-                    style: TextStyle(fontSize: 13),
+                  child: Text('I agree to the investment terms and conditions, including the risks associated with this investment.', style: TextStyle(fontSize: 13),
                   ),
                 ),
               ],
@@ -236,10 +219,8 @@ class _InvestScreenState extends State<InvestScreen> {
                   const Icon(Icons.warning, color: Colors.redAccent),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(
-                      'Investment involves risk. The value of your investment may rise or fall and your capital is at risk.',
-                      style:
-                      const TextStyle(fontSize: 12, color: Colors.redAccent),
+                    child: Text('Investment involves risk. The value of your investment may rise or fall and your capital is at risk.',
+                      style: const TextStyle(fontSize: 12, color: Colors.redAccent),
                     ),
                   ),
                 ],
@@ -250,13 +231,9 @@ class _InvestScreenState extends State<InvestScreen> {
             // total
             Row(
               children: const [
-                Text('Total Investment:',
-                    style:
-                    TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
+                Text('Total Investment:', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
                 Spacer(),
-                Text('\$1000',
-                    style:
-                    TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                Text('\$1000', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
               ],
             ),
             const SizedBox(height: 16),
@@ -265,9 +242,7 @@ class _InvestScreenState extends State<InvestScreen> {
             SizedBox(
               width: double.infinity,
               child: TextButton(
-                onPressed: () {
-                  Get.to(ProjectScreen());
-                },
+                onPressed: () {Get.to(ProjectScreen());},
                 style: TextButton.styleFrom(
                   backgroundColor: accent,
                   foregroundColor: Colors.black,
@@ -276,9 +251,7 @@ class _InvestScreenState extends State<InvestScreen> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                child: const Text('Invest \$1000',
-                    style:
-                    TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                child: const Text('Invest \$1000', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
               ),
             ),
           ],
@@ -298,17 +271,12 @@ class _SavedCardRow extends StatelessWidget {
     const card = Color(0xFF1B1E23);
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: card,
-        borderRadius: BorderRadius.circular(8),
-      ),
+      decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(8),),
       child: Row(
         children: [
           Icon(logo, color: Colors.white),
           const SizedBox(width: 12),
-          Text(number,
-              style:
-              const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+          Text(number, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
         ],
       ),
     );

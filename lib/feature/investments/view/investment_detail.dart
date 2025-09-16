@@ -3,7 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'invest.dart';
+import '../invest.dart';
 
 class InvestmentDetailScreen extends StatelessWidget {
   const InvestmentDetailScreen({super.key});
