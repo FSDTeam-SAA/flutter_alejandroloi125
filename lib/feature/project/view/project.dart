@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 
 import 'project_detail.dart';
 
-void main() => runApp(const ProjectScreen());
+// void main() => runApp(const ProjectScreen());
 
 class ProjectScreen extends StatelessWidget {
   const ProjectScreen({super.key});

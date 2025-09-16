@@ -103,7 +103,7 @@ class InvestmentsScreen extends StatelessWidget {
                 },
                 child: _InvestmentCard(
                   image:
-                  'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?q=80&w=1200&auto=format&fit=crop',
+                  'assets/images/agriculture.jpg',
                   category: 'Agriculture',
                   title: 'Urban Farming Initiative',
                   description:
