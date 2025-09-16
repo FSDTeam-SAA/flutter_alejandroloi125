@@ -24,11 +24,11 @@ class _AppGroundState extends State<AppGround> {
   void initState() {
     super.initState();
     _pages = [
-      SafeArea(child: HomeScreenView()),
-      SafeArea(child: ServiceView()),
-      const SafeArea(child: CreateServicesView()),
-      SafeArea(child: EventView()),
-      const SafeArea(child: ProfileScreenView()),
+      HomeScreenView(),
+      ServiceView(),
+      CreateServicesView(),
+      EventView(),
+      ProfileScreenView()
     ];
   }
 

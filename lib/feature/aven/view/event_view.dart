@@ -1,4 +1,8 @@
 import 'package:alejandroloi/core/common/widgets/pilltabs.dart';
+import 'package:alejandroloi/core/util/styles.dart';
+import 'package:alejandroloi/feature/auctions/view/auction_screen.dart';
+import 'package:alejandroloi/feature/auctions/view/create_auctions_view.dart';
+import 'package:alejandroloi/feature/project/view/create_project_view.dart';
 import 'package:flutter/material.dart';
 
 import '../../investments/view/create_investments.dart';
@@ -32,7 +36,7 @@ class _EventViewState extends State<EventView>
       backgroundColor: Colors.black,
 
       appBar: AppBar(
-        title: const Text("My Event", style: TextStyle(color: Colors.white),),
+        title: const Text("Create Services", style: headingText,),
         backgroundColor: Colors.transparent,
         elevation: 0,
 
@@ -43,10 +47,11 @@ class _EventViewState extends State<EventView>
           Expanded(
             child: TabBarView(
               controller: _tabController,
-              children: const [
-                CreateInvestmentsView(),
-                Center(child: Text("Upcoming Services")),
-                Center(child: Text("Ended Services")),
+              children: [
+                const CreateInvestmentsView(),
+                const CreateProjectView(),
+                //AuctionScreen(),
+                CreateAuctionsView(),
               ],
             ),
           ),
