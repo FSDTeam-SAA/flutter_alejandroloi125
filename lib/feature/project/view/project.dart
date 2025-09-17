@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../app_ground.dart';
 import 'project_detail.dart';
 
 // void main() => runApp(const ProjectScreen());
@@ -65,7 +66,12 @@ class ProjectsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          onPressed: () {},
+          onPressed: () => Get.offAll(
+                () => const AppGround(),            // or AppGround(initialIndex: 0)
+            transition: Transition.rightToLeft,
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeInOut,
+          ),
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
         ),
         title: const Text('Project'),

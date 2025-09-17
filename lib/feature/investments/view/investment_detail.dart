@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../invest.dart';
+import 'investment_screen.dart';
 
 class InvestmentDetailScreen extends StatelessWidget {
   const InvestmentDetailScreen({super.key});
@@ -36,7 +37,7 @@ class InvestmentDetailScreen extends StatelessWidget {
               // ---------- HERO ----------
               _HeroImage(
                 image:
-                'https://images.unsplash.com/photo-1524404794195-0f93a1c1a5a5?q=80&w=1400&auto=format&fit=crop',
+                'assets/images/agriculture.jpg',
               ),
               const SizedBox(height: 10),
 
@@ -115,7 +116,11 @@ class InvestmentDetailScreen extends StatelessWidget {
                       width: double.infinity,
                       child: TextButton(
                         onPressed: () {
-                          Get.to(InvestScreen());
+                          Get.to(InvestScreen(),
+                            transition: Transition.rightToLeft,
+                            duration: const Duration(milliseconds: 350),
+                            curve: Curves.easeInOut,
+                          );
                         },
                         style: TextButton.styleFrom(
                           backgroundColor: accent,
@@ -221,10 +226,32 @@ class _HeroImage extends StatelessWidget {
       borderRadius: BorderRadius.circular(12),
       child: Stack(
         children: [
+          // AspectRatio(
+          //   aspectRatio: 16 / 9,
+          //   child: Ink.image(image: NetworkImage(image), fit: BoxFit.cover),
+          // ),
+
           AspectRatio(
             aspectRatio: 16 / 9,
-            child: Ink.image(image: NetworkImage(image), fit: BoxFit.cover),
+            child: InkWell(
+              onTap: () => Get.back(),
+
+              child: ClipRRect(
+                borderRadius: BorderRadius.zero,
+                child: Image.asset(
+                  image,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: Colors.black26,
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.broken_image_outlined),
+                  ),
+                ),
+              ),
+            ),
           ),
+
+
           // top controls
           Positioned(
             left: 8,

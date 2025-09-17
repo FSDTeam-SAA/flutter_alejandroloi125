@@ -1,4 +1,5 @@
 // lib/invest_screen.dart
+import 'package:alejandroloi/feature/investments/view/investment_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -242,7 +243,12 @@ class _InvestScreenState extends State<InvestScreen> {
             SizedBox(
               width: double.infinity,
               child: TextButton(
-                onPressed: () {Get.to(ProjectScreen());},
+                onPressed: () {
+                  Get.to(InvestmentsScreen(),
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeInOut,
+                  );},
                 style: TextButton.styleFrom(
                   backgroundColor: accent,
                   foregroundColor: Colors.black,

@@ -1,6 +1,10 @@
 import 'package:alejandroloi/core/common/widgets/pilltabs.dart';
 import 'package:flutter/material.dart';
 
+import '../../auctions/view/auction_screen.dart';
+import '../../investments/view/investment_screen.dart';
+import '../../project/view/project.dart';
+
 class ServiceView extends StatefulWidget {
   const ServiceView({super.key});
 
@@ -42,9 +46,12 @@ class _ServiceViewState extends State<ServiceView>
             child: TabBarView(
               controller: _tabController,
               children: const [
-                Center(child: Text("Live Services")),
-                Center(child: Text("Upcoming Services")),
-                Center(child: Text("Ended Services")),
+                // Center(child: Text("Live Services")),
+                // Center(child: Text("Upcoming Services")),
+                // Center(child: Text("Ended Services")),
+                InvestmentsScreen(), // <- your widget
+                ProjectScreen(),     // <- your widget
+                AuctionScreen(),     // <- your widget
               ],
             ),
           ),

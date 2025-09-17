@@ -5,6 +5,10 @@ import 'package:alejandroloi/core/common/widgets/save_botton.dart';
 import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/styles.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+
+import 'investment_screen.dart';
 
 class CreateInvestmentsView extends StatelessWidget {
   const CreateInvestmentsView({super.key});
@@ -26,10 +30,25 @@ class CreateInvestmentsView extends StatelessWidget {
 
           ],
                ),
+              // Padding(
+              //   padding: const EdgeInsets.symmetric(vertical: 15),
+              //   child: CustomTextField(hintText: "Enter your Investment title"),
+              // ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 15),
-                child: CustomTextField(hintText: "Enter your Investment title"),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Investment Title', style: bodyText1),   // label
+                    const SizedBox(height: 6),
+                    CustomTextField(
+                      hintText: "Enter your Investment title",
+
+                    ),
+                  ],
+                ),
               ),
+
               Text("Category",style: bodyText1,),
               CustomWrapWidget(
                 spacing: 8,
@@ -47,11 +66,18 @@ class CreateInvestmentsView extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text("Description",style: bodyText1,),
               ),
-             Container(decoration: BoxDecoration(color: AppColors.fieldColor,borderRadius: BorderRadius.circular(6)),
+             Container(
+                 decoration: BoxDecoration(
+                     color: AppColors.fieldColor,
+                     borderRadius: BorderRadius.circular(6)
+                 ),
                child: Padding(
                  padding: const EdgeInsets.all(8.0),
                  child: TextField(
                    textAlignVertical: TextAlignVertical.top,
+                   keyboardType: TextInputType.multiline,
+                   style: const TextStyle(color: Colors.white),     //  make text visible
+                   cursorColor: Colors.white,
                    maxLines: 10,
                    decoration: InputDecoration(
                      hintText: "Describe your Investment in detail",
@@ -90,6 +116,9 @@ class CreateInvestmentsView extends StatelessWidget {
                 child: TextField(
                   maxLines: 10,
                   textAlignVertical: TextAlignVertical.top,
+                  keyboardType: TextInputType.multiline,
+                  style: const TextStyle(color: Colors.white),     //  make text visible
+                  cursorColor: Colors.white,
                   decoration: InputDecoration(
                     hintText: "Describe the investment terms and potential returns.",
                     hintStyle: const TextStyle(color: Color(0xFFBFBFBF), fontWeight: FontWeight.w400, fontSize: 16,),
@@ -99,7 +128,19 @@ class CreateInvestmentsView extends StatelessWidget {
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 15),
-                child: bottomWidget(text: "Create Investment"),
+                child: bottomWidget(
+                    text: "Create Investment",
+                  onTap: () {
+                    // If you want to replace this page:
+                    Get.off(() => const InvestmentsScreen(),
+                      transition: Transition.rightToLeft,
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeInOut,
+                    );
+
+
+                  },
+                ),
               ),
               SizedBox(height: 10,)
             ],

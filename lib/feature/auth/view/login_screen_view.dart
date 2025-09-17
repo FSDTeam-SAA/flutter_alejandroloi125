@@ -100,10 +100,14 @@ class _LoginScreenViewState extends State<LoginScreenView> {
               text: "Login",
               onTap: () {
                 if (_formKey.currentState!.validate()) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (context) => const AppGround()),
+
+                  Get.offAll(
+                        () => const AppGround(),
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeInOut,
                   );
+
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text("Please fill all required fields correctly")),

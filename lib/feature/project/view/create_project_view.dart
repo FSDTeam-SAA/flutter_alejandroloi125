@@ -4,7 +4,11 @@ import 'package:alejandroloi/core/common/widgets/custom_warp.dart';
 import 'package:alejandroloi/core/common/widgets/save_botton.dart';
 import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/styles.dart';
+import 'package:alejandroloi/feature/project/view/project.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_navigation/src/routes/transitions_type.dart';
 
 class CreateProjectView extends StatelessWidget {
   const CreateProjectView({super.key});
@@ -61,15 +65,50 @@ class CreateProjectView extends StatelessWidget {
 
 
 
+                  // Padding(
+                  //   padding: const EdgeInsets.symmetric(vertical: 8),
+                  //   child: Text("Budget Range",style: bodyText1,),
+                  // ),
+                  // Row(
+                  //   children: [
+                  //
+                  //   ],
+                  // ),
+
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Text("Budget Range",style: bodyText1,),
+                    child: Text("Budget Range", style: bodyText1),
                   ),
                   Row(
                     children: [
-
+                      Expanded(
+                        child: CustomTextField(
+                          hintText: "Min",
+                          prefixIcon: Icons.attach_money,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          // filled: true,
+                          // fillColor: AppColors.fieldColor,
+                          // borderRadius: 8,
+                          // contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                          showBorder: false,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: CustomTextField(
+                          hintText: "Max",
+                          prefixIcon: Icons.attach_money,
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          // filled: true,
+                          // fillColor: AppColors.fieldColor,
+                          // borderRadius: 8,
+                          // contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                          showBorder: false,
+                        ),
+                      ),
                     ],
                   ),
+
 
 
                   Padding(
@@ -93,7 +132,21 @@ class CreateProjectView extends StatelessWidget {
 
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 15),
-                    child: bottomWidget(text: "Create Investment"),
+                    child: bottomWidget(
+                        text: "Create Project Post",
+                      onTap: () {
+                        Get.off(                               // replace current page
+                              () => const ProjectScreen(),
+                          transition: Transition.rightToLeft,
+                          duration: const Duration(milliseconds: 350),
+                          curve: Curves.easeInOut,
+                        );
+
+                        // If you want to keep the current page in the stack, use:
+                        // Get.to(() => const ProjectScreen(), transition: Transition.rightToLeft);
+                      },
+
+                    ),
                   ),
                   SizedBox(height: 10,)
                 ],

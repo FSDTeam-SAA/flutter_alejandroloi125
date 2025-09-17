@@ -14,6 +14,13 @@ class CustomTextField extends StatefulWidget {
   final bool showBorder;
   final Color borderColor;
 
+  // final EdgeInsetsGeometry? contentPadding;
+  // final bool filled;
+  // final Color? fillColor;
+  // final double borderRadius;
+
+
+
 
   const CustomTextField({
     super.key,
@@ -28,6 +35,10 @@ class CustomTextField extends StatefulWidget {
     this.width,
     this.showBorder = false,
     this.borderColor = Colors.white,
+    // this.contentPadding,
+    // this.filled = true,
+    // this.fillColor,
+    // this.borderRadius = 8,
   });
 
   @override
@@ -36,6 +47,8 @@ class CustomTextField extends StatefulWidget {
 
 class _CustomTextFieldState extends State<CustomTextField> {
   bool _obscure = true;
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -49,11 +62,14 @@ class _CustomTextFieldState extends State<CustomTextField> {
         controller: widget.controller,
         obscureText: widget.isPassword ? _obscure : false,
         keyboardType: widget.keyboardType,
+
         decoration: InputDecoration(
           hintText: widget.hintText,
           hintStyle: const TextStyle(fontSize: 14, color: Colors.white, fontWeight: FontWeight.w400,),
           prefixIcon: widget.prefixIcon != null ? Icon(widget.prefixIcon, size: 24, color: Color(0xFFB1B3B4)) : null,
           suffixIcon: widget.isPassword ? IconButton(icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility, size: 18, color: const Color(0xffB4B4B4),), onPressed: () {setState(() {_obscure = !_obscure;});},) : null,
+
+
 
           enabledBorder:widget.showBorder? OutlineInputBorder(
             borderRadius: BorderRadius.circular(6),

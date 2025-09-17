@@ -3,6 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../app_ground.dart';
+import '../../home/view/home_view.dart';
 import 'investment_detail.dart';
 
 class InvestmentsScreen extends StatelessWidget {
@@ -38,7 +40,12 @@ class InvestmentsScreen extends StatelessWidget {
               Row(
                 children: [
                   _IconBtn(
-                    onTap: () {},
+                    onTap: () => Get.offAll(
+                          () => AppGround(),               //  show Home tab
+                      transition: Transition.rightToLeft,
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeInOut,
+                    ),
                     child: const Icon(CupertinoIcons.back, size: 20),
                   ),
                   const SizedBox(width: 12),
@@ -47,7 +54,7 @@ class InvestmentsScreen extends StatelessWidget {
                     style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
                   ),
                   const Spacer(),
-                  const Icon(CupertinoIcons.battery_100), // just to match status-ish
+                  // const Icon(CupertinoIcons.battery_100),
                 ],
               ),
               const SizedBox(height: 12),
@@ -99,11 +106,16 @@ class InvestmentsScreen extends StatelessWidget {
               // Cards
               InkWell(
                 onTap: (){
-                  Get.to(InvestmentDetailScreen());
+                  Get.to(InvestmentDetailScreen(),
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeInOut,
+                  );
+
                 },
                 child: _InvestmentCard(
                   image:
-                  'assets/images/agriculture.jpg',
+                   'assets/images/agriculture.jpg',
                   category: 'Agriculture',
                   title: 'Urban Farming Initiative',
                   description:
@@ -116,32 +128,43 @@ class InvestmentsScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 14),
-              _InvestmentCard(
-                image:
-                'https://images.unsplash.com/photo-1509395176047-4a66953fd231?q=80&w=1200&auto=format&fit=crop',
-                category: 'Agriculture',
-                title: 'Urban Farming Initiative',
-                description:
-                'Looking for an experienced web designer to revamp our company website. Need',
-                progressPct: 45,
-                goalUsd: 25000,
-                daysLeft: 10,
-                ownerAvatar: 'https://i.pravatar.cc/100?img=15',
-                ownerName: 'John Smith',
+              //for project UI purpose i add this (abu sayed)
+              InkWell(
+                onTap: (){
+                  Get.to(InvestmentDetailScreen());
+                },
+                child: _InvestmentCard(
+                  image:
+                  'assets/images/wind-mill.jpg',
+                  category: 'Agriculture',
+                  title: 'Urban Farming Initiative',
+                  description:
+                  'Looking for an experienced web designer to revamp our company website. Need',
+                  progressPct: 45,
+                  goalUsd: 25000,
+                  daysLeft: 10,
+                  ownerAvatar: 'https://i.pravatar.cc/100?img=15',
+                  ownerName: 'Odo Smith',
+                ),
               ),
               const SizedBox(height: 14),
-              _InvestmentCard(
-                image:
-                'https://images.unsplash.com/photo-1524404794195-0f93a1c1a5a5?q=80&w=1200&auto=format&fit=crop',
-                category: 'Agriculture',
-                title: 'Urban Farming Initiative',
-                description:
-                'Looking for an experienced web designer to revamp our company website. Need',
-                progressPct: 45,
-                goalUsd: 25000,
-                daysLeft: 10,
-                ownerAvatar: 'https://i.pravatar.cc/100?img=21',
-                ownerName: 'John Smith',
+              InkWell(
+                onTap: (){
+                  Get.to(InvestmentDetailScreen());
+                },
+                child: _InvestmentCard(
+                  image:
+                  'assets/images/garden.jpg',
+                  category: 'Agriculture',
+                  title: 'Urban Farming Initiative',
+                  description:
+                  'Looking for an experienced web designer to revamp our company website. Need',
+                  progressPct: 45,
+                  goalUsd: 25000,
+                  daysLeft: 10,
+                  ownerAvatar: 'https://i.pravatar.cc/100?img=21',
+                  ownerName: 'Jihan Smith',
+                ),
               ),
             ],
           ),
@@ -214,11 +237,30 @@ class _InvestmentCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Image
+          // AspectRatio(
+          //   aspectRatio: 16 / 9,
+          //   child: Ink.image(
+          //     image: AssetImage(image),
+          //     fit: BoxFit.cover,
+          //   ),
+          // ),
+
           AspectRatio(
             aspectRatio: 16 / 9,
-            child: Ink.image(
-              image: NetworkImage(image),
-              fit: BoxFit.cover,
+            child: InkWell(
+              onTap: () {}, // optional ripple target
+              child: ClipRRect(
+                borderRadius: BorderRadius.zero,
+                child: Image.asset(
+                  image,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: Colors.black26,
+                    alignment: Alignment.center,
+                    child: const Icon(Icons.broken_image_outlined),
+                  ),
+                ),
+              ),
             ),
           ),
 
