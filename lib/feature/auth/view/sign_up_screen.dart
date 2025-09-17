@@ -10,13 +10,62 @@ import 'package:get/get_core/src/get_main.dart';
 import 'package:flutter/gestures.dart';
 
 import 'login_screen_view.dart'; // <—
-class SignUpScreenView extends StatelessWidget {
+class SignUpScreenView extends StatefulWidget {
    SignUpScreenView({super.key});
 
+  @override
+  State<SignUpScreenView> createState() => _SignUpScreenViewState();
+}
 
+class _SignUpScreenViewState extends State<SignUpScreenView> {
   final emailController = TextEditingController();
+
   final passwordController = TextEditingController();
+
   final confirmPasswordController = TextEditingController();
+
+  final _formKey = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  String? _emailValidator(String? v) {
+    if (v == null || v.trim().isEmpty) return "Please enter your email";
+    final email = v.trim();
+    final emailRegex = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$');
+    if (!emailRegex.hasMatch(email)) return "Enter a valid email";
+    return null;
+  }
+
+  String? _passwordValidator(String? v) {
+    if (v == null || v.isEmpty) return "Please enter a password";
+    if (v.length < 6) return "Password must be at least 6 characters";
+    return null;
+  }
+
+  String? _confirmValidator(String? v) {
+    if (v == null || v.isEmpty) return "Please confirm your password";
+    if (v != passwordController.text) return "Passwords do not match";
+    return null;
+  }
+
+  void _submit() {
+    // final ok = _formKey.currentState?.validate() ?? false;
+    // if (!ok) return;
+
+    // TODO: call your sign-up API here if needed
+    // On success, go to Login screen:
+    Get.off(() => LoginScreenView(),
+      transition: Transition.rightToLeft,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeInOut,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,6 +89,8 @@ class SignUpScreenView extends StatelessWidget {
               controller: emailController,
               hintText: "Email",
               prefixIcon: Icons.email_outlined,
+              validator: _emailValidator,
+
             ),
 
             Padding(
@@ -48,15 +99,22 @@ class SignUpScreenView extends StatelessWidget {
                 controller: passwordController,
                 hintText: "Password",
                 prefixIcon: Icons.lock_outline,
+                validator: _passwordValidator,
               ),
-            ), CustomTextField(
-              controller: passwordController,
+            ),
+            CustomTextField(
+              controller: confirmPasswordController,
               hintText: "Confirm Password",
               prefixIcon: Icons.lock_outline,
+              validator: _confirmValidator,
             ),
 
             SizedBox(height: 10,),
-            bottomWidget(text: "Sign up"),
+            // bottomWidget(text: "Sign up"),
+            bottomWidget(
+              text: "Sign up",
+              onTap: _submit, //  validate then navigate
+            ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 20),
               child: Row(

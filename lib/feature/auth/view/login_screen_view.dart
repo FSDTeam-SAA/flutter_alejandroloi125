@@ -10,15 +10,30 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 
+import '../../app_ground.dart';
 import 'forget_password_view.dart';
 import 'package:flutter/gestures.dart'; // <—
 
 
-class LoginScreenView extends StatelessWidget {
+class LoginScreenView extends StatefulWidget {
   LoginScreenView({super.key});
 
+  @override
+  State<LoginScreenView> createState() => _LoginScreenViewState();
+}
+
+class _LoginScreenViewState extends State<LoginScreenView> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -26,66 +41,95 @@ class LoginScreenView extends StatelessWidget {
       backgroundColor: Colors.black,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
-            const SizedBox(height: 80),
+        child: Form(
+          key:_formKey,
+          child: ListView(
+            children: [
+              const SizedBox(height: 80),
 
-            Image.asset(Images.appIcon, height: 52, width: 165),
-            SizedBox(height: 40),
-            Center(child: Text("Welcome Back", style: headingText)),
-            SizedBox(height: 10),
-            Center(
-              child: Text("Sign in to access your account", style: bodyText1),
-            ),
-            SizedBox(height: 20),
-            CustomTextField(
-              controller: emailController,
-              hintText: "Email",
-              prefixIcon: Icons.email_outlined,
-            ),
-            const SizedBox(height: 10),
-            CustomTextField(
-              controller: passwordController,
-              hintText: "Password",
-              prefixIcon: Icons.lock_outline,
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Get.to(() => const ForgetPasswordView(),
-                      transition: Transition.rightToLeft,
-                      duration: const Duration(milliseconds: 350),
-                      curve: Curves.easeInOut,
-                    ),
-                    child: Text(
-                      "Forget Password",
-                      style: bodyText1.copyWith(color: AppColors.bottomColor1),
-                    ),
-                  ),
-                ],
+              Image.asset(Images.appIcon, height: 52, width: 165),
+              SizedBox(height: 40),
+              Center(child: Text("Welcome Back", style: headingText)),
+              SizedBox(height: 10),
+              Center(
+                child: Text("Sign in to access your account", style: bodyText1),
               ),
-            ),
-            bottomWidget(text: "Login"),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(height: 1.5, color: Colors.grey, width: 148),
-                  Text("Or", style: bodyText1.copyWith(color: Colors.grey)),
-                  Container(height: 1.5, color: Colors.grey, width: 148),
-                ],
+              SizedBox(height: 20),
+              CustomTextField(
+                controller: emailController,
+                hintText: "Email",
+                prefixIcon: Icons.email_outlined,
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return "Enter your email";
+                  // add email regex if you want
+                  return null;
+                },
               ),
+              const SizedBox(height: 10),
+              CustomTextField(
+                controller: passwordController,
+                hintText: "Password",
+                prefixIcon: Icons.lock_outline,
+                validator: (v) {
+                  if (v == null || v.isEmpty) return "Enter your password";
+                  if (v.length < 6) return "Min 6 characters";
+                  return null;
+                },
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Get.to(() => const ForgetPasswordView(),
+                        transition: Transition.rightToLeft,
+                        duration: const Duration(milliseconds: 350),
+                        curve: Curves.easeInOut,
+                      ),
+                      child: Text(
+                        "Forget Password",
+                        style: bodyText1.copyWith(color: AppColors.bottomColor1),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // bottomWidget(text: "Login"),
+            bottomWidget(
+              text: "Login",
+              onTap: () {
+                if (_formKey.currentState!.validate()) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AppGround()),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Please fill all required fields correctly")),
+                  );
+                }
+              },
             ),
 
-            CustomOutlineContainer(name:  'Continue With Google',image: Images.googleIcon,),
-            const SizedBox(height: 10),
-            CustomOutlineContainer(name:  'Continue With Apple',image: Images.macIcon,),
+            Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(height: 1.5, color: Colors.grey, width: 148),
+                    Text("Or", style: bodyText1.copyWith(color: Colors.grey)),
+                    Container(height: 1.5, color: Colors.grey, width: 148),
+                  ],
+                ),
+              ),
 
-          ],
+              CustomOutlineContainer(name:  'Continue With Google',image: Images.googleIcon,),
+              const SizedBox(height: 10),
+              CustomOutlineContainer(name:  'Continue With Apple',image: Images.macIcon,),
+
+            ],
+          ),
         ),
       ),
 
