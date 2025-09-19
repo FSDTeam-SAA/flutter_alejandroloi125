@@ -1,13 +1,13 @@
 import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:flutter/material.dart';
 
-class Auction {
+class Auctions {
   final String imageUrl;
   final String title;
   final double currentPrice;
   final int viewers;
 
-  Auction({
+  Auctions({
     required this.imageUrl,
     required this.title,
     required this.currentPrice,
@@ -15,14 +15,14 @@ class Auction {
   });
 }
 
-class LiveAuctionCard extends StatelessWidget {
-  final Auction auction;
+class LiveAuctionCards extends StatelessWidget {
+  final Auctions auction;
   final VoidCallback? onTap;
   final double borderRadius;
   final Color liveBadgeColor;
   final Color viewersBadgeColor;
 
-  const LiveAuctionCard({
+  const LiveAuctionCards({
     super.key,
     required this.auction,
     this.onTap,

@@ -10,6 +10,9 @@ import 'package:alejandroloi/feature/investments/widgets/progrees.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../auctions/view/auction_screen.dart';
+import '../../project/view/project.dart';
+
 class HomeScreenView extends StatelessWidget {
   const HomeScreenView({super.key});
 
@@ -51,18 +54,40 @@ class HomeScreenView extends StatelessWidget {
               imagePath: Images.currency,
               title: "Investments",
               subtitle: "Develop Investment Strategy and Engage with Potential Funders.",
+              onTap: () {
+                Get.to(
+                      () => const InvestmentsScreen(),
+                  transition: Transition.rightToLeft,
+                  duration: const Duration(milliseconds: 300),
+                );
+              },
             ),
             const SizedBox(height: 15),
             BottomCard(
               imagePath: Images.layout,
               title: "Project",
               subtitle: "Post a need or offer to complete someone else's project",
+              onTap: () {
+                Get.to(
+                      () => const ProjectScreen(),
+                  transition: Transition.rightToLeft,
+                  duration: const Duration(milliseconds: 300),
+                );
+              },
+
             ),
             const SizedBox(height: 15),
             BottomCard(
               imagePath: Images.key,
               title: "Action",
               subtitle: "Participate in the live product auction by placing your bid.",
+              onTap: () {
+                Get.to(
+                      () => const AuctionScreen(),
+                  transition: Transition.rightToLeft,
+                  duration: const Duration(milliseconds: 300),
+                );
+              },
             ),
             const SizedBox(height: 20),
             rowText(leadingText: "Live Action", trailingText: "See all"),
@@ -78,8 +103,8 @@ class HomeScreenView extends StatelessWidget {
                     padding: const EdgeInsets.only(right: 12),
                     child: SizedBox(
                       width: 160, // fix card width
-                      child: LiveAuctionCard(
-                        auction: Auction(
+                      child: LiveAuctionCards(
+                        auction: Auctions(
                           imageUrl: "assets/images/tree.jpg",
                           title: "Live Art Auction",
                           currentPrice: 1200.5,

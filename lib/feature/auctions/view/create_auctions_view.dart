@@ -8,6 +8,7 @@ import 'package:alejandroloi/feature/auctions/controller/create_auctions_control
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../service/view/service_view.dart';
 import 'auction_screen.dart';
 
 class CreateAuctionsView extends StatefulWidget {
@@ -252,7 +253,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                   onTap: () {
                     // Replace current page (no back)
                     Get.to(
-                      () => const AuctionScreen(),
+                      () => const ServiceView(initialIndex: 2),
                       transition: Transition.rightToLeft,
                       duration: const Duration(milliseconds: 350),
                       curve: Curves.easeInOut,

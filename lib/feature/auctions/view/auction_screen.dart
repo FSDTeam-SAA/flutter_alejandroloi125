@@ -1,14 +1,24 @@
 import 'dart:async';
 import 'package:alejandroloi/feature/auctions/view/auction_detail.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_navigation/src/routes/transitions_type.dart';
 
-// void main() => runApp(const AuctionScreen());
+import '../../app_ground.dart';
 
-/// -------------------- APP --------------------
 
-class AuctionScreen extends StatelessWidget {
+
+
+
+class AuctionScreen extends StatefulWidget {
   const AuctionScreen({super.key});
 
+  @override
+  State<AuctionScreen> createState() => _AuctionScreenState();
+}
+
+class _AuctionScreenState extends State<AuctionScreen> {
   @override
   Widget build(BuildContext context) {
     final dark = ThemeData.dark();
@@ -188,7 +198,18 @@ class _AuctionsScreenState extends State<AuctionsScreen>
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Auctions')),
+      appBar: AppBar(
+          title: const Text('Auctions'),
+        leading: IconButton(
+          onPressed: () => Get.offAll(
+                () => const AppGround(),
+            transition: Transition.rightToLeft,
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeInOut,
+          ),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+        ),
+      ),
       body: Column(
         children: [
           Padding(

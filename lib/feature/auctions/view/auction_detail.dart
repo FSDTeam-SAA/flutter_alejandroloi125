@@ -5,8 +5,6 @@ import 'package:get/get_core/src/get_main.dart';
 
 import 'auction_screen.dart';
 
-// void main() => runApp(const AuctionDetailScreen());
-
 class AuctionDetailScreen extends StatelessWidget {
   const AuctionDetailScreen({super.key});
 
@@ -183,14 +181,14 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
                       children: [
                         _circleBtn(
                           icon: Icons.arrow_back_ios_new_rounded,
-                          onTap: () {
-                            Get.off(
-                                  () =>  AuctionScreen(),
-                              transition: Transition.rightToLeft,
-                              duration: const Duration(milliseconds: 350),
-                              curve: Curves.easeInOut,
-                            );
-                          },
+                        onTap: () {
+                          if (Navigator.of(context).canPop()) {
+                            Navigator.of(context).pop();
+                          } else {
+                            Get.back(); // if using GetX root navigator
+                          }
+                        }
+
                         ),
                         const Spacer(),
                         _circleBtn(icon: Icons.share_outlined, onTap: () {}),

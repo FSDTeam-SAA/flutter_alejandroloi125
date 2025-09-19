@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 
+import '../../service/view/my_investments/my_investments.dart';
+import '../../service/view/service_view.dart';
 import 'investment_screen.dart';
 
 class CreateInvestmentsView extends StatelessWidget {
@@ -132,7 +134,7 @@ class CreateInvestmentsView extends StatelessWidget {
                     text: "Create Investment",
                   onTap: () {
                     // If you want to replace this page:
-                    Get.off(() => const InvestmentsScreen(),
+                    Get.off(() => const ServiceView(),
                       transition: Transition.rightToLeft,
                       duration: const Duration(milliseconds: 350),
                       curve: Curves.easeInOut,

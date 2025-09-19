@@ -10,6 +10,8 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/routes/transitions_type.dart';
 
+import '../../service/view/service_view.dart';
+
 class CreateProjectView extends StatelessWidget {
   const CreateProjectView({super.key});
 
@@ -136,7 +138,7 @@ class CreateProjectView extends StatelessWidget {
                         text: "Create Project Post",
                       onTap: () {
                         Get.off(                               // replace current page
-                              () => const ProjectScreen(),
+                              () => const ServiceView(initialIndex: 1),
                           transition: Transition.rightToLeft,
                           duration: const Duration(milliseconds: 350),
                           curve: Curves.easeInOut,
