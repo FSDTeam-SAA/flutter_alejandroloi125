@@ -36,7 +36,7 @@ class ProfileScreenView extends StatelessWidget {
                 SizedBox(width: 10,),
                 Column(crossAxisAlignment: CrossAxisAlignment.start,children: [
                   Text("Darelel Saerer",style: headingText,),
-                  Text("addresss",style: bodyText1.copyWith(fontSize: 16),),
+                  Text("address",style: bodyText1.copyWith(fontSize: 16),),
           
                 ],),
               ],
