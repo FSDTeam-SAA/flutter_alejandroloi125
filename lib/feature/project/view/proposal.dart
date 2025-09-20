@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 
-void main() => runApp(const ProposalScreen());
+
 
 class ProposalScreen extends StatelessWidget {
   const ProposalScreen({super.key});
@@ -103,7 +105,9 @@ class _SubmitProposalPageState extends State<SubmitProposalPage> {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () {},
+          onPressed: () {
+            Get.back();
+          },
         ),
         title: const Text('Submit Your Proposal',
             style: TextStyle(fontWeight: FontWeight.w800)),

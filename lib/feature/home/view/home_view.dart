@@ -151,35 +151,35 @@ class HomeScreenView extends StatelessWidget {
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 itemCount: 5,
-               // padding: const EdgeInsets.symmetric(horizontal: 12), // left-right padding for ListView
+                padding: const EdgeInsets.symmetric(horizontal: 12),
                 itemBuilder: (_, index) {
                   return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: Container(
-                      width: 300, height: 222,// card width
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        color: AppColors.fieldColor,
-                      ),
-                      child: const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                            Text("Design",style: bodyText1,),
-                              Text("Website Redesign for Local Business",style: TextStyle(fontSize: 14,fontWeight: FontWeight.w600,color: Colors.white),),
-                              Text("Looking for an experienced web designer to revamp our company website. Need ",style: TextStyle(fontSize: 12,fontWeight: FontWeight.w400,color: Colors.white),),
-                              Row(children: [],)
-                          ],),
-                        )
-                      ),
+                    padding: const EdgeInsets.only(right: 12),
+                    child: ProjectMiniCard(
+                      category: 'Design',
+                      title: 'Website Redesign for Local Business',
+                      blurb:
+                      'Looking for an experienced web designer to revamp our company website. Need',
+                      priceRange: '\$ 1,500 - 3,000',
+                      duration: '15 Days',
+                      location: 'Brooklyn, NY',
+                      proposals: '8 Proposals',
+                      avatars: const [
+                        'https://i.pravatar.cc/60?img=12',
+                        'https://i.pravatar.cc/60?img=22',
+                        'https://i.pravatar.cc/60?img=32',
+                        'https://i.pravatar.cc/60?img=42',
+                      ],
+                      onTap: () {
+                        // e.g. Get.to(() => ProjectDetailScreen());
+                      },
                     ),
                   );
                 },
               ),
             )
+
+
 
 
 
@@ -190,6 +190,246 @@ class HomeScreenView extends StatelessWidget {
     );
   }
 }
+
+
+
+class ProjectMiniCard extends StatelessWidget {
+  const ProjectMiniCard({
+    super.key,
+    required this.category,
+    required this.title,
+    required this.blurb,
+    required this.priceRange,
+    required this.duration,
+    required this.location,
+    required this.proposals,
+    this.avatars = const [],
+    this.onTap,
+  });
+
+  final String category;
+  final String title;
+  final String blurb;
+  final String priceRange;
+  final String duration;
+  final String location;
+  final String proposals;
+  final List<String> avatars;
+  final VoidCallback? onTap;
+
+  static const _orange = Color(0xFFFF8C3B);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final borderCol = const Color(0xFF2B2C31);
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: Container(
+        width: 300,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1B1E),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: borderCol),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x33000000),
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Category (small orange text)
+            Text(
+              category,
+              style: const TextStyle(
+                color: _orange,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 6),
+
+            // Title
+            Text(
+              title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16.5,
+                fontWeight: FontWeight.w700,
+                height: 1.2,
+              ),
+            ),
+            const SizedBox(height: 6),
+
+            // Blurb
+            Text(
+              blurb,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 12.5,
+                height: 1.25,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Row 1: $ and Days
+            Row(
+              children: [
+                Expanded(
+                  child: _MetaItem(
+                    icon: Icons.attach_money_rounded,
+                    text: priceRange,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _MetaItem(
+                    icon: Icons.timelapse_rounded,
+                    text: duration,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+
+            // Row 2: Location and Proposals
+            Row(
+              children: [
+                Expanded(
+                  child: _MetaItem(
+                    icon: Icons.place_rounded,
+                    text: location,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _MetaItem(
+                    icon: Icons.group_rounded,
+                    text: proposals,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+            const Divider(color: Color(0xFF2B2C31), height: 1),
+            const SizedBox(height: 10),
+
+            // Avatars + CTA
+            Row(
+              children: [
+                _AvatarStack(urls: avatars),
+                const Spacer(),
+                Text(
+                  'View Details',
+                  style: const TextStyle(
+                    color: _orange,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MetaItem extends StatelessWidget {
+  const _MetaItem({required this.icon, required this.text});
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Icon(Icons.circle, size: 0), // keeps height consistent if text wraps
+        Icon(icon, size: 18, color: Colors.white70),
+        const SizedBox(width: 6),
+        Flexible(
+          child: Text(
+            text,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: Colors.white, fontSize: 13.5),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AvatarStack extends StatelessWidget {
+  const _AvatarStack({required this.urls});
+  final List<String> urls;
+
+  @override
+  Widget build(BuildContext context) {
+    const double size = 26;
+    const double overlap = 12;
+    final extras = urls.length > 3 ? urls.length - 3 : 0;
+
+    return SizedBox(
+      height: size,
+      width: size + (urls.isEmpty ? 0 : (urls.length.clamp(0, 3) - 1) * overlap) + (extras > 0 ? overlap + 10 : 0),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          for (int i = 0; i < urls.length && i < 3; i++)
+            Positioned(
+              left: i * overlap,
+              child: CircleAvatar(
+                radius: size / 2,
+                backgroundColor: Colors.black,
+                child: CircleAvatar(
+                  radius: size / 2 - 1.5,
+                  backgroundImage: NetworkImage(urls[i]),
+                ),
+              ),
+            ),
+          if (extras > 0)
+            Positioned(
+              left: 3 * overlap,
+              child: Container(
+                width: size,
+                height: size,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2A2B30),
+                  border: Border.all(color: Colors.black, width: 1.5),
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  '+$extras',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+
+
 
 
 Widget rowText({

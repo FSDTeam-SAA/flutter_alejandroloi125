@@ -55,32 +55,60 @@ class ProfileScreenView extends StatelessWidget {
           
           
             profileBottom(imagePath: Images.credit,name: "Personal Information",voidCallBack: (){
-              Get.to(()=>PersonalInfoView());
+              Get.to(()=>PersonalInfoView(),
+                transition: Transition.rightToLeft,
+                duration: const Duration(milliseconds: 320),
+                curve: Curves.easeInOut,
+              );
             }),
            profileBottom(imagePath: Images.wishlist,name: "WishList",voidCallBack: (){
-             Get.to(()=>WishlistScreenView());
+             Get.to(()=>WishlistScreenView(),
+               transition: Transition.rightToLeft,
+               duration: const Duration(milliseconds: 320),
+               curve: Curves.easeInOut,
+             );
            }),
            profileBottom(imagePath: Images.lang,name: "Language",
                voidCallBack: (){
-                 Get.to(()=>LanguageScreenView());
+                 Get.to(()=>LanguageScreenView(),
+                   transition: Transition.rightToLeft,
+                   duration: const Duration(milliseconds: 320),
+                   curve: Curves.easeInOut,
+                 );
                }
            ),
            profileBottom(imagePath: Images.lock,name: "Change Password",
                voidCallBack: (){
-                 Get.to(()=>ChangePasswordView());
+                 Get.to(()=>ChangePasswordView(),
+                   transition: Transition.rightToLeft,
+                   duration: const Duration(milliseconds: 320),
+                   curve: Curves.easeInOut,
+                 );
                }
            ),
            profileBottom(imagePath: Images.about,name: "About App",voidCallBack: (){
-             Get.to(()=>AboutView());
+             Get.to(()=>AboutView(),
+               transition: Transition.rightToLeft,
+               duration: const Duration(milliseconds: 320),
+               curve: Curves.easeInOut,
+             );
            }),
            profileBottom(imagePath: Images.privacy,name: "Privacy",
                voidCallBack: (){
-                 Get.to(()=>PrivacyPolicyScreenView());
+                 Get.to(()=>PrivacyPolicyScreenView(),
+                   transition: Transition.rightToLeft,
+                   duration: const Duration(milliseconds: 320),
+                   curve: Curves.easeInOut,
+                 );
                }
            ),
            profileBottom(imagePath: Images.terms,name: "Term & Conditon",
                voidCallBack: (){
-                 Get.to(()=>TermsConditionScreenView());
+                 Get.to(()=>TermsConditionScreenView(),
+                   transition: Transition.rightToLeft,
+                   duration: const Duration(milliseconds: 320),
+                   curve: Curves.easeInOut,
+                 );
                }
            ),
 

@@ -149,127 +149,142 @@ class _SearchBar extends StatelessWidget {
 
 class ProjectCard extends StatelessWidget {
   const ProjectCard({super.key, required this.project});
-
   final Project project;
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final muted = Colors.white.withOpacity(0.65);
+    const orange = Color(0xFFFF8C3B);
 
     return Container(
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: const Color(0xFF1A1B1E),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withOpacity(.08)),
         boxShadow: const [
-          BoxShadow(
-            color: Color(0x33000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          )
+          BoxShadow(color: Color(0x33000000), blurRadius: 10, offset: Offset(0, 4)),
         ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Category
-            Row(
-              children: [
-                Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: cs.secondary,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: Theme.of(context).dividerColor),
-                  ),
-                  child: Text(
-                    project.category,
-                    style: TextStyle(
-                      color: cs.primary,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // category (plain orange text)
+          Text(
+            project.category,
+            style: const TextStyle(
+              color: orange,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
             ),
-            const SizedBox(height: 10),
-            // Title
-            Text(
-              project.title,
-              style: const TextStyle(
-                fontSize: 16.5,
-                fontWeight: FontWeight.w700,
+          ),
+          const SizedBox(height: 8),
+
+          // title
+          Text(
+            project.title,
+            style: const TextStyle(
+              fontSize: 16.5,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 6),
+
+          // short description
+          Text(
+            project.description,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: Colors.white70, height: 1.25),
+          ),
+          const SizedBox(height: 12),
+
+          // 2 × 2 info rows (with the $ icon)
+          _TwoCols(
+            leftIcon: Icons.attach_money_rounded,
+            leftText: project.budget,                  // e.g. "$ 1,500 - 3,000"
+            rightIcon: Icons.timelapse_rounded,
+            rightText: '${project.days} Days',
+          ),
+          const SizedBox(height: 8),
+          _TwoCols(
+            leftIcon: Icons.place_rounded,
+            leftText: project.location,
+            rightIcon: Icons.group_rounded,
+            rightText: '${project.proposals} Proposals',
+          ),
+
+          const SizedBox(height: 12),
+          const Divider(color: Color(0xFF2B2C31), height: 1),
+          const SizedBox(height: 10),
+
+          // avatars + CTA
+          Row(
+            children: [
+              _StackedAvatars(urls: project.memberImages),
+              const Spacer(),
+              TextButton(
+                onPressed: () {
+                  Get.to(
+                        () => ProjectDetailScreen(),
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: orange,
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
+                  textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                child: const Text('View Details'),
               ),
-            ),
-            const SizedBox(height: 6),
-            // Description (1–2 lines)
-            Text(
-              project.description,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: muted,
-                height: 1.25,
-              ),
-            ),
-            const SizedBox(height: 12),
-            // Info rows (budget / days / location / proposals)
-            Wrap(
-              spacing: 18,
-              runSpacing: 8,
-              children: [
-                _InfoChip(
-                  icon: Icons.attach_money_rounded,
-                  label: project.budget,
-                ),
-                _InfoChip(
-                  icon: Icons.timelapse_rounded,
-                  label: '${project.days} Days',
-                ),
-                _InfoChip(
-                  icon: Icons.place_rounded,
-                  label: project.location,
-                ),
-                _InfoChip(
-                  icon: Icons.group_rounded,
-                  label: '${project.proposals} Proposals',
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Divider(height: 1),
-            const SizedBox(height: 10),
-            // Avatars + CTA
-            Row(
-              children: [
-                _StackedAvatars(urls: project.memberImages),
-                const Spacer(),
-                TextButton(
-                  onPressed: () {
-                    Get.to(ProjectDetailScreen());
-                  },
-                  style: TextButton.styleFrom(
-                    foregroundColor: cs.primary,
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-                    textStyle: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  child: const Text('View Details'),
-                ),
-              ],
-            ),
-          ],
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
+
+// Small helper to render two compact icon+label pairs on one line
+class _TwoCols extends StatelessWidget {
+  const _TwoCols({
+    required this.leftIcon,
+    required this.leftText,
+    required this.rightIcon,
+    required this.rightText,
+  });
+
+  final IconData leftIcon;
+  final String leftText;
+  final IconData rightIcon;
+  final String rightText;
+
+  @override
+  Widget build(BuildContext context) {
+    const iconStyle = TextStyle(color: Colors.white70, fontSize: 13.5);
+
+    Widget chip(IconData i, String t) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(i, size: 18, color: Colors.white70),
+        const SizedBox(width: 6),
+        Text(t, style: iconStyle),
+      ],
+    );
+
+    return Row(
+      children: [
+        Expanded(child: chip(leftIcon, leftText)),
+        const SizedBox(width: 12),
+        Expanded(child: chip(rightIcon, rightText)),
+      ],
+    );
+  }
+}
+
+
 
 class _InfoChip extends StatelessWidget {
   const _InfoChip({required this.icon, required this.label});

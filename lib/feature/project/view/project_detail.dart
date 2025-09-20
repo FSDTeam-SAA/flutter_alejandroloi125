@@ -2,7 +2,7 @@ import 'package:alejandroloi/feature/project/view/proposal.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-void main() => runApp(const ProjectDetailScreen());
+
 
 class ProjectDetailScreen extends StatelessWidget {
   const ProjectDetailScreen({super.key});
@@ -40,15 +40,19 @@ class ProjectDetailPage extends StatelessWidget {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () {},
+          onPressed: () {
+
+            Get.back();
+
+          },
         ),
         title: const Text(''),
         centerTitle: false,
         actions: [
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.bookmark_outline_rounded),
-          ),
+          // IconButton(
+          //   onPressed: () {},
+          //   icon: const Icon(Icons.bookmark_outline_rounded),
+          // ),
           IconButton(
             onPressed: () {},
             icon: const Icon(Icons.favorite_border_rounded),
@@ -93,6 +97,19 @@ class ProjectDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             // Meta row 1
+            // Wrap(
+            //   spacing: 18,
+            //   runSpacing: 8,
+            //   children: const [
+            //     _InfoChip(icon: Icons.event_rounded, label: 'Posted on\nJune 1, 2023'),
+            //     _InfoChip(icon: Icons.attach_money_rounded, label: '\$ 1,500 - 3,000'),
+            //     _InfoChip(icon: Icons.timelapse_rounded, label: '15 Days'),
+            //     _InfoChip(icon: Icons.place_rounded, label: 'Brooklyn, NY'),
+            //     _InfoChip(icon: Icons.group_rounded, label: '8 Proposals'),
+            //   ],
+            // ),
+
+            // Meta row 1
             Wrap(
               spacing: 18,
               runSpacing: 8,
@@ -104,6 +121,8 @@ class ProjectDetailPage extends StatelessWidget {
                 _InfoChip(icon: Icons.group_rounded, label: '8 Proposals'),
               ],
             ),
+
+
             const SizedBox(height: 16),
             // Client / Poster
             Row(
@@ -156,8 +175,18 @@ class ProjectDetailPage extends StatelessWidget {
                   ),
                 ),
                 onPressed: () {
-                  Get.to(ProposalScreen());
+                  // Get.to(ProposalScreen());
+
+                  Get.to(
+                        () => ProposalScreen(),
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
                 },
+
+
+
                 child: const Text(
                   'Submit a Proposal',
                   style: TextStyle(fontWeight: FontWeight.w800),
@@ -221,6 +250,111 @@ class ProjectDetailPage extends StatelessWidget {
     );
   }
 }
+
+class _MetaPanel extends StatelessWidget {
+  const _MetaPanel({
+    required this.postedOn,
+    required this.items,
+  });
+
+  final String postedOn;
+  final List<_MetaItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // "Posted on …"
+          Row(
+            children: [
+              const Icon(Icons.event_rounded, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'Posted on $postedOn',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Divider(color: theme.dividerColor, height: 1),
+          const SizedBox(height: 10),
+
+          // 4 evenly spaced items, responsive
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // 2 columns for narrow screens, 4 for wide
+              final cols = constraints.maxWidth < 360 ? 2 : 4;
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: cols,
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: 4.2, // compact row-like tiles
+                ),
+                itemCount: items.length,
+                itemBuilder: (_, i) => _MetaTile(item: items[i], cs: cs),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetaItem {
+  const _MetaItem(this.icon, this.label);
+  final IconData icon;
+  final String label;
+}
+
+class _MetaTile extends StatelessWidget {
+  const _MetaTile({required this.item, required this.cs});
+  final _MetaItem item;
+  final ColorScheme cs;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: cs.secondary,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: theme.dividerColor),
+      ),
+      child: Row(
+        children: [
+          Icon(item.icon, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              item.label,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 
 // ---------- UI Bits ----------
 

@@ -1,16 +1,7 @@
-import 'package:alejandroloi/feature/app_ground.dart';
 import 'package:flutter/material.dart';
-
-
-import '../../../service/view/service_view.dart';
-import '../event_view.dart';
-import 'my_event_auction.dart';
 import 'my_event_auction_purchase.dart';
 
-// Add this enum (top of file)
-enum EventTab { investments, project, auctions }
-
-/// Palette tuned to the mock
+/// Color palette tuned to the mock
 const _bg = Color(0xFF2B2B2E);
 const _card = Color(0xFF1E1F22);
 const _pillGreen = Color(0xFF2AA86F);
@@ -26,23 +17,23 @@ class MyEventAutionDetailScreen extends StatelessWidget {
       body: SafeArea(
         top: false,
         child: CustomScrollView(
-          slivers: [
-            const SliverToBoxAdapter(child: _Header()),
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            const SliverToBoxAdapter(
+          slivers: const [
+            SliverToBoxAdapter(child: _Header()),
+            SliverToBoxAdapter(child: SizedBox(height: 16)),
+            SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: _DetailsCard(),
               ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            const SliverToBoxAdapter(
+            SliverToBoxAdapter(child: SizedBox(height: 16)),
+            SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: _LiveChatSection(),
               ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+            SliverToBoxAdapter(child: SizedBox(height: 24)),
           ],
         ),
       ),
@@ -55,24 +46,26 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final top = MediaQuery.of(context).padding.top;
+
     return AspectRatio(
       aspectRatio: 375 / 228,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // PRODUCT IMAGE from your assets
+          // IMAGE
           ClipRRect(
             borderRadius: const BorderRadius.only(
               bottomLeft: Radius.circular(16),
               bottomRight: Radius.circular(16),
             ),
             child: Image.asset(
-              'assets/images/earpod.jpg', // ← from your tree
+              'assets/images/earpod.jpg',
               fit: BoxFit.cover,
             ),
           ),
 
-          // Dark gradient for readable overlays
+          // GRADIENT
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -89,9 +82,9 @@ class _Header extends StatelessWidget {
             ),
           ),
 
-          // TOP BAR (back + share on left, LIVE + like on right)
+          // TOP ICONS (left: back + share, right: heart)
           Positioned(
-            top: MediaQuery.of(context).padding.top + 12,
+            top: top + 12,
             left: 12,
             right: 12,
             child: Row(
@@ -104,29 +97,32 @@ class _Header extends StatelessWidget {
                       onTap: () => Navigator.of(context, rootNavigator: true).pop(),
                     ),
                     const SizedBox(width: 8),
-                    _RoundIconButton(
-                      icon: Icons.ios_share_outlined,
-                      onTap: () {
-                        Navigator.pop(context);
-                      },
-                    ),
+                    // _RoundIconButton(
+                    //   icon: Icons.ios_share_outlined,
+                    //   onTap: () {}, // share
+                    // ),
                   ],
                 ),
-                Row(
-                  children: [
-                    const _LivePill(),
-                    const SizedBox(width: 8),
-                    _RoundIconButton(
-                      icon: Icons.favorite_border,
-                      onTap: () {},
-                    ),
-                  ],
+                _RoundIconButton(
+                  icon: Icons.favorite_border,
+                  onTap: () {},
                 ),
               ],
             ),
           ),
 
-          // CREATOR + STATS (avatar + handle + pills)
+          // LIVE PILL (CENTERED)
+          Positioned(
+            top: top + 28,
+            left: 0,
+            right: 0,
+            child: const Align(
+              alignment: Alignment.topCenter,
+              child: _LivePill(),
+            ),
+          ),
+
+          // CREATOR + STATS
           Positioned(
             left: 16,
             right: 16,
@@ -136,7 +132,6 @@ class _Header extends StatelessWidget {
               children: [
                 const CircleAvatar(
                   radius: 18,
-                  // using your person icon as a simple avatar
                   backgroundImage: AssetImage('assets/images/person.png'),
                   backgroundColor: Colors.white12,
                 ),
@@ -195,6 +190,7 @@ class _DetailsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Title + Won pill
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -214,7 +210,7 @@ class _DetailsCard extends StatelessWidget {
                   'Won',
                   style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                 ),
-              )
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -229,16 +225,20 @@ class _DetailsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
+
+          // Final Bid + Purchase
           Row(
             children: [
-              Expanded(
+              const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Opacity(
                       opacity: 0.8,
-                      child: Text('Final Bid:',
-                          style: TextStyle(fontSize: 12, color: Colors.white70)),
+                      child: Text(
+                        'Final Bid:',
+                        style: TextStyle(fontSize: 12, color: Colors.white70),
+                      ),
                     ),
                     SizedBox(height: 4),
                     Text(
@@ -246,7 +246,7 @@ class _DetailsCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
-                        color: _accent, // orange price like the mock
+                        color: _accent,
                       ),
                     ),
                   ],
@@ -264,13 +264,9 @@ class _DetailsCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 18),
                   ),
                   onPressed: () {
-
-                    Navigator.of(context).push(
-                      _slideRightToLeft( MyEventAuctionPurchase()),
+                    Navigator.of(context, rootNavigator: true).push(
+                      _slideRightToLeft(const MyEventAuctionPurchase()),
                     );
-
-
-
                   },
                   child: const Text('Purchase'),
                 ),
@@ -283,20 +279,6 @@ class _DetailsCard extends StatelessWidget {
   }
 }
 
-Route _slideRightToLeft(Widget page) {
-  return PageRouteBuilder(
-    pageBuilder: (_, __, ___) => page,
-    transitionDuration: const Duration(milliseconds: 320),
-    reverseTransitionDuration: const Duration(milliseconds: 280),
-    transitionsBuilder: (_, animation, __, child) {
-      final tween = Tween(begin: const Offset(1, 0), end: Offset.zero)
-          .chain(CurveTween(curve: Curves.easeInOut));
-      return SlideTransition(position: animation.drive(tween), child: child);
-    },
-  );
-}
-
-
 class _LiveChatSection extends StatefulWidget {
   const _LiveChatSection();
 
@@ -308,14 +290,11 @@ class _LiveChatSectionState extends State<_LiveChatSection> {
   final List<ChatMessage> _messages = [
     ChatMessage('Ronald Richards', '\$500', '2m ago', 'assets/images/person.png'),
     ChatMessage('Arlene McCoy', '\$800', '2m ago', 'assets/images/person.png'),
-    ChatMessage('Darrell Steward', "What's the band material?", '2m ago',
-        'assets/images/person.png'),
+    ChatMessage('Darrell Steward', "What's the band material?", '2m ago', 'assets/images/person.png'),
     ChatMessage('Kathryn Murphy', '\$1000', '2m ago', 'assets/images/person.png'),
     ChatMessage('Devon Lane', 'Beautiful !', '2m ago', 'assets/images/person.png'),
-    ChatMessage('Robert Fox', "I'll go \$1,200", '2m ago',
-        'assets/images/person.png'),
-    ChatMessage('Darlene Robertson', '\$1250', '2m ago',
-        'assets/images/person.png'),
+    ChatMessage('Robert Fox', "I'll go \$1,200", '2m ago', 'assets/images/person.png'),
+    ChatMessage('Darlene Robertson', '\$1250', '2m ago', 'assets/images/person.png'),
   ];
 
   final TextEditingController _controller = TextEditingController();
@@ -335,34 +314,34 @@ class _LiveChatSectionState extends State<_LiveChatSection> {
       ),
       child: Column(
         children: [
-          // Header
+          // section header
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
             child: Row(
               children: const [
                 Icon(Icons.chat_bubble_outline, size: 18, color: Colors.white),
                 SizedBox(width: 8),
-                Text('Live Chat',
-                    style: TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
+                Text(
+                  'Live Chat',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white),
+                ),
               ],
             ),
           ),
-          const Divider(height: 1, thickness: 1),
+          const Divider(height: 1, thickness: 1, color: Colors.white24),
 
-          // Messages
+          // messages list
           ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            itemBuilder: (context, index) => _ChatRow(message: _messages[index]),
+            itemBuilder: (_, i) => _ChatRow(message: _messages[i]),
             separatorBuilder: (_, __) => const SizedBox(height: 12),
             itemCount: _messages.length,
           ),
-
           const SizedBox(height: 4),
 
-          // Input
+          // input
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             child: Row(
@@ -381,8 +360,7 @@ class _LiveChatSectionState extends State<_LiveChatSection> {
                         borderSide: BorderSide.none,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     ),
                     onSubmitted: (_) => _send(),
                   ),
@@ -456,14 +434,32 @@ class _LivePill extends StatelessWidget {
         color: Colors.redAccent,
         borderRadius: BorderRadius.circular(20),
       ),
-      child: const Text(
-        'LIVE',
-        style: TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.5,
-          color: Colors.white,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // white ring with red dot
+          Container(
+            width: 14,
+            height: 14,
+            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+            alignment: Alignment.center,
+            child: Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle),
+            ),
+          ),
+          const SizedBox(width: 6),
+          const Text(
+            'LIVE',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -543,7 +539,10 @@ class _ChatRow extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 4),
-              Text(message.text, style: const TextStyle(fontSize: 13, color: Colors.white))
+              Text(
+                message.text,
+                style: const TextStyle(fontSize: 13, color: Colors.white),
+              ),
             ],
           ),
         ),
@@ -551,3 +550,21 @@ class _ChatRow extends StatelessWidget {
     );
   }
 }
+
+// ---- route helper (right -> left) ----
+Route _slideRightToLeft(Widget page) {
+  return PageRouteBuilder(
+    pageBuilder: (_, __, ___) => page,
+    transitionDuration: const Duration(milliseconds: 320),
+    reverseTransitionDuration: const Duration(milliseconds: 280),
+    transitionsBuilder: (_, animation, __, child) {
+      final tween = Tween(begin: const Offset(1, 0), end: Offset.zero)
+          .chain(CurveTween(curve: Curves.easeInOut));
+      return SlideTransition(position: animation.drive(tween), child: child);
+    },
+  );
+}
+
+
+
+

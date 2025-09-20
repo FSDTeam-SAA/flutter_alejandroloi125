@@ -363,6 +363,7 @@ class AuctionListView extends StatefulWidget {
 
   final AuctionStatus status;
   final AuctionsRepository repository;
+
   final String query;
 
   @override
