@@ -1,18 +1,19 @@
 
-// import 'package:alejandroloi/feature/auctions/auction_screen.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-import 'core/common/widgets/botton_nav1.dart';
-import 'feature/app_ground.dart';
-import 'feature/create_service/view/create_services_view.dart';
-import 'feature/investments/view/investment_screen.dart';
-import 'feature/project/view/project.dart';
+
 import 'feature/splash/view/splash_view.dart';
+import 'package:provider/provider.dart';
+
 
 void main() {
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(
+    const MyApp(),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -38,23 +39,9 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         ),
 
-      //home: ProposalScreen(),
-       // home: CustomBottomNav(),
-       // home: AppGround(),
-       //  home: InvestmentsScreen(),
-        // home: InvestmentDetailScreen(),
-        //home: ResetPasswordView(),
-        //home: OtpCodeViewScreen(email: '',),
-        // home:  ForgetPasswordView(),
-        // home: UploadPhotosView(),
-        //home: SignUpScreenView(),
-        //  home: LoginScreenView(),
+
         home: SplashScreen(),
-        // home: PersonalInfoAddView(),
-        // home: SplashScreen(),
-        // home: AuctionScreen(),
-        // home: ProjectScreen(),
-        // home: CreateServicesView(),
+
       ),
     );
   }

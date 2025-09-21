@@ -43,7 +43,9 @@ class _InvestScreenState extends State<InvestScreen> {
           elevation: 0,
           leading: IconButton(
             icon: const Icon(CupertinoIcons.back),
-            onPressed: () {},
+            onPressed: () {
+              Get.back();
+            },
           ),
           title: const Text('Invest'),
         ),

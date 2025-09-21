@@ -25,6 +25,9 @@ dependencies:
   country_picker: ^2.0.27
   country_flags: ^4.0.1
   flutter_credit_card: ^4.1.0
+  http: ^1.5.0
+  shared_preferences: ^2.5.3
+  flutter_riverpod: ^3.0.0
 
 
 dev_dependencies:

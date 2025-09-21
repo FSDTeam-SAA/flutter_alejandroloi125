@@ -22,7 +22,6 @@ class AuctionDetailScreen extends StatelessWidget {
           surface: Color(0xFF1A1B1E),
         ),
         dividerColor: const Color(0xFF2B2C31),
-        useMaterial3: true,
       ),
       home: const AuctionDetailPage(),
     );
@@ -191,7 +190,7 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
 
                         ),
                         const Spacer(),
-                        _circleBtn(icon: Icons.share_outlined, onTap: () {}),
+                        // _circleBtn(icon: Icons.share_outlined, onTap: () {}),
                         const SizedBox(width: 10),
                         _circleBtn(
                             icon: Icons.favorite_border_rounded, onTap: () {}),
@@ -314,7 +313,7 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
                                   color: Colors.white70, fontSize: 12)),
                           SizedBox(height: 4),
                           Text('\$1,200',
-                              style: TextStyle(
+                              style: TextStyle(color: Colors.orangeAccent,
                                   fontSize: 22, fontWeight: FontWeight.w900)),
                         ],
                       ),
@@ -326,7 +325,7 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
                           keyboardType: TextInputType.number,
                           decoration: InputDecoration(
                             isDense: true,
-                            filled: true,
+                            filled: false,
                             fillColor: ThemeData.dark()
                                 .colorScheme
                                 .secondary, // matches theme

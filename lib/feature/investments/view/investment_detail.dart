@@ -259,9 +259,13 @@ class _HeroImage extends StatelessWidget {
             top: 8,
             child: Row(
               children: [
-                _roundBtn(const Icon(CupertinoIcons.back)),
-                const Spacer(),
-                _roundBtn(const Icon(CupertinoIcons.share)),
+                _roundBtn(
+                    const Icon(CupertinoIcons.back),
+                  onPressed: () => Get.back(),
+
+                ),
+              const Spacer(),
+                // _roundBtn(const Icon(CupertinoIcons.share)),
                 const SizedBox(width: 8),
                 _roundBtn(const Icon(CupertinoIcons.heart)),
               ],
@@ -298,7 +302,9 @@ class _HeroImage extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(width: 8),
+
                   const _TinyPill(icon: CupertinoIcons.eye, label: '2.1k'),
+                  // const Spacer(),
                   const SizedBox(width: 6),
                   const _TinyPill(icon: CupertinoIcons.hand_thumbsup, label: '142'),
                 ],
@@ -327,16 +333,39 @@ class _HeroImage extends StatelessWidget {
     );
   }
 
-  static Widget _roundBtn(Widget icon) => Container(
-    height: 36,
-    width: 36,
-    decoration: BoxDecoration(
-      color: Colors.black.withOpacity(.45),
-      borderRadius: BorderRadius.circular(10),
-    ),
-    alignment: Alignment.center,
-    child: icon,
-  );
+  // static Widget _roundBtn(Widget icon) => Container(
+  //   height: 36,
+  //   width: 36,
+  //   decoration: BoxDecoration(
+  //     color: Colors.black.withOpacity(.45),
+  //     borderRadius: BorderRadius.circular(10),
+  //   ),
+  //   alignment: Alignment.center,
+  //   child: icon,
+  // );
+
+  Widget _roundBtn(Icon icon, {VoidCallback? onPressed}) {
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: const Color(0xFF2F6F80).withOpacity(0.35), // bluish grey, ~35% opacity
+        boxShadow: [
+          BoxShadow(blurRadius: 6, spreadRadius: 0, offset: const Offset(0, 2), color: Colors.black.withOpacity(0.10)),
+        ],
+      ),
+      child: IconButton(
+        icon: icon,
+        color: Colors.white,                // white arrow for contrast
+        padding: EdgeInsets.zero,           // remove extra padding
+        constraints: const BoxConstraints.tightFor(width: 40, height: 40), // circle size
+        onPressed: onPressed,
+      ),
+    );
+  }
+
+
+
+
 }
 
 class _TinyPill extends StatelessWidget {
