@@ -69,6 +69,10 @@ class _CustomTextFieldState extends State<CustomTextField> {
           prefixIcon: widget.prefixIcon != null ? Icon(widget.prefixIcon, size: 24, color: Color(0xFFB1B3B4)) : null,
           suffixIcon: widget.isPassword ? IconButton(icon: Icon(_obscure ? Icons.visibility_off : Icons.visibility, size: 18, color: const Color(0xffB4B4B4),), onPressed: () {setState(() {_obscure = !_obscure;});},) : null,
 
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,  // 👈 left/right space
+            vertical: 14,    // 👈 top/bottom space
+          ),
 
 
           enabledBorder:widget.showBorder? OutlineInputBorder(

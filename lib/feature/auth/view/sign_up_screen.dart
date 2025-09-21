@@ -4,11 +4,13 @@ import 'package:alejandroloi/core/common/widgets/save_botton.dart';
 import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/images.dart';
 import 'package:alejandroloi/core/util/styles.dart';
+import 'package:alejandroloi/feature/auth/view/personal_information_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:flutter/gestures.dart';
 
+import '../../profile/view/personal_info_view.dart';
 import 'login_screen_view.dart'; // <—
 class SignUpScreenView extends StatefulWidget {
    SignUpScreenView({super.key});
@@ -60,7 +62,7 @@ class _SignUpScreenViewState extends State<SignUpScreenView> {
 
     // TODO: call your sign-up API here if needed
     // On success, go to Login screen:
-    Get.off(() => LoginScreenView(),
+    Get.off(() => PersonalInformationProfileView(),
       transition: Transition.rightToLeft,
       duration: const Duration(milliseconds: 350),
       curve: Curves.easeInOut,

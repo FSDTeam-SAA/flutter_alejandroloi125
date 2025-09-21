@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 
+import 'feature/auth/view/personal_information_profile.dart';
+import 'feature/auth/view/upload_profile.dart';
 import 'feature/splash/view/splash_view.dart';
 import 'package:provider/provider.dart';
 
@@ -41,6 +43,7 @@ class MyApp extends StatelessWidget {
 
 
         home: SplashScreen(),
+        // home: PersonalInformationProfileView(),
 
       ),
     );
