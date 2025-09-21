@@ -62,7 +62,7 @@ class ProfileScreenView extends StatelessWidget {
               );
             }),
            profileBottom(imagePath: Images.wishlist,name: "WishList",voidCallBack: (){
-             Get.to(()=>WishlistScreenView(),
+             Get.to(()=>WishlistViewScreen(),
                transition: Transition.rightToLeft,
                duration: const Duration(milliseconds: 320),
                curve: Curves.easeInOut,
@@ -70,7 +70,7 @@ class ProfileScreenView extends StatelessWidget {
            }),
            profileBottom(imagePath: Images.lang,name: "Language",
                voidCallBack: (){
-                 Get.to(()=>LanguageScreenView(),
+                 Get.to(()=>LanguageViewScreen(),
                    transition: Transition.rightToLeft,
                    duration: const Duration(milliseconds: 320),
                    curve: Curves.easeInOut,
