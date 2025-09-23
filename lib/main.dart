@@ -5,8 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 
+import 'feature/auth/controllers/auth_provider.dart';
+import 'feature/auth/controllers/onboarding_provider.dart';
+import 'feature/auth/services/auth_repository.dart';
 import 'feature/splash/view/splash_view.dart';
-
+import 'package:provider/provider.dart';
 
 
 void main() async{
@@ -14,7 +17,14 @@ void main() async{
 
 
   runApp(
-    const MyApp(),
+
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => OnboardingProvider()),
+      ],
+      child: const MyApp(),
+    ),
   );
 }
 
@@ -34,7 +44,7 @@ class MyApp extends StatelessWidget {
         ),
       child: GetMaterialApp(
         debugShowCheckedModeBanner: false,
-        title: 'Flutter Demo',
+        title: 'Nver',
 
         theme: ThemeData(
 
@@ -42,7 +52,7 @@ class MyApp extends StatelessWidget {
         ),
 
 
-        home: SplashScreen(),
+        home: const SplashScreen(),
         // home: WishlistViewScreen(),
 
       ),

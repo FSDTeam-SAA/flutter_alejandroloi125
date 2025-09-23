@@ -1,9 +1,15 @@
+// lib/feature/auth/view/upload_profile_view.dart
+import 'dart:io';
 import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 
+import '../../app_ground.dart';
+import '../controllers/onboarding_provider.dart';
 import 'login_screen_view.dart';
 
 class UploadProfileView extends StatefulWidget {
@@ -15,15 +21,20 @@ class UploadProfileView extends StatefulWidget {
 
 class _UploadProfileViewState extends State<UploadProfileView> {
   // Palette
-  static const bg       = Color(0xFF0E0E0E);
+  static const bg = Color(0xFF0E0E0E);
   static const textMain = Colors.white;
-  static const textSub  = Colors.white70;
-  static const accent   = Color(0xFFFF7A00);
+  static const textSub = Colors.white70;
+  static const accent = Color(0xFFFF7A00);
 
+  final _picker = ImagePicker();
+  File? _selectedFile;
   ImageProvider? _avatar;
 
   @override
   Widget build(BuildContext context) {
+    final flow = context.watch<OnboardingProvider>();
+    final isLoading = flow.loading;
+
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
@@ -32,11 +43,7 @@ class _UploadProfileViewState extends State<UploadProfileView> {
         leading: _RoundBack(onTap: () => Navigator.pop(context)),
         title: const Text(
           'Upload Profile',
-          style: TextStyle(
-            color: textMain,
-            fontSize: 22,
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(color: textMain, fontSize: 22, fontWeight: FontWeight.w700),
         ),
         centerTitle: false,
       ),
@@ -52,22 +59,18 @@ class _UploadProfileViewState extends State<UploadProfileView> {
               ),
               const SizedBox(height: 24),
 
-              // Avatar with double ring (NO grey fill)
+              // Avatar with double ring (transparent center)
               Center(
                 child: _DoubleRingAvatar(
                   size: 220,
                   outerColor: accent,
-                  innerColor: Colors.white, // clean white inner ring
+                  innerColor: Colors.white,
                   child: CircleAvatar(
                     radius: 95,
-                    backgroundColor: Colors.transparent, // ⬅️ no grey
+                    backgroundColor: Colors.transparent,
                     backgroundImage: _avatar,
                     child: _avatar == null
-                        ? const Icon(
-                      CupertinoIcons.person_alt,
-                      size: 110,
-                      color: Colors.white30, // subtle, not grey block
-                    )
+                        ? const Icon(CupertinoIcons.person_alt, size: 110, color: Colors.white30)
                         : null,
                   ),
                 ),
@@ -78,71 +81,85 @@ class _UploadProfileViewState extends State<UploadProfileView> {
               // Camera / Photos row
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
+                children: [
                   _IconAction(
                     icon: CupertinoIcons.camera,
                     label: 'Camera',
+                    onTap: _pickFromCamera,
                   ),
-                  SizedBox(width: 36),
+                  const SizedBox(width: 36),
                   _IconAction(
                     icon: CupertinoIcons.photo,
                     label: 'Photos',
+                    onTap: _pickFromGallery,
                   ),
                 ],
               ),
-
 
               const Spacer(),
 
               // Bottom buttons
               Row(
                 children: [
+                  // Skip -> go to app (no upload)
                   Expanded(
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
                         foregroundColor: accent,
                         side: const BorderSide(color: accent, width: 1.6),
                         backgroundColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      onPressed: () => Get.to(() => LoginScreenView(),
-                        transition: Transition.rightToLeft,
-                        duration: const Duration(milliseconds: 300),
-                      ),
-
-
-
-                      child: const Text(
-                        'Skip',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                      ),
+                      onPressed: isLoading
+                          ? null
+                          : () {
+                        Get.offAll(() => const AppGround(),
+                            transition: Transition.rightToLeft,
+                            duration: const Duration(milliseconds: 300));
+                      },
+                      child: const Text('Skip',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                     ),
                   ),
                   const SizedBox(width: 12),
+
+                  // Continue -> upload if chosen, else warn
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: accent,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         elevation: 0,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
-                      onPressed: () {
-                        Get.to(() => LoginScreenView(),
-                          transition: Transition.rightToLeft,
-                          duration: const Duration(milliseconds: 300),
-                        );
+                      onPressed: isLoading
+                          ? null
+                          : () async {
+                        if (_selectedFile == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Please select a photo first')),
+                          );
+                          return;
+                        }
+                        final ok = await context
+                            .read<OnboardingProvider>()
+                            .uploadProfileImage(_selectedFile!);
+                        if (!mounted) return;
+                        if (ok) {
+                          Get.offAll(() => const AppGround(),
+                              transition: Transition.rightToLeft,
+                              duration: const Duration(milliseconds: 300));
+                        } else {
+                          final err = context.read<OnboardingProvider>().error ??
+                              'Upload failed';
+                          ScaffoldMessenger.of(context)
+                              .showSnackBar(SnackBar(content: Text(err)));
+                        }
                       },
-                      child: const Text(
-                        'Continue',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-                      ),
+                      child: Text(isLoading ? 'Uploading...' : 'Continue',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                     ),
                   ),
                 ],
@@ -154,26 +171,31 @@ class _UploadProfileViewState extends State<UploadProfileView> {
     );
   }
 
-  // ---- stubbed pickers (hook up image_picker here) ----
-  void _pickFromCamera() async {
-    // final XFile? file = await ImagePicker().pickImage(source: ImageSource.camera);
-    // if (file != null) setState(() => _avatar = FileImage(File(file.path)));
+  // ---- pickers ----
+  Future<void> _pickFromCamera() async {
+    final x = await _picker.pickImage(source: ImageSource.camera, imageQuality: 85);
+    if (x != null) {
+      setState(() {
+        _selectedFile = File(x.path);
+        _avatar = FileImage(_selectedFile!);
+      });
+    }
   }
 
-  void _pickFromGallery() async {
-    // final XFile? file = await ImagePicker().pickImage(source: ImageSource.gallery);
-    // if (file != null) setState(() => _avatar = FileImage(File(file.path)));
+  Future<void> _pickFromGallery() async {
+    final x = await _picker.pickImage(source: ImageSource.gallery, imageQuality: 85);
+    if (x != null) {
+      setState(() {
+        _selectedFile = File(x.path);
+        _avatar = FileImage(_selectedFile!);
+      });
+    }
   }
 }
 
 class _IconAction extends StatelessWidget {
-  const _IconAction({
-    required this.icon,
-    required this.label,
-    this.onTap,
-  });
-
-  final IconData icon;        // 👈 dynamic icon
+  const _IconAction({required this.icon, required this.label, this.onTap});
+  final IconData icon;
   final String label;
   final VoidCallback? onTap;
 
@@ -189,15 +211,14 @@ class _IconAction extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: Colors.white, size: 26),   // 👈 use the dynamic icon
+            Icon(icon, color: Colors.white, size: 26),
             const SizedBox(height: 6),
+            const Text('',
+              style: TextStyle(color: Colors.transparent), // spacer line fix
+            ),
             Text(
               label,
-              style: const TextStyle(
-                color: accent,                            // orange text
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(color: accent, fontSize: 14, fontWeight: FontWeight.w600),
             ),
           ],
         ),
@@ -206,9 +227,6 @@ class _IconAction extends StatelessWidget {
   }
 }
 
-
-
-// Back button with subtle blur and circular tap target
 class _RoundBack extends StatelessWidget {
   const _RoundBack({required this.onTap});
   final VoidCallback onTap;
@@ -237,7 +255,6 @@ class _RoundBack extends StatelessWidget {
   }
 }
 
-// Big circular avatar with two rings (transparent center)
 class _DoubleRingAvatar extends StatelessWidget {
   const _DoubleRingAvatar({
     required this.size,
@@ -254,7 +271,7 @@ class _DoubleRingAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final outer = size;
-    final inner = size - 10;   // outer ring thickness ~5
+    final inner = size - 10; // outer ring thickness ~5
     final content = size - 24; // inner ring thickness ~7
 
     return SizedBox(
@@ -263,7 +280,6 @@ class _DoubleRingAvatar extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Outer ring (accent)
           Container(
             width: outer,
             height: outer,
@@ -272,7 +288,6 @@ class _DoubleRingAvatar extends StatelessWidget {
               border: Border.all(color: outerColor, width: 5),
             ),
           ),
-          // Inner ring (white)
           Container(
             width: inner,
             height: inner,
@@ -281,12 +296,9 @@ class _DoubleRingAvatar extends StatelessWidget {
               border: Border.all(color: innerColor, width: 7),
             ),
           ),
-          // Transparent center with avatar/placeholder
           SizedBox(width: content, height: content, child: child),
         ],
       ),
     );
   }
 }
-
-

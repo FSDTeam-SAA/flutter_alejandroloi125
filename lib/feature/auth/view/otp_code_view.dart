@@ -1,10 +1,14 @@
 import 'package:alejandroloi/core/common/widgets/save_botton.dart';
 import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/styles.dart';
+import 'package:alejandroloi/feature/auth/view/personal_information_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart';
 import 'package:pinput/pinput.dart';
+import 'package:provider/provider.dart';
 
+import '../controllers/onboarding_provider.dart';
 import 'create_new_password.dart';
 import 'forget_password_view.dart';
 import 'login_screen_view.dart';
@@ -79,18 +83,34 @@ final otpController = TextEditingController();
                 ),
               ),
         GestureDetector(
-          onTap: () {
-            final code = otpController.text.trim();
-            if (code.length != 6) {
-              Get.snackbar('Invalid code', 'Enter the 6-digit code');
-              return;
+          // onTap: () {
+          //   final code = otpController.text.trim();
+          //   if (code.length != 6) {
+          //     Get.snackbar('Invalid code', 'Enter the 6-digit code');
+          //     return;
+          //   }
+          //   Get.off(() => CreateNewPasswordScreen(),
+          //     transition: Transition.rightToLeft,
+          //     duration: const Duration(milliseconds: 350),
+          //     curve: Curves.easeInOut,
+          //   );
+          // },
+          onTap: context.watch<OnboardingProvider>().loading
+              ? null
+              : () async {
+            final flow = context.read<OnboardingProvider>();
+            final ok = await flow.verifyOtp(otpController.text.trim());
+            // if (!mounted) return;
+
+            if (ok) {
+              Get.off(() => PersonalInformationProfileView());
+            } else {
+              ScaffoldMessenger.of(context)
+                  .showSnackBar(SnackBar(content: Text(flow.error ?? 'Invalid code')));
             }
-            Get.off(() => CreateNewPasswordScreen(),
-              transition: Transition.rightToLeft,
-              duration: const Duration(milliseconds: 350),
-              curve: Curves.easeInOut,
-            );
           },
+
+
           child: bottomWidget(
               text: "Verify",
             

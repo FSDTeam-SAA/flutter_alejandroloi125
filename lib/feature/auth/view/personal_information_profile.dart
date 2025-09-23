@@ -2,16 +2,21 @@ import 'dart:ui';
 import 'package:alejandroloi/feature/auth/view/upload_profile.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart'; // only if you want Get.back()
+import 'package:get/get.dart';
+import 'package:provider/provider.dart';
+
+import '../controllers/onboarding_provider.dart';
 
 class PersonalInformationProfileView extends StatefulWidget {
   const PersonalInformationProfileView({super.key});
 
   @override
-  State<PersonalInformationProfileView> createState() => _PersonalInformationProfileViewState();
+  State<PersonalInformationProfileView> createState() =>
+      _PersonalInformationProfileViewState();
 }
 
-class _PersonalInformationProfileViewState extends State<PersonalInformationProfileView> {
+class _PersonalInformationProfileViewState
+    extends State<PersonalInformationProfileView> {
   final _formKey = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _ageCtrl = TextEditingController();
@@ -20,13 +25,13 @@ class _PersonalInformationProfileViewState extends State<PersonalInformationProf
   String? _gender;
   String? _nationality;
 
-  // Colors (tuned to the screenshot)
+  // Colors
   static const bg = Color(0xFF0E0E0E);
   static const fieldFill = Color(0xFF1B1B1B);
   static const textPrimary = Colors.white;
   static const textSecondary = Colors.white70;
   static const stroke = Color(0x22FFFFFF);
-  static const accent = Color(0xFFFF7A00); // orange button
+  static const accent = Color(0xFFFF7A00);
 
   @override
   void dispose() {
@@ -38,6 +43,8 @@ class _PersonalInformationProfileViewState extends State<PersonalInformationProf
 
   @override
   Widget build(BuildContext context) {
+    final isLoading = context.watch<OnboardingProvider>().loading;
+
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
@@ -45,7 +52,7 @@ class _PersonalInformationProfileViewState extends State<PersonalInformationProf
         elevation: 0,
         leading: _RoundIconButton(
           icon: const Icon(CupertinoIcons.back, color: Colors.white),
-          onPressed: () => Get.back(), // or Navigator.pop(context)
+          onPressed: () => Get.back(),
         ),
         title: const Text(
           'Personal Information',
@@ -125,8 +132,9 @@ class _PersonalInformationProfileViewState extends State<PersonalInformationProf
                 controller: _addressCtrl,
                 hintText: 'Write your Address',
                 maxLines: 3,
-                validator: (v) =>
-                (v == null || v.trim().isEmpty) ? 'Address is required' : null,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Address is required'
+                    : null,
               ),
               const SizedBox(height: 24),
 
@@ -141,19 +149,46 @@ class _PersonalInformationProfileViewState extends State<PersonalInformationProf
                     ),
                     elevation: 0,
                   ),
-                  onPressed: () {
-                    // if (_formKey.currentState?.validate() ?? false) {
-                    //   // Navigate to UploadProfileView
-                    // }
-                      Get.to(() => UploadProfileView(),
-                        transition: Transition.rightToLeft,
-                        duration: const Duration(milliseconds: 300),
-                      );
+                  onPressed: isLoading
+                      ? null
+                      : () async {
+                    final okForm =
+                        _formKey.currentState?.validate() ?? false;
+                    if (!okForm) return;
 
+                    final flow = context.read<OnboardingProvider>();
+                    // Your provider signature was: savePersonalInfo({
+                    //   required String name,
+                    //   String? phone, String? username,
+                    //   String? street, String? city, String? state, String? zipCode
+                    // })
+                    //
+                    // We only have name + a freeform address here. We’ll map
+                    // address -> street and send extra metadata in a separate field
+                    // (optional—handle on server if you wish).
+                    final ok = await flow.savePersonalInfo(
+                      name: _nameCtrl.text.trim(),
+                      street: _addressCtrl.text.trim(),
+                      // You can also extend your provider to accept:
+                      // extra: {'age': _ageCtrl.text, 'gender': _gender, 'nationality': _nationality}
+                    );
+
+                    if (!mounted) return;
+
+                    if (ok) {
+                      Get.off(() => const UploadProfileView(),
+                          transition: Transition.rightToLeft,
+                          duration: const Duration(milliseconds: 300));
+                    } else {
+                      final err = flow.error ?? 'Could not save info';
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(err)),
+                      );
+                    }
                   },
-                  child: const Text(
-                    'Continue',
-                    style: TextStyle(
+                  child: Text(
+                    isLoading ? 'Please wait...' : 'Continue',
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w700,
                     ),
@@ -192,10 +227,9 @@ class _PersonalInformationProfileViewState extends State<PersonalInformationProf
   }
 }
 
-/// Rounded back icon (no grey box; semi-transparent circle like iOS)
+/// Rounded back icon
 class _RoundIconButton extends StatelessWidget {
   const _RoundIconButton({required this.icon, this.onPressed});
-
   final Icon icon;
   final VoidCallback? onPressed;
 
@@ -220,7 +254,6 @@ class _RoundIconButton extends StatelessWidget {
   }
 }
 
-/// Dark text field that removes grey borders and adds inner padding.
 class _DarkTextField extends StatelessWidget {
   const _DarkTextField({
     required this.controller,
@@ -246,18 +279,22 @@ class _DarkTextField extends StatelessWidget {
       validator: validator,
       keyboardType: keyboardType,
       maxLines: maxLines,
-      style: const TextStyle(color: _PersonalInformationProfileViewState.textPrimary),
+      style: const TextStyle(
+          color: _PersonalInformationProfileViewState.textPrimary),
       cursorColor: Colors.white70,
       decoration: InputDecoration(
         hintText: hintText,
-        hintStyle: const TextStyle(color: _PersonalInformationProfileViewState.textSecondary),
+        hintStyle: const TextStyle(
+            color: _PersonalInformationProfileViewState.textSecondary),
         isDense: true,
         filled: true,
         fillColor: fieldFill,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding:
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: _rounded(BorderSide.none),
         enabledBorder: _rounded(const BorderSide(color: stroke)),
-        focusedBorder: _rounded(const BorderSide(color: Colors.white24, width: 1.2)),
+        focusedBorder:
+        _rounded(const BorderSide(color: Colors.white24, width: 1.2)),
       ),
     );
   }
@@ -268,7 +305,6 @@ class _DarkTextField extends StatelessWidget {
   );
 }
 
-/// Dark dropdown styled like the text fields
 class _DarkDropdown<T> extends StatelessWidget {
   const _DarkDropdown({
     required this.value,
@@ -291,21 +327,25 @@ class _DarkDropdown<T> extends StatelessWidget {
       validator: validator,
       icon: const Icon(Icons.arrow_drop_down, color: Colors.white70),
       dropdownColor: _PersonalInformationProfileViewState.fieldFill,
-      style: const TextStyle(color: _PersonalInformationProfileViewState.textPrimary),
+      style: const TextStyle(
+          color: _PersonalInformationProfileViewState.textPrimary),
       decoration: InputDecoration(
         isDense: true,
         filled: true,
         fillColor: _PersonalInformationProfileViewState.fieldFill,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding:
+        const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         hintText: hint,
-        hintStyle: const TextStyle(color: _PersonalInformationProfileViewState.textSecondary),
+        hintStyle: const TextStyle(
+            color: _PersonalInformationProfileViewState.textSecondary),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _PersonalInformationProfileViewState.stroke),
+          borderSide:
+          const BorderSide(color: _PersonalInformationProfileViewState.stroke),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -313,10 +353,12 @@ class _DarkDropdown<T> extends StatelessWidget {
         ),
       ),
       items: items
-          .map((e) => DropdownMenuItem<T>(
-        value: e as T,
-        child: Text(e),
-      ))
+          .map(
+            (e) => DropdownMenuItem<T>(
+          value: e as T,
+          child: Text(e),
+        ),
+      )
           .toList(),
       onChanged: onChanged,
     );

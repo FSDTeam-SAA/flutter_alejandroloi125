@@ -4,6 +4,7 @@ import 'package:alejandroloi/core/common/widgets/save_botton.dart';
 import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/images.dart';
 import 'package:alejandroloi/core/util/styles.dart';
+import 'package:alejandroloi/feature/auth/controllers/auth_provider.dart';
 import 'package:alejandroloi/feature/auth/view/sign_up_screen.dart';
 
 import 'package:flutter/material.dart';
@@ -13,6 +14,7 @@ import 'package:get/get_core/src/get_main.dart';
 import '../../app_ground.dart';
 import 'forget_password_view.dart';
 import 'package:flutter/gestures.dart'; // <—
+import 'package:provider/provider.dart';
 
 
 class LoginScreenView extends StatefulWidget {
@@ -23,8 +25,8 @@ class LoginScreenView extends StatefulWidget {
 }
 
 class _LoginScreenViewState extends State<LoginScreenView> {
-  final emailController = TextEditingController();
-  final passwordController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
@@ -37,6 +39,11 @@ class _LoginScreenViewState extends State<LoginScreenView> {
 
   @override
   Widget build(BuildContext context) {
+
+    final authProvider=Provider.of<AuthProvider>(context);
+    final isLoading = authProvider.loading;
+
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Padding(
@@ -98,22 +105,60 @@ class _LoginScreenViewState extends State<LoginScreenView> {
               // bottomWidget(text: "Login"),
             bottomWidget(
               text: "Login",
-              onTap: () {
-                if (_formKey.currentState!.validate()) {
+              // onTap: () {
+              //   if (_formKey.currentState!.validate()) {
+              //
+              //     Get.offAll(
+              //           () => const AppGround(),
+              //       transition: Transition.rightToLeft,
+              //       duration: const Duration(milliseconds: 350),
+              //       curve: Curves.easeInOut,
+              //     );
+              //
+              //   } else {
+              //     ScaffoldMessenger.of(context).showSnackBar(
+              //       const SnackBar(content: Text("Please fill all required fields correctly")),
+              //     );
+              //   }
+              // },
 
-                  Get.offAll(
-                        () => const AppGround(),
-                    transition: Transition.rightToLeft,
-                    duration: const Duration(milliseconds: 350),
-                    curve: Curves.easeInOut,
+                onTap: isLoading
+                    ? null
+                    : () async {
+                  // 1) Validate first
+                  if (!_formKey.currentState!.validate()) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Please fill all required fields correctly")),
+                    );
+                    return;
+                  }
+
+                  // 2) Call provider once
+                  final auth = context.read<AuthProvider>();
+                  final ok = await auth.login(
+                    emailController.text.trim(),
+                    passwordController.text,
                   );
 
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Please fill all required fields correctly")),
-                  );
+                  // 3) Ensure the widget is still in the tree after await
+                  if (!mounted) return;
+
+                  // 4) Navigate or show error
+                  if (ok) {
+                    Get.offAll(
+                          () => const AppGround(),
+                      transition: Transition.rightToLeft,
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeInOut,
+                    );
+                  } else {
+                    final err = authProvider.error ?? 'Login failed';
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(err)),
+                    );
+                  }
                 }
-              },
+
             ),
 
             Padding(

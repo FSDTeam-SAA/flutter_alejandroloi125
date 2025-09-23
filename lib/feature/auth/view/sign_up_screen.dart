@@ -9,9 +9,15 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:flutter/gestures.dart';
+import 'package:http/http.dart';
+import 'package:provider/provider.dart';
 
 import '../../profile/view/personal_info_view.dart';
-import 'login_screen_view.dart'; // <—
+import '../controllers/auth_provider.dart';
+import '../controllers/onboarding_provider.dart';
+import 'login_screen_view.dart';
+import 'otp_code_view.dart'; // <—
+
 class SignUpScreenView extends StatefulWidget {
    SignUpScreenView({super.key});
 
@@ -56,18 +62,67 @@ class _SignUpScreenViewState extends State<SignUpScreenView> {
     return null;
   }
 
-  void _submit() {
-    // final ok = _formKey.currentState?.validate() ?? false;
-    // if (!ok) return;
+  // void _submit() {
+  //   // final ok = _formKey.currentState?.validate() ?? false;
+  //   // if (!ok) return;
+  //
+  //   final email = emailController.text.trim();
+  //
+  //   // // TODO: call your sign-up API here if needed
+  //   // // On success, go to Login screen:
+  //   Get.off(() => OtpCodeViewScreen(email:email),
+  //     transition: Transition.rightToLeft,
+  //     duration: const Duration(milliseconds: 350),
+  //     curve: Curves.easeInOut,
+  //   );
+  // }
 
-    // TODO: call your sign-up API here if needed
-    // On success, go to Login screen:
-    Get.off(() => PersonalInformationProfileView(),
-      transition: Transition.rightToLeft,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeInOut,
+  void _submit() async {
+    // 1) Validate
+    final okForm = _formKey.currentState?.validate() ?? false;
+    if (!okForm) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fix the errors above')),
+      );
+      return;
+    }
+
+    // 2) Call provider once
+    final auth = context.read<AuthProvider>();
+
+    // We only have email + password fields on this screen,
+    // so we’ll pass the rest as optional/defaults.
+    final name = emailController.text.trim().split('@').first;
+
+    final ok = await auth.register(
+      name: name,
+      email: emailController.text.trim(),
+      password: passwordController.text,
+      confirmPassword: confirmPasswordController.text,
+      // optional:
+      role: 'seller',
+      // phone/username/address can be provided later on the profile step
     );
+
+    // 3) Make sure the widget is still mounted after await
+    if (!mounted) return;
+
+    // 4) Navigate or show error
+    if (ok) {
+      Get.off(
+            () => PersonalInformationProfileView(),
+        transition: Transition.rightToLeft,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+      );
+    } else {
+      final err = auth.error ?? 'Registration failed';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(err)),
+      );
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +170,28 @@ class _SignUpScreenViewState extends State<SignUpScreenView> {
             // bottomWidget(text: "Sign up"),
             bottomWidget(
               text: "Sign up",
-              onTap: _submit, //  validate then navigate
+              // onTap: _submit, //  validate then navigate
+                onTap: context.watch<OnboardingProvider>().loading
+                    ? null
+                    : () async {
+                  final ok = _formKey.currentState?.validate() ?? false;
+                  if (!ok) return;
+
+                  final flow = context.read<OnboardingProvider>();
+                  final success = await flow.startRegistration(
+                    email: emailController.text.trim(),
+                    password: passwordController.text,
+                  );
+
+                  if (!mounted) return;
+                  if (success) {
+                    Get.off(() => OtpCodeViewScreen(email: emailController.text.trim()));
+                  } else {
+                    ScaffoldMessenger.of(context)
+                        .showSnackBar(SnackBar(content: Text(flow.error ?? 'Registration failed')));
+                  }
+                }
+
             ),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 20),
