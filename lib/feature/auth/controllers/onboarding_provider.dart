@@ -107,7 +107,7 @@ class OnboardingProvider extends ChangeNotifier {
 
     try {
       // If your baseUrl already ends with /auth/, this is correct.
-      final uri = ApiConstants.api('verify-otp'); // or '/auth/verify-otp' if needed
+      final uri = ApiConstants.api('verify'); // or '/auth/verify-otp' if needed
       final res = await http.post(
         uri,
         headers: ApiConstants.headers(),
