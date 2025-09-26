@@ -11,12 +11,21 @@ import 'package:alejandroloi/feature/profile/view/wishlist_view.dart';
 import 'package:alejandroloi/feature/profile/widgets/top_card.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
+
+import '../../auth/controllers/auth_provider.dart';
+import '../../auth/view/login_screen_view.dart';
 
 class ProfileScreenView extends StatelessWidget {
   const ProfileScreenView({super.key});
 
   @override
   Widget build(BuildContext context) {
+
+    final auth = context.watch<AuthProvider>(); // listen for name/email/loading
+    final user = auth.user;
+
+
     return Scaffold(
       backgroundColor: Colors.black,
     appBar: AppBar(
@@ -112,25 +121,96 @@ class ProfileScreenView extends StatelessWidget {
                }
            ),
 
+            // --- Logout row (Provider-powered) ---
+            Container(
+              decoration: const BoxDecoration(border: Border.symmetric()),
+              child: Column(
+                children: [
+                  InkWell(
+                    onTap: auth.loading
+                        ? null
+                        : () async {
+                      // confirm
+                      final ok = await showDialog<bool>(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          title: const Text('Log out?'),
+                          content: const Text('You will need to sign in again.'),
+                          actions: [
+                            TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel')),
+                            TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text('Log out')),
+                          ],
+                        ),
+                      ) ??
+                          false;
+                      if (!ok) return;
 
-            Container(decoration: BoxDecoration(border: Border.symmetric()),
-              child: Column(children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                child: Row(children: [
-                  Icon(Icons.logout,color: Colors.red,),
-                  SizedBox(width: 10,),
-                  Expanded(
-                    child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,children: [
-                      Text('Log Out',style: TextStyle(color: Colors.red,fontSize: 16,fontWeight: FontWeight.w600),),
-                      Icon(Icons.arrow_forward_ios,color: Colors.red,)
-                    ],),
-                  )
-                ],),
+                      await context.read<AuthProvider>().logout();
+
+                      if (!context.mounted) return;
+
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Logged out')),
+                      );
+
+                      Get.offAll(() => LoginScreenView(),
+                          transition: Transition.rightToLeft,
+                          duration: const Duration(milliseconds: 300));
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      child: Row(
+                        children: const [
+                          Icon(Icons.logout, color: Colors.red),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Log Out',
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Icon(Icons.arrow_forward_ios, color: Colors.red),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Container(width: double.infinity, color: Colors.white, height: 1.5),
+                ],
               ),
-              Container(width: double.infinity,color: Colors.white,height: 1.5,)
-            ],),
-          ),
+            ),
+
+
+          //   Container(decoration: BoxDecoration(border: Border.symmetric()),
+          //     child: Column(children: [
+          //     Padding(
+          //       padding: const EdgeInsets.symmetric(vertical: 20),
+          //       child: Row(children: [
+          //         Icon(Icons.logout,color: Colors.red,),
+          //         SizedBox(width: 10,),
+          //         Expanded(
+          //           child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,children: [
+          //             Text('Log Out',style: TextStyle(color: Colors.red,fontSize: 16,fontWeight: FontWeight.w600),),
+          //             Icon(Icons.arrow_forward_ios,color: Colors.red,)
+          //           ],),
+          //         )
+          //       ],),
+          //     ),
+          //     Container(width: double.infinity,color: Colors.white,height: 1.5,)
+          //   ],),
+          // ),
 
             SizedBox(height: 20,),
           ],),

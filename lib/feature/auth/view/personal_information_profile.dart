@@ -323,7 +323,7 @@ class _DarkDropdown<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<T>(
-      value: value,
+      initialValue: value,
       validator: validator,
       icon: const Icon(Icons.arrow_drop_down, color: Colors.white70),
       dropdownColor: _PersonalInformationProfileViewState.fieldFill,

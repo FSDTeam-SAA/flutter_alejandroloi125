@@ -40,8 +40,8 @@ class _LoginScreenViewState extends State<LoginScreenView> {
   @override
   Widget build(BuildContext context) {
 
-    final authProvider=Provider.of<AuthProvider>(context);
-    final isLoading = authProvider.loading;
+    final auth = context.watch<AuthProvider>();     // listens for changes
+    final isLoading = auth.isLoggedIn;
 
 
     return Scaffold(
@@ -152,7 +152,7 @@ class _LoginScreenViewState extends State<LoginScreenView> {
                       curve: Curves.easeInOut,
                     );
                   } else {
-                    final err = authProvider.error ?? 'Login failed';
+                    final err = auth.error ?? 'Login failed';
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(err)),
                     );

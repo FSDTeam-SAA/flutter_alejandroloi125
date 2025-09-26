@@ -1,8 +1,14 @@
+import 'package:alejandroloi/feature/app_ground.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:http/http.dart';
 
+import '../../auth/controllers/auth_provider.dart';
 import '../../auth/view/login_screen_view.dart';
+import '../../home/view/home_view.dart';
+import 'package:provider/provider.dart';
+
 
 
 
@@ -16,37 +22,34 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+
+
   @override
   void initState() {
     super.initState();
-    _navigateBasedOnAuth();
+    _checkAndRoute();
   }
 
-  Future<void> _navigateBasedOnAuth() async {
-    // await Future.delayed(const Duration(seconds: 5));
-   // Get.to(OnboardingScreen());
-    //Get.to(SignInScreenView());
-    // splash delay
-    //bool loggedIn = await TokenStorage.isLoggedIn();
+  Future<void> _checkAndRoute() async {
+    final auth = context.read<AuthProvider>();
+    await auth.loadSession();                     // restore token/user
+    await Future.delayed(const Duration(seconds: 1)); // keep splash a moment
+    if (!mounted) return;
 
-    /*if (!mounted) return;
-
-    if (loggedIn) {
-      Get.offAll(() => AppGroundView());
+    if (auth.isLoggedIn) {
+      Get.offAll(() => const AppGround(),
+        transition: Transition.rightToLeft,
+        duration: const Duration(milliseconds: 350),
+      );
     } else {
-
-      //Get.to(AppGroundView());
-      Get.offAll(() => OnboardingScreen());
-    }*/
-
-    await Future.delayed(const Duration(seconds: 1));
-    Get.off(
-          () => LoginScreenView(),
-      transition: Transition.rightToLeft,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeInOut,
-    );
+      Get.offAll(() => LoginScreenView(),
+        transition: Transition.rightToLeft,
+        duration: const Duration(milliseconds: 350),
+      );
+    }
   }
+
+
 
   @override
   Widget build(BuildContext context) {
