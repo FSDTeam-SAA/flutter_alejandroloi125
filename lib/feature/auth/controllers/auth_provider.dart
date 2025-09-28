@@ -195,4 +195,58 @@ class AuthProvider extends ChangeNotifier {
       _setLoading(false);
     }
   }
+
+  Future<bool> changePassword({
+    required String token,
+    required String oldPassword,
+    required String newPassword,
+  }) async {
+    _loading = true;
+    _error = null;
+    notifyListeners();
+
+    try {
+      final uri = ApiConstants.api("change-password");
+
+      final res = await http.post(
+        uri,
+        headers: {
+          ...ApiConstants.headers(),
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'oldPassword': oldPassword,
+          'newPassword': newPassword,
+        }),
+      );
+
+      if (kDebugMode) {
+        print("Change Password ${res.statusCode}: ${res.body}");
+      }
+
+      if (res.statusCode == 200) {
+        return true;
+      } else {
+        _error = _parseMsg(res) ?? "Change password failed [${res.statusCode}]";
+        return false;
+      }
+    } catch (e) {
+      _error = "Network error: $e";
+      return false;
+    } finally {
+      _loading = false;
+      notifyListeners();
+    }
+  }
+
+  String? _parseMsg(http.Response res) {
+    try {
+      final body = jsonDecode(res.body);
+      if (body is Map && body['message'] != null) return body['message'].toString();
+      if (body is Map && body['error'] != null) return body['error'].toString();
+    } catch (_) {}
+    return null;
+  }
+
+
 }
