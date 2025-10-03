@@ -6,6 +6,7 @@ import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
 import '../controllers/onboarding_provider.dart';
+// ✅ use the actual file you have
 
 class PersonalInformationProfileView extends StatefulWidget {
   const PersonalInformationProfileView({super.key});
@@ -41,6 +42,37 @@ class _PersonalInformationProfileViewState
     super.dispose();
   }
 
+  Future<void> _submit() async {
+    final okForm = _formKey.currentState?.validate() ?? false;
+    if (!okForm) return;
+
+    final flow = context.read<OnboardingProvider>();
+
+    // Provider expects: name, (optional) phone/username, and address parts:
+    // street, city, state, zipCode. We only have a freeform address here,
+    // so map it to `street` (backend can split/normalize if needed).
+    final ok = await flow.savePersonalInfo(
+      name: _nameCtrl.text.trim(),
+      street: _addressCtrl.text.trim(),
+      // You can extend the provider later to include:
+      // extra: {'age': _ageCtrl.text, 'gender': _gender, 'nationality': _nationality}
+    );
+
+    if (!mounted) return;
+
+    if (ok) {
+      Get.off(
+            () => const UploadProfileView(),
+        transition: Transition.rightToLeft,
+        duration: const Duration(milliseconds: 300),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(flow.error ?? 'Could not save info')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isLoading = context.watch<OnboardingProvider>().loading;
@@ -52,7 +84,7 @@ class _PersonalInformationProfileViewState
         elevation: 0,
         leading: _RoundIconButton(
           icon: const Icon(CupertinoIcons.back, color: Colors.white),
-          onPressed: () => Get.back(),
+          onPressed: isLoading ? null : () => Get.back(),
         ),
         title: const Text(
           'Personal Information',
@@ -65,137 +97,104 @@ class _PersonalInformationProfileViewState
         centerTitle: false,
       ),
       body: SafeArea(
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            children: [
-              const Text(
-                "To create your new account, provide your information.",
-                style: TextStyle(color: textSecondary, fontSize: 14),
-              ),
-              const SizedBox(height: 20),
+        child: AbsorbPointer(
+          absorbing: isLoading,
+          child: Form(
+            key: _formKey,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              children: [
+                const Text(
+                  "To create your new account, provide your information.",
+                  style: TextStyle(color: textSecondary, fontSize: 14),
+                ),
+                const SizedBox(height: 20),
 
-              _label('Name', required: true),
-              _DarkTextField(
-                controller: _nameCtrl,
-                hintText: 'Write your name here. . .',
-                validator: (v) =>
-                (v == null || v.trim().isEmpty) ? 'Name is required' : null,
-              ),
-              const SizedBox(height: 12),
+                _label('Name', required: true),
+                _DarkTextField(
+                  controller: _nameCtrl,
+                  hintText: 'Write your name here. . .',
+                  validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+                ),
+                const SizedBox(height: 12),
 
-              _label('Age', required: true),
-              _DarkTextField(
-                controller: _ageCtrl,
-                keyboardType: TextInputType.number,
-                hintText: 'Write your age here. . .',
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return 'Age is required';
-                  final n = int.tryParse(v);
-                  if (n == null || n <= 0) return 'Enter a valid age';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 12),
-
-              _label('Gender', required: true),
-              _DarkDropdown<String>(
-                value: _gender,
-                hint: 'Select your gender',
-                items: const ['Male', 'Female', 'Other'],
-                onChanged: (v) => setState(() => _gender = v),
-                validator: (v) => v == null ? 'Please select your gender' : null,
-              ),
-              const SizedBox(height: 12),
-
-              _label('Nationality', required: true),
-              _DarkDropdown<String>(
-                value: _nationality,
-                hint: 'Select your nationality',
-                items: const [
-                  'Bangladesh',
-                  'India',
-                  'Pakistan',
-                  'Nepal',
-                  'Sri Lanka',
-                  'Other'
-                ],
-                onChanged: (v) => setState(() => _nationality = v),
-                validator: (v) =>
-                v == null ? 'Please select your nationality' : null,
-              ),
-              const SizedBox(height: 12),
-
-              _label('Address', required: true),
-              _DarkTextField(
-                controller: _addressCtrl,
-                hintText: 'Write your Address',
-                maxLines: 3,
-                validator: (v) => (v == null || v.trim().isEmpty)
-                    ? 'Address is required'
-                    : null,
-              ),
-              const SizedBox(height: 24),
-
-              SizedBox(
-                height: 52,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: accent,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  onPressed: isLoading
-                      ? null
-                      : () async {
-                    final okForm =
-                        _formKey.currentState?.validate() ?? false;
-                    if (!okForm) return;
-
-                    final flow = context.read<OnboardingProvider>();
-                    // Your provider signature was: savePersonalInfo({
-                    //   required String name,
-                    //   String? phone, String? username,
-                    //   String? street, String? city, String? state, String? zipCode
-                    // })
-                    //
-                    // We only have name + a freeform address here. We’ll map
-                    // address -> street and send extra metadata in a separate field
-                    // (optional—handle on server if you wish).
-                    final ok = await flow.savePersonalInfo(
-                      name: _nameCtrl.text.trim(),
-                      street: _addressCtrl.text.trim(),
-                      // You can also extend your provider to accept:
-                      // extra: {'age': _ageCtrl.text, 'gender': _gender, 'nationality': _nationality}
-                    );
-
-                    if (!mounted) return;
-
-                    if (ok) {
-                      Get.off(() => const UploadProfileView(),
-                          transition: Transition.rightToLeft,
-                          duration: const Duration(milliseconds: 300));
-                    } else {
-                      final err = flow.error ?? 'Could not save info';
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(err)),
-                      );
-                    }
+                _label('Age', required: true),
+                _DarkTextField(
+                  controller: _ageCtrl,
+                  keyboardType: TextInputType.number,
+                  hintText: 'Write your age here. . .',
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'Age is required';
+                    final n = int.tryParse(v);
+                    if (n == null || n <= 0) return 'Enter a valid age';
+                    return null;
                   },
-                  child: Text(
-                    isLoading ? 'Please wait...' : 'Continue',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                ),
+                const SizedBox(height: 12),
+
+                _label('Gender', required: true),
+                _DarkDropdown<String>(
+                  value: _gender,
+                  hint: 'Select your gender',
+                  items: const ['Male', 'Female', 'Other'],
+                  onChanged: (v) => setState(() => _gender = v),
+                  validator: (v) => v == null ? 'Please select your gender' : null,
+                ),
+                const SizedBox(height: 12),
+
+                _label('Nationality', required: true),
+                _DarkDropdown<String>(
+                  value: _nationality,
+                  hint: 'Select your nationality',
+                  items: const [
+                    'Bangladesh',
+                    'India',
+                    'Pakistan',
+                    'Nepal',
+                    'Sri Lanka',
+                    'Other'
+                  ],
+                  onChanged: (v) => setState(() => _nationality = v),
+                  validator: (v) =>
+                  v == null ? 'Please select your nationality' : null,
+                ),
+                const SizedBox(height: 12),
+
+                _label('Address', required: true),
+                _DarkTextField(
+                  controller: _addressCtrl,
+                  hintText: 'Write your Address',
+                  maxLines: 3,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Address is required'
+                      : null,
+                ),
+                const SizedBox(height: 24),
+
+                SizedBox(
+                  height: 52,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: accent,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    onPressed: isLoading ? null : _submit,
+                    child: Text(
+                      isLoading ? 'Please wait...' : 'Continue',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

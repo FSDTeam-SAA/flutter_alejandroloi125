@@ -30,6 +30,11 @@ dependencies:
   flutter_stripe: ^12.0.2
   flutter_dotenv: ^6.0.0
   get_it: ^8.2.0
+  dio: ^5.9.0
+  google_sign_in: ^6.2.1
+
+
+
 
 
 dev_dependencies:

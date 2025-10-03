@@ -1,7 +1,11 @@
 import 'package:alejandroloi/feature/service/view/my_projects/my_project_details.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_navigation/src/routes/transitions_type.dart';
+import 'package:provider/provider.dart';
+
+// adjust path to your provider file
+import '../../../create_service/provider/project_provider.dart';
 
 class MyProjectScreen extends StatelessWidget {
   const MyProjectScreen({super.key});
@@ -11,82 +15,131 @@ class MyProjectScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: const Color(0xFF0D0F12),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          children: const [
-            _ProjectCard(
-              status: 'In Progress',
-              statusColor: Color(0xFFFF8A34),
-              category: 'Design',
-              title: 'Website Redesign for Local Business',
-              description:
-              'Looking for an experienced web designer to revamp our company website. Need',
-              budgetRange: '\$ 1,500 - 3,000',
-              days: '15 Days',
-              location: 'Brooklyn, NY',
-              proposals: '8 Proposals',
-              completed: false,
-            ),
-            SizedBox(height: 14),
-            _ProjectCard(
-              status: 'In Progress',
-              statusColor: Color(0xFFFF8A34),
-              category: 'Design',
-              title: 'Website Redesign for Local Business',
-              description:
-              'Looking for an experienced web designer to revamp our company website. Need',
-              budgetRange: '\$ 1,500 - 3,000',
-              days: '15 Days',
-              location: 'Brooklyn, NY',
-              proposals: '8 Proposals',
-              completed: false,
-            ),
-            SizedBox(height: 14),
-            _ProjectCard(
-              status: 'In Progress',
-              statusColor: Color(0xFFFF8A34),
-              category: 'Design',
-              title: 'Website Redesign for Local Business',
-              description:
-              'Looking for an experienced web designer to revamp our company website. Need',
-              budgetRange: '\$ 1,500 - 3,000',
-              days: '15 Days',
-              location: 'Brooklyn, NY',
-              proposals: '8 Proposals',
-              completed: false,
-            ),
-            SizedBox(height: 14),
-            _ProjectCard(
-              status: 'In Progress',
-              statusColor: Color(0xFFFF8A34),
-              category: 'Design',
-              title: 'Website Redesign for Local Business',
-              description:
-              'Looking for an experienced web designer to revamp our company website. Need',
-              budgetRange: '\$ 1,500 - 3,000',
-              days: '15 Days',
-              location: 'Brooklyn, NY',
-              proposals: '8 Proposals',
-              completed: false,
-            ),
-            SizedBox(height: 14),
-            _ProjectCard(
-              status: 'Completed',
-              statusColor: Color(0xFF58D38C),
-              category: 'Design',
-              title: 'Website Redesign for Local Business',
-              description:
-              'Looking for an experienced web designer to revamp our company website. Need',
-              budgetRange: '\$ 1,500 - 3,000',
-              days: '15 Days',
-              location: 'Brooklyn, NY',
-              proposals: '8 Proposals',
-              completed: true,
-            ),
-          ],
+        child: RefreshIndicator(
+          onRefresh: () => context.read<ProjectProvider>().fetchAllProjects(),
+          child: Consumer<ProjectProvider>(
+            builder: (context, p, _) {
+              // Trigger initial load once, safely from build:
+              if (!p.loadingList && p.projects.isEmpty && p.error == null) {
+                // will be ignored on subsequent rebuilds because loadingList flips true
+                Future.microtask(() => p.fetchAllProjects());
+              }
+
+              // loading first paint
+              if (p.loadingList && p.projects.isEmpty) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              // error & empty
+              if (p.error != null && p.projects.isEmpty) {
+                return ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: [
+                    Text(
+                      p.error!,
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                    const SizedBox(height: 8),
+                    ElevatedButton(
+                      onPressed: () => p.fetchAllProjects(),
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                );
+              }
+
+              // empty state
+              if (p.projects.isEmpty) {
+                return ListView(
+                  padding: const EdgeInsets.all(24),
+                  children: const [
+                    SizedBox(height: 40),
+                    Icon(Icons.inbox_outlined, color: Colors.white54, size: 48),
+                    SizedBox(height: 12),
+                    Text(
+                      'No projects yet',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white70, fontSize: 16),
+                    ),
+                  ],
+                );
+              }
+
+              // list
+              return ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                itemCount: p.projects.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 14),
+                itemBuilder: (context, i) {
+                  final item = p.projects[i];
+
+                  final status = item.status ??
+                      ((item.durationDays != null && (item.durationDays ?? 0) <= 0)
+                          ? 'Completed'
+                          : 'In Progress');
+
+                  final statusColor = status.toLowerCase().contains('complete')
+                      ? const Color(0xFF58D38C)
+                      : const Color(0xFFFF8A34);
+
+                  final deleting = p.deletingIds.contains(item.id);
+
+                  return _ProjectCard(
+                    status: status,
+                    statusColor: statusColor,
+                    category: item.category,
+                    title: item.title,
+                    description: item.description,
+                    budgetRange: _fmtBudget(item.budgetMin, item.budgetMax),
+                    days: item.durationDays != null ? '${item.durationDays} Days' : '-',
+                    location: item.location,
+                    proposals: '${item.proposalsCount ?? 0} Proposals',
+                    completed: status.toLowerCase().contains('complete'),
+                    onDelete: deleting
+                        ? null
+                        : () async {
+                      final ok = await context.read<ProjectProvider>().deleteProject(item.id);
+                      if (!ok && context.mounted && p.error != null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(p.error!)),
+                        );
+                      }
+                    },
+                    onView: () {
+                      // pass id if your details screen expects it
+                      Get.to(
+                            () => MyProjectDetailScreen( projectId: item.id ),
+                        transition: Transition.rightToLeft,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          ),
         ),
       ),
     );
+  }
+
+  String _fmtBudget(int? min, int? max) {
+    if (min == null && max == null) return '-';
+    if (min != null && max != null) return '\$ ${_sep(min)} - ${_sep(max)}';
+    if (min != null) return '\$ ${_sep(min)}+';
+    return '\$ ${_sep(max!)}';
+  }
+
+  String _sep(int n) {
+    final s = n.toString();
+    final buf = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      buf.write(s[i]);
+      final left = s.length - i - 1;
+      if (left % 3 == 0 && left != 0) buf.write(',');
+    }
+    return buf.toString();
   }
 }
 
@@ -102,7 +155,11 @@ class _ProjectCard extends StatelessWidget {
   final String proposals;
   final bool completed;
 
+  final VoidCallback? onDelete;
+  final VoidCallback onView;
+
   const _ProjectCard({
+    super.key,
     required this.status,
     required this.statusColor,
     required this.category,
@@ -113,6 +170,8 @@ class _ProjectCard extends StatelessWidget {
     required this.location,
     required this.proposals,
     required this.completed,
+    this.onDelete,
+    required this.onView,
   });
 
   @override
@@ -137,8 +196,7 @@ class _ProjectCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Category + badge spacer
-                SizedBox(height: 4 + 24), // space under badge row height
+                const SizedBox(height: 28),
                 Text(
                   category,
                   style: TextStyle(
@@ -167,7 +225,6 @@ class _ProjectCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-                // Info rows
                 Row(
                   children: [
                     _InfoPill(icon: Icons.attach_money, text: budgetRange),
@@ -184,8 +241,7 @@ class _ProjectCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 14),
-                // Buttons
-                // Buttons
+
                 if (!completed)
                   Row(
                     children: [
@@ -197,9 +253,7 @@ class _ProjectCard extends StatelessWidget {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
-                          onPressed: () {
-                            // your delete logic here
-                          },
+                          onPressed: onDelete,
                           child: const Text('Delete'),
                         ),
                       ),
@@ -213,14 +267,7 @@ class _ProjectCard extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             elevation: 0,
                           ),
-                          onPressed: () {
-                            Get.to(
-                                  () => const MyProjectDetailScreen(),
-                              transition: Transition.rightToLeft,
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                          },
+                          onPressed: onView,
                           child: const Text('View Details'),
                         ),
                       ),
@@ -237,23 +284,13 @@ class _ProjectCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         elevation: 0,
                       ),
-                      onPressed: () {
-                        Get.to(
-                              () => const MyProjectDetailScreen(),
-                          transition: Transition.rightToLeft,
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeInOut,
-                        );
-                      },
+                      onPressed: onView,
                       child: const Text('View Details'),
                     ),
                   ),
-
               ],
             ),
           ),
-
-          // Top row with badge
           Positioned(
             top: 12,
             right: 12,
@@ -262,8 +299,7 @@ class _ProjectCard extends StatelessWidget {
               children: [
                 const Spacer(),
                 Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(12),

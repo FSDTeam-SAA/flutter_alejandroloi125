@@ -4,6 +4,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
+import 'feature/create_service/provider/auction_provider.dart';
+import 'feature/create_service/provider/investment_provider.dart';
+import 'feature/create_service/provider/project_provider.dart';
 import 'service/init_getit.dart';
 import 'service/navigation_service.dart';
 import 'service/api_service.dart';
@@ -31,6 +34,10 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()..loadSession()),
 
         ChangeNotifierProvider(create: (_) => OnboardingProvider()),
+        ChangeNotifierProvider(create: (_) => ProjectProvider()),
+        ChangeNotifierProvider(create: (_) => InvestmentProvider()..fetchAllInvestments()),
+        ChangeNotifierProvider(create: (_) => AuctionProvider()),
+
       ],
       child: AnnotatedRegion<SystemUiOverlayStyle>(
         value: const SystemUiOverlayStyle(

@@ -102,26 +102,26 @@ class _UploadProfileViewState extends State<UploadProfileView> {
               Row(
                 children: [
                   // Skip -> go to app (no upload)
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: accent,
-                        side: const BorderSide(color: accent, width: 1.6),
-                        backgroundColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      onPressed: isLoading
-                          ? null
-                          : () {
-                        Get.offAll(() => const AppGround(),
-                            transition: Transition.rightToLeft,
-                            duration: const Duration(milliseconds: 300));
-                      },
-                      child: const Text('Skip',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                    ),
-                  ),
+                  // Expanded(
+                  //   child: OutlinedButton(
+                  //     style: OutlinedButton.styleFrom(
+                  //       foregroundColor: accent,
+                  //       side: const BorderSide(color: accent, width: 1.6),
+                  //       backgroundColor: Colors.transparent,
+                  //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  //       padding: const EdgeInsets.symmetric(vertical: 14),
+                  //     ),
+                  //     onPressed: isLoading
+                  //         ? null
+                  //         : () {
+                  //       Get.offAll(() => Navigator.pop(context));
+                  //
+                  //       // leading: _RoundBack(onTap: () => Navigator.pop(context)),
+                  //     },
+                  //     // child: const Text('Skip',
+                  //     //     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  //   ),
+                  // ),
                   const SizedBox(width: 12),
 
                   // Continue -> upload if chosen, else warn
@@ -158,7 +158,7 @@ class _UploadProfileViewState extends State<UploadProfileView> {
                               .showSnackBar(SnackBar(content: Text(err)));
                         }
                       },
-                      child: Text(isLoading ? 'Uploading...' : 'Continue',
+                      child: Text(isLoading ? 'Uploading...' : 'Update',
                           style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                     ),
                   ),

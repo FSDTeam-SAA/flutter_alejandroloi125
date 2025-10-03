@@ -59,7 +59,7 @@ class _SignUpScreenViewState extends State<SignUpScreenView> {
     if (!okForm) {
       setState(() => _auto = AutovalidateMode.onUserInteraction);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fix the errors above')),
+         SnackBar(content: Text('Please fix the errors above')),
       );
       return;
     }
@@ -88,7 +88,7 @@ class _SignUpScreenViewState extends State<SignUpScreenView> {
 
   @override
   Widget build(BuildContext context) {
-    final loading = context.watch<OnboardingProvider>().loading;
+    final registerProvider = context.watch<OnboardingProvider>();
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -133,8 +133,8 @@ class _SignUpScreenViewState extends State<SignUpScreenView> {
               const SizedBox(height: 10),
 
               bottomWidget(
-                text: loading ? "Please wait..." : "Sign up",
-                onTap: loading ? null : _submit,
+                text: registerProvider.loading ? "Please wait..." : "Sign up",
+                onTap: _submit,
               ),
 
               Padding(

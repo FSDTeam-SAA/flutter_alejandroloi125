@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
+import 'package:provider/provider.dart';
 
-
+import '../../create_service/provider/project_provider.dart';
 
 class ProposalScreen extends StatelessWidget {
-  const ProposalScreen({super.key});
+  final String projectId;
+  const ProposalScreen({super.key, required this.projectId});
 
   @override
   Widget build(BuildContext context) {
@@ -16,8 +17,8 @@ class ProposalScreen extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFF0F0F10),
         cardColor: const Color(0xFF1A1B1E),
         colorScheme: const ColorScheme.dark(
-          primary: Color(0xFFFF8C3B), // accent orange
-          secondary: Color(0xFF2A2B30), // input bg
+          primary: Color(0xFFFF8C3B),
+          secondary: Color(0xFF2A2B30),
         ),
         dividerColor: const Color(0xFF2B2C31),
         useMaterial3: true,
@@ -37,17 +38,17 @@ class ProposalScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFFFF8C3B)),
           ),
-          contentPadding:
-          const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         ),
       ),
-      home: const SubmitProposalPage(),
+      home: SubmitProposalPage(projectId: projectId),
     );
   }
 }
 
 class SubmitProposalPage extends StatefulWidget {
-  const SubmitProposalPage({super.key});
+  final String projectId;
+  const SubmitProposalPage({super.key, required this.projectId});
 
   @override
   State<SubmitProposalPage> createState() => _SubmitProposalPageState();
@@ -75,25 +76,34 @@ class _SubmitProposalPageState extends State<SubmitProposalPage> {
 
     setState(() => _submitting = true);
 
-    // Simulate API call
-    await Future.delayed(const Duration(milliseconds: 900));
+    final provider = context.read<ProjectProvider>();
+    final amount = int.tryParse(_budgetCtrl.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+    final days = int.tryParse(_daysCtrl.text) ?? 0;
+    final cover = _coverCtrl.text.trim();
+
+    final ok = await provider.submitProposal(
+      projectId: widget.projectId,
+      budgetAmount: amount,
+      days: days,
+      coverLetter: cover,
+    );
 
     setState(() => _submitting = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Proposal submitted: \$${_budgetCtrl.text} • ${_daysCtrl.text} days',
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Proposal submitted successfully!'),
+          behavior: SnackBarBehavior.floating,
         ),
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-
-    // Clear after success
-    _formKey.currentState!.reset();
-    _budgetCtrl.clear();
-    _daysCtrl.clear();
-    _coverCtrl.clear();
+      );
+      Get.back();
+    } else {
+      final msg = provider.error?.isNotEmpty == true ? provider.error! : 'Failed to submit proposal';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
+      );
+    }
   }
 
   @override
@@ -105,12 +115,9 @@ class _SubmitProposalPageState extends State<SubmitProposalPage> {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () {
-            Get.back();
-          },
+          onPressed: () => Get.back(),
         ),
-        title: const Text('Submit Your Proposal',
-            style: TextStyle(fontWeight: FontWeight.w800)),
+        title: const Text('Submit Your Proposal', style: TextStyle(fontWeight: FontWeight.w800)),
         centerTitle: false,
       ),
       body: SafeArea(
@@ -122,20 +129,15 @@ class _SubmitProposalPageState extends State<SubmitProposalPage> {
               const _FieldLabel('Your Budget'),
               TextFormField(
                 controller: _budgetCtrl,
-                keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(decimal: false),
                 decoration: const InputDecoration(
                   prefixIcon: Icon(Icons.attach_money_rounded),
                   hintText: 'Enter your Price',
                 ),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Please enter a budget';
-                  }
-                  final value = double.tryParse(v.replaceAll(',', ''));
-                  if (value == null || value <= 0) {
-                    return 'Enter a valid amount';
-                  }
+                  if (v == null || v.trim().isEmpty) return 'Please enter a budget';
+                  final value = int.tryParse(v.replaceAll(',', ''));
+                  if (value == null || value <= 0) return 'Enter a valid amount';
                   return null;
                 },
               ),
@@ -150,13 +152,9 @@ class _SubmitProposalPageState extends State<SubmitProposalPage> {
                   hintText: 'e.g., 10 days',
                 ),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Please enter delivery time in days';
-                  }
-                  final days = int.tryParse(v);
-                  if (days == null || days <= 0) {
-                    return 'Enter a positive number of days';
-                  }
+                  if (v == null || v.trim().isEmpty) return 'Please enter delivery time in days';
+                  final d = int.tryParse(v);
+                  if (d == null || d <= 0) return 'Enter a positive number of days';
                   return null;
                 },
               ),
@@ -169,16 +167,11 @@ class _SubmitProposalPageState extends State<SubmitProposalPage> {
                 maxLines: 8,
                 textInputAction: TextInputAction.newline,
                 decoration: const InputDecoration(
-                  hintText:
-                  'Explain why you are the best fit for this project.',
+                  hintText: 'Explain why you are the best fit for this project.',
                 ),
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Please write a short cover letter';
-                  }
-                  if (v.trim().length < 30) {
-                    return 'Add a bit more detail (min 30 characters)';
-                  }
+                  if (v == null || v.trim().isEmpty) return 'Please write a short cover letter';
+                  if (v.trim().length < 30) return 'Add a bit more detail (min 30 characters)';
                   return null;
                 },
               ),
@@ -192,19 +185,11 @@ class _SubmitProposalPageState extends State<SubmitProposalPage> {
                     backgroundColor: cs.primary,
                     foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   ),
                   child: _submitting
-                      ? const SizedBox(
-                    height: 18,
-                    width: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                      : const Text('Submit',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w800, fontSize: 16)),
+                      ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Text('Submit', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
                 ),
               ),
             ],
@@ -218,7 +203,6 @@ class _SubmitProposalPageState extends State<SubmitProposalPage> {
 class _FieldLabel extends StatelessWidget {
   const _FieldLabel(this.text);
   final String text;
-
   @override
   Widget build(BuildContext context) {
     return Padding(

@@ -3,6 +3,9 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+// feature/auth/controllers/auth_provider.dart (add imports)
+import 'dart:io';
+import 'package:path/path.dart' as p;
 
 import '../../../constants/api_constants.dart';
 import '../models/auth_session.dart';
@@ -63,7 +66,7 @@ class AuthProvider extends ChangeNotifier {
     }
 
     try {
-      final uri = Uri.parse('${ApiConstants.baseUrl}/login'); // adjust path
+      final uri = Uri.parse('${ApiConstants.baseUrl}/auth/login'); // adjust path
       final res = await http.post(
         uri,
         headers: ApiConstants.headers(), // usually no bearer needed for login
@@ -206,7 +209,7 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final uri = ApiConstants.api("change-password");
+      final uri = ApiConstants.api("auth/change-password");
 
       final res = await http.post(
         uri,
@@ -247,6 +250,11 @@ class AuthProvider extends ChangeNotifier {
     } catch (_) {}
     return null;
   }
+
+
+
+
+
 
 
 }

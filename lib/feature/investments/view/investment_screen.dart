@@ -1,21 +1,55 @@
-// lib/investments_screen.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 
 import '../../app_ground.dart';
-import '../../home/view/home_view.dart';
+import '../../create_service/provider/investment_provider.dart';
 import 'investment_detail.dart';
 
-class InvestmentsScreen extends StatelessWidget {
+class InvestmentsScreen extends StatefulWidget {
   const InvestmentsScreen({super.key});
+
+  @override
+  State<InvestmentsScreen> createState() => _InvestmentsScreenState();
+}
+
+class _InvestmentsScreenState extends State<InvestmentsScreen> {
+  final _searchCtl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // kick off initial load
+    Future.microtask(
+          () => context.read<InvestmentProvider>().fetchAllInvestments(),
+    );
+  }
+
+  @override
+  void dispose() {
+    _searchCtl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     const bg = Color(0xFF0F0F12);
     const card = Color(0xFF1B1E23);
-    const inner = Color(0xFF23262B);
     const accent = Color(0xFFFF7A1A);
+
+    final p = context.watch<InvestmentProvider>();
+    final query = _searchCtl.text.trim().toLowerCase();
+
+    final items = p.investments; // List<Investment>
+
+    final filtered = items.where((inv) {
+      final name = _name(inv).toLowerCase();
+      final loc = _location(inv).toLowerCase();
+      final cat = _category(inv).toLowerCase();
+      if (query.isEmpty) return true;
+      return name.contains(query) || loc.contains(query) || cat.contains(query);
+    }).toList();
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -33,146 +67,269 @@ class InvestmentsScreen extends StatelessWidget {
       home: Scaffold(
         body: SafeArea(
           bottom: false,
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            children: [
-              // Top bar
-              Row(
-                children: [
-                  _IconBtn(
-                    onTap: () => Get.offAll(
-                          () => AppGround(),               //  show Home tab
-                      transition: Transition.rightToLeft,
-                      duration: const Duration(milliseconds: 350),
-                      curve: Curves.easeInOut,
-                    ),
-                    child: const Icon(CupertinoIcons.back, size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  const Text(
-                    'Investments',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
-                  ),
-                  const Spacer(),
-                  // const Icon(CupertinoIcons.battery_100),
-                ],
-              ),
-              const SizedBox(height: 12),
-
-              // Search + Filter
-              Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: card,
-                        borderRadius: BorderRadius.circular(12),
+          child: RefreshIndicator(
+            onRefresh: () => context.read<InvestmentProvider>().fetchAllInvestments(),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+              children: [
+                // Top bar
+                Row(
+                  children: [
+                    _IconBtn(
+                      onTap: () => Get.offAll(
+                            () => const AppGround(),
+                        transition: Transition.rightToLeft,
+                        duration: const Duration(milliseconds: 350),
+                        curve: Curves.easeInOut,
                       ),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Row(
-                        children: [
-                          Icon(CupertinoIcons.search,
-                              color: Colors.white.withOpacity(.7), size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: TextField(
-                              decoration: InputDecoration(
-                                hintText: 'Search location',
-                                hintStyle: TextStyle(
-                                  color: Colors.white.withOpacity(.6),
-                                  fontSize: 14,
+                      child: const Icon(CupertinoIcons.back, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Investments',
+                      style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20),
+                    ),
+                    const Spacer(),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Search
+                Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: card,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Row(
+                          children: [
+                            Icon(CupertinoIcons.search,
+                                color: Colors.white.withOpacity(.7), size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: TextField(
+                                controller: _searchCtl,
+                                onChanged: (_) => setState(() {}),
+                                decoration: InputDecoration(
+                                  hintText: 'Search name or location',
+                                  hintStyle: TextStyle(
+                                    color: Colors.white.withOpacity(.6),
+                                    fontSize: 14,
+                                  ),
+                                  border: InputBorder.none,
+                                  isDense: true,
                                 ),
-                                border: InputBorder.none,
-                                isDense: true,
+                                style: const TextStyle(fontSize: 14),
                               ),
-                              style: const TextStyle(fontSize: 14),
                             ),
-                          ),
-                        ],
+                            if (query.isNotEmpty)
+                              GestureDetector(
+                                onTap: () {
+                                  _searchCtl.clear();
+                                  setState(() {});
+                                },
+                                child: Icon(CupertinoIcons.clear_thick_circled,
+                                    size: 18, color: Colors.white.withOpacity(.6)),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 10),
+                    _IconBtn(
+                      onTap: () {},
+                      child: const Icon(CupertinoIcons.slider_horizontal_3, size: 18),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 14),
+
+                // Content
+                if (p.loadingList) ...[
+                  const _ShimmerCard(),
+                  const SizedBox(height: 14),
+                  const _ShimmerCard(),
+                  const SizedBox(height: 14),
+                  const _ShimmerCard(),
+                ] else if ((p.error ?? '').isNotEmpty) ...[
+                  _ErrorBox(
+                    message: p.error!,
+                    onRetry: () => context.read<InvestmentProvider>().fetchAllInvestments(),
                   ),
-                  const SizedBox(width: 10),
-                  _IconBtn(
-                    onTap: () {},
-                    child: const Icon(CupertinoIcons.slider_horizontal_3, size: 18),
-                  ),
+                ] else if (filtered.isEmpty) ...[
+                  const _EmptyState(),
+                ] else ...[
+                  for (final inv in filtered) ...[
+                    InkWell(
+                      onTap: () {
+                        final id = _id(inv);
+                        if (id.isNotEmpty) {
+                          Get.to(
+                                () => InvestmentDetailScreen(investmentId: id),
+                            transition: Transition.rightToLeft,
+                            duration: const Duration(milliseconds: 350),
+                            curve: Curves.easeInOut,
+                          );
+                        }
+                      },
+                      child: _InvestmentCard(
+                        imageUrl: _imageUrl(inv),
+                        category: _category(inv),
+                        title: _name(inv),
+                        description: _description(inv),
+                        progressPct: _progressPct(inv),
+                        goalUsd: _goal(inv),
+                        daysLeft: _daysLeft(inv),
+                        ownerAvatar: 'https://i.pravatar.cc/100?img=13', // placeholder
+                        ownerName: _ownerName(inv),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
                 ],
-              ),
-
-              const SizedBox(height: 14),
-
-              // Cards
-              InkWell(
-                onTap: (){
-                  Get.to(InvestmentDetailScreen(),
-                    transition: Transition.rightToLeft,
-                    duration: const Duration(milliseconds: 350),
-                    curve: Curves.easeInOut,
-                  );
-
-                },
-                child: _InvestmentCard(
-                  image:
-                   'assets/images/agriculture.jpg',
-                  category: 'Agriculture',
-                  title: 'Urban Farming Initiative',
-                  description:
-                  'Looking for an experienced web designer to revamp our company website. Need',
-                  progressPct: 45,
-                  goalUsd: 25000,
-                  daysLeft: 10,
-                  ownerAvatar: 'https://i.pravatar.cc/100?img=13',
-                  ownerName: 'John Smith',
-                ),
-              ),
-              const SizedBox(height: 14),
-              //for project UI purpose i add this (abu sayed)
-              InkWell(
-                onTap: (){
-                  Get.to(InvestmentDetailScreen());
-                },
-                child: _InvestmentCard(
-                  image:
-                  'assets/images/wind-mill.jpg',
-                  category: 'Agriculture',
-                  title: 'Urban Farming Initiative',
-                  description:
-                  'Looking for an experienced web designer to revamp our company website. Need',
-                  progressPct: 45,
-                  goalUsd: 25000,
-                  daysLeft: 10,
-                  ownerAvatar: 'https://i.pravatar.cc/100?img=15',
-                  ownerName: 'Odo Smith',
-                ),
-              ),
-              const SizedBox(height: 14),
-              InkWell(
-                onTap: (){
-                  Get.to(InvestmentDetailScreen());
-                },
-                child: _InvestmentCard(
-                  image:
-                  'assets/images/garden.jpg',
-                  category: 'Agriculture',
-                  title: 'Urban Farming Initiative',
-                  description:
-                  'Looking for an experienced web designer to revamp our company website. Need',
-                  progressPct: 45,
-                  goalUsd: 25000,
-                  daysLeft: 10,
-                  ownerAvatar: 'https://i.pravatar.cc/100?img=21',
-                  ownerName: 'Jihan Smith',
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+
+  // -------------------------------
+  // Safe helpers (no crashes if fields are absent)
+  // -------------------------------
+
+  String _id(dynamic inv) {
+    try { final v = (inv as dynamic).id; if (v is String) return v; } catch (_) {}
+    try { final v = (inv as dynamic)._id; if (v is String) return v; } catch (_) {}
+    try { final v = (inv as dynamic).sId; if (v is String) return v; } catch (_) {}
+    return '';
+  }
+
+  String _name(dynamic inv) {
+    try { final v = (inv as dynamic).name; if (v is String && v.isNotEmpty) return v; } catch (_) {}
+    try { final v = (inv as dynamic).title; if (v is String && v.isNotEmpty) return v; } catch (_) {}
+    return 'Untitled project';
+  }
+
+  String _description(dynamic inv) {
+    try { final v = (inv as dynamic).description; if (v is String) return v; } catch (_) {}
+    return 'No description provided.';
+  }
+
+  String _location(dynamic inv) {
+    try { final v = (inv as dynamic).location; if (v is String) return v; } catch (_) {}
+    return '';
+  }
+
+  String _category(dynamic inv) {
+    try {
+      final v = (inv as dynamic).category;
+      if (v is String) return v;
+      if (v is List) return v.join(', ');
+    } catch (_) {}
+    return '';
+  }
+
+  String _ownerName(dynamic inv) {
+    try { final v = (inv as dynamic).ownerName; if (v is String) return v; } catch (_) {}
+    return 'Project Owner';
+  }
+
+  String _imageUrl(dynamic inv) {
+    // direct string
+    try { final v = (inv as dynamic).imageUrl; if (v is String && v.isNotEmpty) return v; } catch (_) {}
+    // { image: [ { url: ... }, ... ] }
+    try {
+      final images = (inv as dynamic).image;
+      if (images is List && images.isNotEmpty) {
+        final first = images.first;
+        if (first is Map && first['url'] is String) return first['url'] as String;
+      }
+    } catch (_) {}
+    // some backends use 'images'
+    try {
+      final images = (inv as dynamic).images;
+      if (images is List && images.isNotEmpty) {
+        final first = images.first;
+        if (first is Map && first['url'] is String) return first['url'] as String;
+        if (first is String) return first;
+      }
+    } catch (_) {}
+    return '';
+  }
+
+  int _goal(dynamic inv) {
+    try { final v = (inv as dynamic).fundingGoal; if (v is num) return v.toInt(); } catch (_) {}
+    try { final v = (inv as dynamic).funding_goal; if (v is num) return v.toInt(); } catch (_) {}
+    return 0;
+  }
+
+  num _raised(dynamic inv) {
+    try { final v = (inv as dynamic).amountRaised; if (v is num) return v; } catch (_) {}
+    try { final v = (inv as dynamic).raised; if (v is num) return v; } catch (_) {}
+    return 0;
+  }
+
+  String? _createdAtIso(dynamic inv) {
+    try { final v = (inv as dynamic).createdAt; if (v is String) return v; } catch (_) {}
+    try { final v = (inv as dynamic).created_at; if (v is String) return v; } catch (_) {}
+    return null;
+  }
+
+  dynamic _fundingDuration(dynamic inv) {
+    try { return (inv as dynamic).fundingDuration; } catch (_) {}
+    try { return (inv as dynamic).funding_duration; } catch (_) {}
+    return null;
+  }
+
+  int _progressPct(dynamic inv) {
+    // 1) if a progress field exists, use it
+    try { final v = (inv as dynamic).progressPct; if (v is num) return v.clamp(0, 100).toInt(); } catch (_) {}
+    try { final v = (inv as dynamic).progress;    if (v is num) return v.clamp(0, 100).toInt(); } catch (_) {}
+
+    // 2) compute from raised/goal
+    final g = _goal(inv);
+    final r = _raised(inv);
+    if (g > 0) return ((r / g) * 100).clamp(0, 100).toInt();
+    return 0;
+  }
+
+  int _daysLeft(dynamic inv) {
+    final fd = _fundingDuration(inv);
+    final createdAtIso = _createdAtIso(inv);
+
+    int totalDays = 0;
+    if (fd is int) {
+      totalDays = fd;
+    } else if (fd is String) {
+      final s = fd.toLowerCase();
+      final n = int.tryParse(RegExp(r'\d+').firstMatch(s)?.group(0) ?? '');
+      if (n != null) {
+        if (s.contains('month')) totalDays = n * 30;
+        else if (s.contains('week')) totalDays = n * 7;
+        else if (s.contains('day')) totalDays = n;
+      }
+    }
+    if (totalDays == 0) return 0;
+
+    DateTime start;
+    try {
+      start = createdAtIso != null ? DateTime.parse(createdAtIso) : DateTime.now();
+    } catch (_) {
+      start = DateTime.now();
+    }
+    final end = start.add(Duration(days: totalDays));
+    final left = end.difference(DateTime.now()).inDays;
+    return left < 0 ? 0 : left;
+  }
 }
+
+// ---------- small UI widgets ----------
 
 class _IconBtn extends StatelessWidget {
   final Widget child;
@@ -199,7 +356,7 @@ class _IconBtn extends StatelessWidget {
 }
 
 class _InvestmentCard extends StatelessWidget {
-  final String image;
+  final String imageUrl;
   final String category;
   final String title;
   final String description;
@@ -210,7 +367,7 @@ class _InvestmentCard extends StatelessWidget {
   final String ownerName;
 
   const _InvestmentCard({
-    required this.image,
+    required this.imageUrl,
     required this.category,
     required this.title,
     required this.description,
@@ -236,96 +393,63 @@ class _InvestmentCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Image
-          // AspectRatio(
-          //   aspectRatio: 16 / 9,
-          //   child: Ink.image(
-          //     image: AssetImage(image),
-          //     fit: BoxFit.cover,
-          //   ),
-          // ),
-
           AspectRatio(
             aspectRatio: 16 / 9,
-            child: InkWell(
-              onTap: () {}, // optional ripple target
-              child: ClipRRect(
-                borderRadius: BorderRadius.zero,
-                child: Image.asset(
-                  image,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    color: Colors.black26,
-                    alignment: Alignment.center,
-                    child: const Icon(Icons.broken_image_outlined),
-                  ),
-                ),
-              ),
-            ),
+            child: imageUrl.isNotEmpty
+                ? Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => _brokenImage(),
+            )
+                : _brokenImage(),
           ),
-
-          // Body
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(category,
-                    style: TextStyle(
-                        color: Colors.white.withOpacity(.65), fontSize: 12)),
+                    style: TextStyle(color: Colors.white.withOpacity(.65), fontSize: 12)),
                 const SizedBox(height: 2),
                 Text(title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w800, fontSize: 15)),
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
                 const SizedBox(height: 4),
                 Text(
                   description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                      color: Colors.white.withOpacity(.72), fontSize: 12),
+                  style: TextStyle(color: Colors.white.withOpacity(.72), fontSize: 12),
                 ),
                 const SizedBox(height: 10),
 
-                // progress row
+                // progress
                 Container(
                   decoration: BoxDecoration(
                     color: inner,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-                  child: Row(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  child: Column(
                     children: [
-                      Expanded(
-                        child: Column(
-                          children: [
-                            _ProgressBar(
-                              value: progressPct / 100,
-                              color: accent,
-                            ),
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                Text(
-                                  '${progressPct}% of \$${_fmt(goalUsd)}',
-                                  style: TextStyle(
-                                      color:
-                                      Colors.white.withOpacity(.75),
-                                      fontSize: 12),
-                                ),
-                                const Spacer(),
-                                Text(
-                                  '$daysLeft days left',
-                                  style: TextStyle(
-                                      color:
-                                      Colors.white.withOpacity(.75),
-                                      fontSize: 12),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                      _ProgressBar(
+                        value: (progressPct / 100).clamp(0, 1),
+                        color: accent,
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Text(
+                            '$progressPct% of \$${_fmt(goalUsd)}',
+                            style: TextStyle(
+                                color: Colors.white.withOpacity(.75), fontSize: 12),
+                          ),
+                          const Spacer(),
+                          Text(
+                            '${daysLeft}d left',
+                            style: TextStyle(
+                                color: Colors.white.withOpacity(.75), fontSize: 12),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -333,18 +457,15 @@ class _InvestmentCard extends StatelessWidget {
 
                 const SizedBox(height: 10),
 
-                // Owner row
+                // owner row
                 Row(
                   children: [
-                    CircleAvatar(
-                      radius: 14,
-                      backgroundImage: NetworkImage(ownerAvatar),
-                    ),
+                    CircleAvatar(radius: 14, backgroundImage: NetworkImage(ownerAvatar)),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(ownerName,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 13)),
+                          style:
+                          const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
                     ),
                     Container(
                       height: 36,
@@ -365,6 +486,12 @@ class _InvestmentCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _brokenImage() => Container(
+    color: Colors.black26,
+    alignment: Alignment.center,
+    child: const Icon(Icons.broken_image_outlined),
+  );
 }
 
 class _ProgressBar extends StatelessWidget {
@@ -393,7 +520,70 @@ class _ProgressBar extends StatelessWidget {
   }
 }
 
-// --- helpers
+class _ShimmerCard extends StatelessWidget {
+  const _ShimmerCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    const card = Color(0xFF1B1E23);
+    return Container(
+      height: 240,
+      decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(14)),
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  const _EmptyState({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const SizedBox(height: 40),
+        Icon(CupertinoIcons.doc_richtext, size: 36, color: Colors.white.withOpacity(.6)),
+        const SizedBox(height: 10),
+        Text('No investments found',
+            style: TextStyle(color: Colors.white.withOpacity(.8))),
+      ],
+    );
+  }
+}
+
+// Error box
+class _ErrorBox extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+  const _ErrorBox({super.key, required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    const card = Color(0xFF1B1E23);
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(12)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Couldn’t load investments',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Colors.white.withOpacity(.95),
+              )),
+          const SizedBox(height: 6),
+          Text(message, style: TextStyle(color: Colors.white.withOpacity(.75))),
+          const SizedBox(height: 10),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(onPressed: onRetry, child: const Text('Retry')),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// — helpers
 String _fmt(int n) {
   final s = n.toString();
   final buf = StringBuffer();

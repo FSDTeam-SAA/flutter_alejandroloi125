@@ -8,7 +8,7 @@ import 'package:get/get.dart';
 import 'package:pinput/pinput.dart';
 import 'package:provider/provider.dart';
 
-import '../../splash/view/splash_view.dart'; // if you need navigation elsewhere
+import 'login_screen_view.dart';
 
 class OtpCodeViewScreen extends StatefulWidget {
   final String email;
@@ -37,18 +37,21 @@ class _OtpCodeViewScreenState extends State<OtpCodeViewScreen> {
     }
 
     final flow = context.read<OnboardingProvider>();
-    final ok = await flow.verifyOtp(code);
+    final ok = await flow.verifyOtp(code); // posts {email, otp} inside provider
 
     if (!mounted) return;
 
     if (ok) {
-      Get.off(() => const PersonalInformationProfileView(),
-          transition: Transition.rightToLeft,
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeInOut);
+      Get.off(
+            () => LoginScreenView(),
+        transition: Transition.rightToLeft,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+      );
     } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(flow.error ?? 'Invalid code')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(flow.error ?? 'Invalid code')),
+      );
     }
   }
 
@@ -70,7 +73,7 @@ class _OtpCodeViewScreenState extends State<OtpCodeViewScreen> {
       appBar: AppBar(
         centerTitle: true,
         leading: InkWell(
-          onTap: () => Get.back(),
+          onTap: loading ? null : () => Get.back(),
           child: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
         ),
         backgroundColor: Colors.transparent,
@@ -84,27 +87,35 @@ class _OtpCodeViewScreenState extends State<OtpCodeViewScreen> {
             "Please check your Email for a message with your code. Your code is 6 numbers long.",
             style: bodyText1.copyWith(color: const Color(0xFFB5B7BA)),
           ),
-          Text(widget.email, style: TextStyle(color: AppColors.bottomColor1, fontSize: 16)),
+          Text(widget.email,
+              style: TextStyle(color: AppColors.bottomColor1, fontSize: 16)),
           const SizedBox(height: 50),
 
           // OTP input
-          Pinput(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            autofocus: true,
-            length: 6,
-            controller: otpController,
-            defaultPinTheme: PinTheme(
-              height: 52,
-              width: 48,
-              textStyle: const TextStyle(
-                fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold,
+          AbsorbPointer(
+            absorbing: loading,
+            child: Pinput(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              autofocus: true,
+              length: 6,
+              controller: otpController,
+              keyboardType: TextInputType.number,
+              textInputAction: TextInputAction.done,
+              defaultPinTheme: PinTheme(
+                height: 52,
+                width: 48,
+                textStyle: const TextStyle(
+                  fontSize: 20,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+                decoration: BoxDecoration(
+                  color: AppColors.fieldColor,
+                  borderRadius: BorderRadius.circular(9),
+                ),
               ),
-              decoration: BoxDecoration(
-                color: AppColors.fieldColor,
-                borderRadius: BorderRadius.circular(9),
-              ),
+              onCompleted: (_) => _verify(), // auto submit on 6th digit
             ),
-            onCompleted: (pin) => otpController.text = pin,
           ),
 
           const SizedBox(height: 15),
@@ -125,7 +136,8 @@ class _OtpCodeViewScreenState extends State<OtpCodeViewScreen> {
                     color: AppColors.bottomColor1,
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
-                    decoration: loading ? TextDecoration.lineThrough : TextDecoration.none,
+                    decoration:
+                    loading ? TextDecoration.lineThrough : TextDecoration.none,
                   ),
                 ),
               ),
@@ -133,18 +145,18 @@ class _OtpCodeViewScreenState extends State<OtpCodeViewScreen> {
           ),
 
           // Verify button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _verify,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.bottomColor1,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              child: Text(loading ? "Verifying..." : "Verify"),
-            ),
-          ),
+          // SizedBox(
+          //   width: double.infinity,
+          //   child: ElevatedButton(
+          //     onPressed: loading ? null : _verify,
+          //     style: ElevatedButton.styleFrom(
+          //       backgroundColor: AppColors.bottomColor1,
+          //       padding: const EdgeInsets.symmetric(vertical: 14),
+          //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          //     ),
+          //     child: Text(loading ? "Verifying..." : "Verify"),
+          //   ),
+          // ),
         ]),
       ),
     );
