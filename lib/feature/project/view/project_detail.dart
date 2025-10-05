@@ -1,31 +1,43 @@
+// lib/feature/project/view/project_detail.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:provider/provider.dart';
 
-import '../../create_service/provider/project_provider.dart';
 import 'proposal.dart';
 
 class ProjectDetailScreen extends StatefulWidget {
+  const ProjectDetailScreen({
+    super.key,
+    required this.projectId,
+    this.project, // if provided, we won't look anything up
+  });
+
+  /// Kept for backwards-compatibility with existing navigation.
   final String projectId;
-  const ProjectDetailScreen({super.key, required this.projectId});
+
+  /// Optional prefilled data (preferred in a no-API setup).
+  final ProjectDetailData? project;
 
   @override
   State<ProjectDetailScreen> createState() => _ProjectDetailScreenState();
 }
 
 class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
+  late final ProjectDetailData _data;
+
   @override
   void initState() {
     super.initState();
-    Future.microtask(
-          () => context.read<ProjectProvider>().fetchProjectById(widget.projectId),
-    );
+    // No providers / APIs. Use the passed object if present,
+    // otherwise look up from local sample data by id, else fall back to a stub.
+    _data = widget.project ??
+        kSampleProjectsDetail.firstWhere(
+              (p) => p.id == widget.projectId,
+          orElse: () => ProjectDetailData.stub(widget.projectId),
+        );
   }
 
   @override
   Widget build(BuildContext context) {
-    final p = context.watch<ProjectProvider>();
-
     return MaterialApp(
       title: 'Project Detail',
       debugShowCheckedModeBanner: false,
@@ -39,102 +51,26 @@ class _ProjectDetailScreenState extends State<ProjectDetailScreen> {
         dividerColor: const Color(0xFF2B2C31),
         useMaterial3: true,
       ),
-      home: _DetailBody(
-        loading: p.loadingOne,
-        error: p.error,
-        data: p.currentProject,
-      ),
+      home: _DetailBody(data: _data),
     );
   }
 }
 
 class _DetailBody extends StatelessWidget {
-  const _DetailBody({
-    required this.loading,
-    required this.error,
-    required this.data,
-  });
-
-  final bool loading;
-  final String? error;
-  final Object? data;
+  const _DetailBody({required this.data});
+  final ProjectDetailData data;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final muted = Colors.white.withOpacity(.70);
 
-    if (loading) {
-      return Scaffold(
-        appBar: _appBar(context),
-        body: const Center(child: CircularProgressIndicator()),
-      );
-    }
-    if (data == null) {
-      return Scaffold(
-        appBar: _appBar(context),
-        body: Center(
-          child: Text((error ?? 'Not found'), style: const TextStyle(color: Colors.white70)),
-        ),
-      );
-    }
+    final postedOn = _fmtDate(data.createdAt ?? DateTime.now());
+    final budgetRange = '\$ ${_fmt(data.budgetMin)} - ${_fmt(data.budgetMax)}';
+    final daysText = '${data.durationDays} Days';
+    final proposalsText = '${data.proposalsCount} Proposals';
+    final location = data.location?.trim().isNotEmpty == true ? data.location! : '—';
 
-    // ---- Map API → UI (defensive) ----
-    final raw = data as dynamic;
-
-    String id = '';
-    try { if (raw.id is String) id = raw.id; } catch (_) {}
-    try { if (raw._id is String) id = raw._id; } catch (_) {}
-
-    String category = 'Design';
-    try { if (raw.category is String) category = raw.category; } catch (_) {}
-
-    String title = 'Untitled';
-    try { if (raw.name is String && raw.name.isNotEmpty) title = raw.name; } catch (_) {}
-    try { if (raw.title is String && raw.title.isNotEmpty) title = raw.title; } catch (_) {}
-
-    String shortIntro = '';
-    try { if (raw.short_intro is String) shortIntro = raw.short_intro; } catch (_) {}
-
-    String description = '';
-    try { if (raw.description is String) description = raw.description; } catch (_) {}
-
-    DateTime? created;
-    try { if (raw.createdAt is String) created = DateTime.tryParse(raw.createdAt); } catch (_) {}
-    final postedOn = created != null ? _fmtDate(created!) : '—';
-
-    int? bmin, bmax;
-    try { if (raw.budget_min is num) bmin = (raw.budget_min as num).toInt(); } catch (_) {}
-    try { if (raw.budgetMin is num) bmin = (raw.budgetMin as num).toInt(); } catch (_) {}
-    try { if (raw.budget_max is num) bmax = (raw.budget_max as num).toInt(); } catch (_) {}
-    try { if (raw.budgetMax is num) bmax = (raw.budgetMax as num).toInt(); } catch (_) {}
-    final budgetRange = '\$ ${_fmt(bmin ?? 0)} - ${_fmt(bmax ?? 0)}';
-
-    String daysText = '0 Days';
-    try {
-      if (raw.duration is String) {
-        final n = int.tryParse(RegExp(r'\d+').firstMatch(raw.duration)?.group(0) ?? '');
-        if (n != null) daysText = '$n Days';
-      }
-    } catch (_) {}
-    try { if (raw.durationDays is num) daysText = '${raw.durationDays.toInt()} Days'; } catch (_) {}
-
-    String location = '';
-    try { if (raw.location is String) location = raw.location; } catch (_) {}
-
-    String proposalsText = '0 Proposals';
-    try {
-      final pc = (raw.proposalsCount is num) ? (raw.proposalsCount as num).toInt() : null;
-      if (pc != null) proposalsText = '$pc Proposals';
-    } catch (_) {}
-
-    String ownerName = 'Eleanor Pena';
-    try { if (raw.ownerName is String && raw.ownerName.toString().trim().isNotEmpty) ownerName = raw.ownerName; } catch (_) {}
-
-    List<String> skills = const [];
-    try { if (raw.skills is List) skills = (raw.skills as List).whereType<String>().toList(); } catch (_) {}
-
-    // ---- UI (design preserved; no overflow) ----
     return Scaffold(
       appBar: _appBar(context),
       body: SafeArea(
@@ -151,20 +87,20 @@ class _DetailBody extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: Theme.of(context).dividerColor),
                 ),
-                child: Text(category, style: TextStyle(color: cs.primary, fontWeight: FontWeight.w700)),
+                child: Text(data.category, style: TextStyle(color: cs.primary, fontWeight: FontWeight.w700)),
               ),
             ),
             const SizedBox(height: 10),
 
             // title
-            Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+            Text(data.title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
 
             // intro
             Text(
-              shortIntro.isNotEmpty
-                  ? shortIntro
-                  : 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum metus eu egestas pharetra. Fusce bibendum odio eu venenatis efficitur.',
+              data.shortIntro?.isNotEmpty == true
+                  ? data.shortIntro!
+                  : 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum metus eu egestas pharetra.',
               style: TextStyle(color: muted, height: 1.25),
             ),
             const SizedBox(height: 12),
@@ -185,7 +121,7 @@ class _DetailBody extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // meta chips (kept compact, no nonexistent fields)
+            // meta chips
             Row(
               children: [
                 Expanded(child: _InfoChip(icon: Icons.attach_money_rounded, label: budgetRange)),
@@ -198,7 +134,7 @@ class _DetailBody extends StatelessWidget {
               children: [
                 Expanded(child: _InfoChip(icon: Icons.group_rounded, label: proposalsText)),
                 const SizedBox(width: 18),
-                Expanded(child: _InfoChip(icon: Icons.place_rounded, label: location.isEmpty ? '—' : location)),
+                Expanded(child: _InfoChip(icon: Icons.place_rounded, label: location)),
               ],
             ),
 
@@ -214,7 +150,7 @@ class _DetailBody extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(ownerName, style: const TextStyle(fontWeight: FontWeight.w700)),
+                      Text(data.ownerName ?? 'Project Owner', style: const TextStyle(fontWeight: FontWeight.w700)),
                       const SizedBox(height: 2),
                       Row(
                         children: [
@@ -254,9 +190,9 @@ class _DetailBody extends StatelessWidget {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 onPressed: () {
-                  if (id.isNotEmpty) {
+                  if (data.id.isNotEmpty) {
                     Get.to(
-                          () => ProposalScreen(projectId: id),
+                          () => ProposalScreen(projectId: data.id),
                       transition: Transition.rightToLeft,
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeInOut,
@@ -274,12 +210,12 @@ class _DetailBody extends StatelessWidget {
             const _SectionHeader('Project Description'),
             const SizedBox(height: 8),
             _Para(
-              description.isNotEmpty
-                  ? description
-                  : 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum quis dui eget velit auctor mollis. Curabitur sodales metus et congue porttitor.',
+              data.description?.isNotEmpty == true
+                  ? data.description!
+                  : 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum quis dui eget velit auctor mollis.',
             ),
             const _Para(
-              'Blandit eget pretium finibus. Donec in malesuada fame ac sapien gravida imperdiet. In iaculis, risus a feugiat convallis dapibus, lacus sapien sem, vehicula in lorem non, blandit volutpat sapien. Aenean in posuere massa. Nunc malesuada sem in rutrum posuere.',
+              'Blandit eget pretium finibus. Donec in malesuada fame ac sapien gravida imperdiet. In iaculis risus a feugiat convallis.',
             ),
             const SizedBox(height: 16),
 
@@ -289,13 +225,15 @@ class _DetailBody extends StatelessWidget {
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: (skills.isNotEmpty ? skills : const ['Web Design', 'Ecommerce', 'Shopify', 'WordPress', 'UI/UX'])
+              children: (data.skills.isNotEmpty
+                  ? data.skills
+                  : const ['Web Design', 'Ecommerce', 'Shopify', 'WordPress', 'UI/UX'])
                   .map((s) => _Tag(s))
                   .toList(),
             ),
             const SizedBox(height: 18),
 
-            // proposals (demo to match figma)
+            // sample proposals (static to match design)
             const _SectionHeader('Project Proposal'),
             const SizedBox(height: 8),
             const ProposalCard(
@@ -304,7 +242,7 @@ class _DetailBody extends StatelessWidget {
               tagline: '2 Projects • Success Rate 100%',
               rating: 4.9,
               text:
-              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum metus eu egestas pharetra. Fusce bibendum odio eu venenatis efficitur.',
+              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum metus eu egestas pharetra.',
               budget: '\$1200',
               delivery: '14 days',
             ),
@@ -315,7 +253,7 @@ class _DetailBody extends StatelessWidget {
               tagline: '3 Projects • Success Rate 100%',
               rating: 4.8,
               text:
-              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum metus eu egestas pharetra. Fusce bibendum odio eu venenatis efficitur.',
+              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum metus eu egestas pharetra.',
               budget: '\$1200',
               delivery: '14 days',
             ),
@@ -345,7 +283,110 @@ class _DetailBody extends StatelessWidget {
   }
 }
 
-// ---------- UI bits ----------
+// ---------- Local model (no API) ----------
+class ProjectDetailData {
+  final String id;
+  final String category;
+  final String title;
+  final String? shortIntro;
+  final String? description;
+  final int budgetMin;
+  final int budgetMax;
+  final int durationDays;
+  final String? location;
+  final int proposalsCount;
+  final String? ownerName;
+  final DateTime? createdAt;
+  final List<String> skills;
+
+  const ProjectDetailData({
+    required this.id,
+    required this.category,
+    required this.title,
+    this.shortIntro,
+    this.description,
+    required this.budgetMin,
+    required this.budgetMax,
+    required this.durationDays,
+    this.location,
+    this.proposalsCount = 0,
+    this.ownerName,
+    this.createdAt,
+    this.skills = const [],
+  });
+
+  factory ProjectDetailData.stub(String id) => ProjectDetailData(
+    id: id,
+    category: 'Design',
+    title: 'Untitled Project',
+    shortIntro:
+    'Placeholder project used when no data was provided.',
+    description:
+    'This is a local-only view with no API integration. Provide ProjectDetailData to populate.',
+    budgetMin: 0,
+    budgetMax: 0,
+    durationDays: 0,
+    location: '—',
+    proposalsCount: 0,
+    ownerName: 'Project Owner',
+    createdAt: DateTime.now(),
+    skills: const ['UI/UX', 'Branding'],
+  );
+}
+
+// --- sample local data to match list IDs (optional) ---
+final kSampleProjectsDetail = <ProjectDetailData>[
+  ProjectDetailData(
+    id: 'p-101',
+    category: 'Design',
+    title: 'Minimal Landing Page for SaaS',
+    shortIntro: 'A clean and responsive landing for a subscription product.',
+    description:
+    'We need a minimal, fast landing page with pricing, FAQs, and a contact form. Deliver responsive design and basic analytics.',
+    budgetMin: 1500,
+    budgetMax: 2500,
+    durationDays: 12,
+    location: 'Remote',
+    proposalsCount: 8,
+    ownerName: 'Eleanor Pena',
+    createdAt: DateTime.now().subtract(const Duration(days: 3)),
+    skills: const ['UI/UX', 'Figma', 'Landing Pages', 'HTML/CSS'],
+  ),
+  ProjectDetailData(
+    id: 'p-102',
+    category: 'Mobile App',
+    title: 'Flutter MVP for Fintech Wallet',
+    shortIntro: 'Build an MVP with login, wallet, and simple transfers.',
+    description:
+    'MVP requires auth, wallet balance, P2P transfer mock, and transaction list. Clean architecture preferred.',
+    budgetMin: 6000,
+    budgetMax: 9000,
+    durationDays: 28,
+    location: 'Hybrid',
+    proposalsCount: 15,
+    ownerName: 'Courtney Henry',
+    createdAt: DateTime.now().subtract(const Duration(days: 7)),
+    skills: const ['Flutter', 'Dart', 'REST', 'State Management'],
+  ),
+  ProjectDetailData(
+    id: 'p-103',
+    category: 'Web',
+    title: 'Next.js E-commerce Prototype',
+    shortIntro: 'Listing, cart, checkout with mock payments.',
+    description:
+    'Prototype with product listing, detail page, cart, and checkout flow. Stripe test mode acceptable.',
+    budgetMin: 3500,
+    budgetMax: 5500,
+    durationDays: 20,
+    location: 'On-site',
+    proposalsCount: 5,
+    ownerName: 'Ralph Edwards',
+    createdAt: DateTime.now().subtract(const Duration(days: 12)),
+    skills: const ['Next.js', 'React', 'Tailwind', 'Stripe'],
+  ),
+];
+
+// ---------- UI bits (unchanged visuals) ----------
 class _InfoChip extends StatelessWidget {
   const _InfoChip({required this.icon, required this.label});
   final IconData icon;
@@ -375,7 +416,7 @@ class _InfoChip extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               SizedBox(
-                width: 140, // compact chip width; prevents overflow on narrow screens
+                width: 140,
                 child: Text(
                   second,
                   style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w600),
@@ -541,7 +582,8 @@ class _Stars extends StatelessWidget {
           return Icon(icon, size: compact ? 14 : 18, color: const Color(0xFFFFC107));
         }),
         const SizedBox(width: 4),
-        Text(rating.toStringAsFixed(1), style: TextStyle(fontSize: compact ? 12 : 14, color: Colors.white70)),
+        Text(rating.toStringAsFixed(1),
+            style: TextStyle(fontSize: compact ? 12 : 14, color: Colors.white70)),
       ],
     );
   }
@@ -560,6 +602,20 @@ String _fmt(int n) {
 }
 
 String _fmtDate(DateTime d) {
-  const months = ['', 'January','February','March','April','May','June','July','August','September','October','November','December'];
+  const months = [
+    '',
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December'
+  ];
   return '${months[d.month]} ${d.day}, ${d.year}';
 }

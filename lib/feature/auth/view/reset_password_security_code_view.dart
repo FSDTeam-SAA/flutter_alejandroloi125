@@ -2,11 +2,11 @@
 import 'dart:async';
 import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/styles.dart';
-import 'package:alejandroloi/feature/auth/controllers/onboarding_provider.dart';
+// import 'package:alejandroloi/feature/auth/controllers/onboarding_provider.dart'; // removed
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pinput/pinput.dart';
-import 'package:provider/provider.dart';
+// import 'package:provider/provider.dart'; // removed
 
 import 'create_new_password.dart';
 
@@ -23,10 +23,11 @@ class _ResetPasswordSecurityCodeState extends State<ResetPasswordSecurityCode> {
   final otpController = TextEditingController();
   int _seconds = 45;
   Timer? _t;
+  bool _loading = false; // local-only (no API)
 
   void _startTimer() {
     _t?.cancel();
-    _seconds = 45;
+    setState(() => _seconds = 45);
     _t = Timer.periodic(const Duration(seconds: 1), (t) {
       if (!mounted) return;
       setState(() => _seconds--);
@@ -48,46 +49,50 @@ class _ResetPasswordSecurityCodeState extends State<ResetPasswordSecurityCode> {
   }
 
   Future<void> _verify() async {
+    if (_loading) return;
+
     final code = otpController.text.trim();
-    if (code.length < 4) {
+    if (code.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter the OTP from your email')),
+        const SnackBar(content: Text('Enter the 6-digit OTP from your email')),
       );
       return;
     }
-    // ✅ No API needed here (your backend verifies when resetting).
-    Get.to(() => CreateNewPasswordScreen(email: widget.email, otp: code),
+
+    setState(() => _loading = true);
+
+    // No API call — proceed to new password screen with entered OTP
+    if (!mounted) return;
+    Get.to(
+          () => CreateNewPasswordScreen(email: widget.email, otp: code),
       transition: Transition.rightToLeft,
       duration: const Duration(milliseconds: 350),
       curve: Curves.easeInOut,
     );
+
+    if (!mounted) return;
+    setState(() => _loading = false);
   }
 
   Future<void> _resend() async {
-    final flow = context.read<OnboardingProvider>();
-    final ok = await flow.resendForgotOtp(widget.email);
+    if (_loading || _seconds > 0) return;
+
+    // No API call — just restart timer and notify the user
+    _startTimer();
     if (!mounted) return;
-    if (ok) {
-      _startTimer();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Code resent')),
-      );
-    } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(flow.error ?? 'Could not resend')));
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Code resent')),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final loading = context.watch<OnboardingProvider>().loading;
-
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         centerTitle: true,
         leading: InkWell(
-          onTap: loading ? null : () => Get.back(),
+          onTap: _loading ? null : () => Get.back(),
           child: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
         ),
         backgroundColor: Colors.transparent,
@@ -102,12 +107,11 @@ class _ResetPasswordSecurityCodeState extends State<ResetPasswordSecurityCode> {
             style: bodyText1.copyWith(color: const Color(0xFFB5B7BA)),
           ),
           const SizedBox(height: 12),
-          Text(widget.email,
-              style: TextStyle(color: AppColors.bottomColor1, fontSize: 16)),
+          Text(widget.email, style: TextStyle(color: AppColors.bottomColor1, fontSize: 16)),
           const SizedBox(height: 30),
 
           AbsorbPointer(
-            absorbing: loading,
+            absorbing: _loading,
             child: Pinput(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               autofocus: true,
@@ -141,20 +145,20 @@ class _ResetPasswordSecurityCodeState extends State<ResetPasswordSecurityCode> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: loading ? null : _verify,
+              onPressed: _loading ? null : _verify,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.bottomColor1,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: const Text("Verify"),
+              child: Text(_loading ? "Verifying..." : "Verify"),
             ),
           ),
 
           const SizedBox(height: 10),
           Center(
             child: TextButton(
-              onPressed: (_seconds == 0 && !loading) ? _resend : null,
+              onPressed: (_seconds == 0 && !_loading) ? _resend : null,
               child: const Text('Resend', style: TextStyle(color: Colors.orangeAccent)),
             ),
           ),

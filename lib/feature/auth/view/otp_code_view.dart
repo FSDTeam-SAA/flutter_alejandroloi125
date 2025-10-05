@@ -1,13 +1,11 @@
-// lib/feature/auth/view/otp_code_view.dart
 import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/styles.dart';
-import 'package:alejandroloi/feature/auth/controllers/onboarding_provider.dart';
-import 'package:alejandroloi/feature/auth/view/personal_information_profile.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pinput/pinput.dart';
 import 'package:provider/provider.dart';
 
+import 'package:alejandroloi/feature/auth/providers/auth_provider.dart';
 import 'login_screen_view.dart';
 
 class OtpCodeViewScreen extends StatefulWidget {
@@ -22,12 +20,24 @@ class _OtpCodeViewScreenState extends State<OtpCodeViewScreen> {
   final otpController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // Ensure provider knows which email we are verifying
+    final ap = context.read<AuthProvider>();
+    if (ap.pendingEmail == null) {
+      // if user refreshed this page, set the email from route
+      // (this does not persist server-side state; it's just for resend/verify convenience)
+    }
+  }
+
+  @override
   void dispose() {
     otpController.dispose();
     super.dispose();
   }
 
   Future<void> _verify() async {
+    final ap = context.read<AuthProvider>();
     final code = otpController.text.trim();
     if (code.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -36,37 +46,33 @@ class _OtpCodeViewScreenState extends State<OtpCodeViewScreen> {
       return;
     }
 
-    final flow = context.read<OnboardingProvider>();
-    final ok = await flow.verifyOtp(code); // posts {email, otp} inside provider
-
+    final ok = await ap.verifyOtp(code);
     if (!mounted) return;
 
     if (ok) {
-      Get.off(
-            () => LoginScreenView(),
-        transition: Transition.rightToLeft,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeInOut,
-      );
+      Get.off(() => LoginScreenView(),
+          transition: Transition.rightToLeft,
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeInOut);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(flow.error ?? 'Invalid code')),
+        SnackBar(content: Text(ap.error ?? 'Verification failed')),
       );
     }
   }
 
   Future<void> _resend() async {
-    final flow = context.read<OnboardingProvider>();
-    final ok = await flow.resendOtp();
+    final ap = context.read<AuthProvider>();
+    await ap.resendOtp();
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(ok ? 'Code resent' : (flow.error ?? 'Could not resend'))),
+      const SnackBar(content: Text('Code resent')),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final loading = context.watch<OnboardingProvider>().loading;
+    final loading = context.watch<AuthProvider>().loading;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -87,11 +93,9 @@ class _OtpCodeViewScreenState extends State<OtpCodeViewScreen> {
             "Please check your Email for a message with your code. Your code is 6 numbers long.",
             style: bodyText1.copyWith(color: const Color(0xFFB5B7BA)),
           ),
-          Text(widget.email,
-              style: TextStyle(color: AppColors.bottomColor1, fontSize: 16)),
+          Text(widget.email, style: TextStyle(color: AppColors.bottomColor1, fontSize: 16)),
           const SizedBox(height: 50),
 
-          // OTP input
           AbsorbPointer(
             absorbing: loading,
             child: Pinput(
@@ -114,13 +118,12 @@ class _OtpCodeViewScreenState extends State<OtpCodeViewScreen> {
                   borderRadius: BorderRadius.circular(9),
                 ),
               ),
-              onCompleted: (_) => _verify(), // auto submit on 6th digit
+              onCompleted: (_) => _verify(),
             ),
           ),
 
           const SizedBox(height: 15),
 
-          // Resend
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 15.0),
             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -136,27 +139,12 @@ class _OtpCodeViewScreenState extends State<OtpCodeViewScreen> {
                     color: AppColors.bottomColor1,
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
-                    decoration:
-                    loading ? TextDecoration.lineThrough : TextDecoration.none,
+                    decoration: loading ? TextDecoration.lineThrough : TextDecoration.none,
                   ),
                 ),
               ),
             ]),
           ),
-
-          // Verify button
-          // SizedBox(
-          //   width: double.infinity,
-          //   child: ElevatedButton(
-          //     onPressed: loading ? null : _verify,
-          //     style: ElevatedButton.styleFrom(
-          //       backgroundColor: AppColors.bottomColor1,
-          //       padding: const EdgeInsets.symmetric(vertical: 14),
-          //       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          //     ),
-          //     child: Text(loading ? "Verifying..." : "Verify"),
-          //   ),
-          // ),
         ]),
       ),
     );

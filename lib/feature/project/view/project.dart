@@ -1,14 +1,17 @@
 // lib/feature/project/view/project.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:provider/provider.dart';
 
 import '../../app_ground.dart';
-import '../../create_service/provider/project_provider.dart';
 import 'project_detail.dart';
 
 class ProjectScreen extends StatelessWidget {
-  const ProjectScreen({super.key});
+  const ProjectScreen({
+    super.key,
+    this.projects = kSampleProjects, // ✅ provide pre-fetched/static projects
+  });
+
+  final List<Project> projects;
 
   @override
   Widget build(BuildContext context) {
@@ -34,20 +37,20 @@ class ProjectScreen extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const ProjectsPage(),
+      home: ProjectsPage(projects: projects),
     );
   }
 }
 
 class ProjectsPage extends StatefulWidget {
-  const ProjectsPage({super.key});
+  const ProjectsPage({super.key, required this.projects});
+  final List<Project> projects;
 
   @override
   State<ProjectsPage> createState() => _ProjectsPageState();
 }
 
 class _ProjectsPageState extends State<ProjectsPage> {
-  // fallback avatars when API has none
   static const _dummyAvatars = <String>[
     'https://i.pravatar.cc/100?img=3',
     'https://i.pravatar.cc/100?img=5',
@@ -56,126 +59,29 @@ class _ProjectsPageState extends State<ProjectsPage> {
     'https://i.pravatar.cc/100?img=12',
   ];
 
+  final _searchCtl = TextEditingController();
+
   @override
-  void initState() {
-    super.initState();
-    Future.microtask(() => context.read<ProjectProvider>().fetchAllProjects());
+  void dispose() {
+    _searchCtl.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final p = context.watch<ProjectProvider>();
-
-    // Adapt provider items to this UI's Project class (design untouched)
-    final List<Project> projects = p.projects.map((raw) {
-      String id = '';
-      String category = 'Design';
-      String title = 'Untitled';
-      String description = '';
-      String budget = '\$ 0 - 0';
-      int days = 0;
-      String location = '';
-      int proposals = 0;
-      List<String> memberImages = const [];
-
-      // safe mapping (works even if some fields are missing)
-      try {
-        final v = (raw as dynamic).id;
-        if (v is String) id = v;
-      } catch (_) {}
-      try {
-        final v = (raw as dynamic)._id;
-        if (v is String) id = v;
-      } catch (_) {}
-
-      try {
-        final v = (raw as dynamic).category;
-        if (v is String) category = v;
-      } catch (_) {}
-      try {
-        final v = (raw as dynamic).name;
-        if (v is String && v.isNotEmpty) title = v;
-      } catch (_) {}
-      try {
-        final v = (raw as dynamic).title;
-        if (v is String && v.isNotEmpty) title = v;
-      } catch (_) {}
-      try {
-        final v = (raw as dynamic).description;
-        if (v is String) description = v;
-      } catch (_) {}
-
-      int? bmin;
-      int? bmax;
-      try {
-        final v = (raw as dynamic).budgetMin;
-        if (v is num) bmin = v.toInt();
-      } catch (_) {}
-      try {
-        final v = (raw as dynamic).budget_min;
-        if (v is num) bmin = v.toInt();
-      } catch (_) {}
-      try {
-        final v = (raw as dynamic).budgetMax;
-        if (v is num) bmax = v.toInt();
-      } catch (_) {}
-      try {
-        final v = (raw as dynamic).budget_max;
-        if (v is num) bmax = v.toInt();
-      } catch (_) {}
-      if (bmin != null || bmax != null) {
-        budget = '\$ ${_fmt(bmin ?? 0)} - ${_fmt(bmax ?? 0)}';
-      }
-
-      try {
-        final v = (raw as dynamic).duration;
-        if (v is String) {
-          final n = int.tryParse(RegExp(r'\d+').firstMatch(v)?.group(0) ?? '');
-          if (n != null) days = n;
-        }
-      } catch (_) {}
-      try {
-        final v = (raw as dynamic).durationDays;
-        if (v is num) days = v.toInt();
-      } catch (_) {}
-
-      try {
-        final v = (raw as dynamic).location;
-        if (v is String) location = v;
-      } catch (_) {}
-      try {
-        final v = (raw as dynamic).proposalsCount;
-        if (v is num) proposals = v.toInt();
-      } catch (_) {}
-
-      try {
-        final imgs = (raw as dynamic).memberImages;
-        if (imgs is List) memberImages = imgs.whereType<String>().toList();
-      } catch (_) {}
-
-      // ✅ always keep dummy avatars if API provides none
-      if (memberImages.isEmpty) {
-        memberImages = _dummyAvatars;
-      }
-
-      return Project(
-        id: id,
-        category: category,
-        title: title,
-        description: description,
-        budget: budget,
-        days: days,
-        location: location,
-        proposals: proposals,
-        memberImages: memberImages,
-      );
+    final q = _searchCtl.text.trim().toLowerCase();
+    final filtered = widget.projects.where((p) {
+      if (q.isEmpty) return true;
+      return p.title.toLowerCase().contains(q) ||
+          p.location.toLowerCase().contains(q) ||
+          p.category.toLowerCase().contains(q);
     }).toList();
 
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           onPressed: () => Get.offAll(
-                () => const AppGround(), // or AppGround(initialIndex: 0)
+                () => const AppGround(),
             transition: Transition.rightToLeft,
             duration: const Duration(milliseconds: 350),
             curve: Curves.easeInOut,
@@ -189,30 +95,21 @@ class _ProjectsPageState extends State<ProjectsPage> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           children: [
-            const _SearchBar(),
+            _SearchBar(controller: _searchCtl, onChanged: (_) => setState(() {})),
             const SizedBox(height: 12),
 
-            if (p.loadingList) ...[
-              const _SkeletonCard(),
-              const SizedBox(height: 12),
-              const _SkeletonCard(),
-              const SizedBox(height: 12),
-              const _SkeletonCard(),
-            ] else if ((p.error ?? '').isNotEmpty) ...[
-              _ErrorBox(
-                message: p.error!,
-                onRetry: () => context.read<ProjectProvider>().fetchAllProjects(),
-              ),
-            ] else if (projects.isEmpty) ...[
+            if (filtered.isEmpty) ...[
               const _EmptyState(),
             ] else ...[
-              for (final proj in projects)
+              for (final proj in filtered)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 12),
                   child: ProjectCard(
-                    project: proj,
+                    project: proj.memberImages.isEmpty
+                        ? proj.copyWith(memberImages: _dummyAvatars)
+                        : proj,
                     onViewDetails: () {
-                      if (proj.id?.isNotEmpty == true) {
+                      if ((proj.id ?? '').isNotEmpty) {
                         Get.to(
                               () => ProjectDetailScreen(projectId: proj.id!),
                           transition: Transition.rightToLeft,
@@ -234,9 +131,11 @@ class _ProjectsPageState extends State<ProjectsPage> {
   }
 }
 
-// ---- Search bar (unchanged visually)
+// ---- Search bar (same visuals; now wired)
 class _SearchBar extends StatelessWidget {
-  const _SearchBar();
+  const _SearchBar({required this.controller, required this.onChanged});
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -254,16 +153,26 @@ class _SearchBar extends StatelessWidget {
               children: [
                 const Icon(Icons.search_rounded),
                 const SizedBox(width: 8),
-                const Expanded(
+                Expanded(
                   child: TextField(
-                    style: TextStyle(fontSize: 15),
-                    decoration: InputDecoration(
+                    controller: controller,
+                    onChanged: onChanged,
+                    style: const TextStyle(fontSize: 15),
+                    decoration: const InputDecoration(
                       hintText: 'Search Project',
                       border: InputBorder.none,
                       isDense: true,
                     ),
                   ),
                 ),
+                if (controller.text.isNotEmpty)
+                  GestureDetector(
+                    onTap: () {
+                      controller.clear();
+                      onChanged('');
+                    },
+                    child: const Icon(Icons.cancel_outlined, size: 18),
+                  ),
               ],
             ),
           ),
@@ -470,7 +379,6 @@ class _StackedAvatars extends StatelessWidget {
     final visible = urls.take(4).toList();
     final extra = urls.length > 4 ? urls.length - 4 : 0;
 
-    // width for the stack including "+n" bubble
     final baseWidth = visible.isEmpty ? 0.0 : size + (visible.length - 1) * overlap;
     final totalWidth = baseWidth + (extra > 0 ? size : 0);
 
@@ -520,50 +428,6 @@ class _StackedAvatars extends StatelessWidget {
   }
 }
 
-// --- skeleton / error / empty states
-class _SkeletonCard extends StatelessWidget {
-  const _SkeletonCard({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 150,
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1B1E),
-        borderRadius: BorderRadius.circular(16),
-      ),
-    );
-  }
-}
-
-class _ErrorBox extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-  const _ErrorBox({super.key, required this.message, required this.onRetry});
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1B1E),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Couldn’t load projects', style: TextStyle(fontWeight: FontWeight.w700)),
-          const SizedBox(height: 6),
-          Text(message, style: const TextStyle(color: Colors.white70)),
-          const SizedBox(height: 10),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(onPressed: onRetry, child: const Text('Retry')),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _EmptyState extends StatelessWidget {
   const _EmptyState({super.key});
   @override
@@ -602,9 +466,89 @@ class Project {
     required this.proposals,
     required this.memberImages,
   });
+
+  Project copyWith({
+    String? id,
+    String? category,
+    String? title,
+    String? description,
+    String? budget,
+    int? days,
+    String? location,
+    int? proposals,
+    List<String>? memberImages,
+  }) {
+    return Project(
+      id: id ?? this.id,
+      category: category ?? this.category,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      budget: budget ?? this.budget,
+      days: days ?? this.days,
+      location: location ?? this.location,
+      proposals: proposals ?? this.proposals,
+      memberImages: memberImages ?? this.memberImages,
+    );
+  }
 }
 
 String _fmt(int n) {
+  final s = "10";
+  final buf = StringBuffer();
+  for (var i = 0; i < s.length; i++) {
+    final idx = s.length - i;
+    buf.write(s[i]);
+    if (idx > 1 && idx % 3 == 1) buf.write(',');
+  }
+  return buf.toString();
+}
+
+// --- simple sample data (local-only; remove/replace with real data if needed)
+const kSampleProjects = <Project>[
+  Project(
+    id: 'p-101',
+    category: 'Design',
+    title: 'Minimal Landing Page for SaaS',
+    description: 'A clean and responsive landing page for a subscription product.',
+    budget: '10',
+    days: 12,
+    location: 'Remote',
+    proposals: 8,
+    memberImages: [
+      'https://i.pravatar.cc/100?img=3',
+      'https://i.pravatar.cc/100?img=8',
+      'https://i.pravatar.cc/100?img=10',
+    ],
+  ),
+  Project(
+    id: 'p-102',
+    category: 'Mobile App',
+    title: 'Flutter MVP for Fintech Wallet',
+    description: 'Build an MVP with login, wallet, and simple transfers.',
+    budget: '100',
+    days: 28,
+    location: 'Hybrid',
+    proposals: 15,
+    memberImages: [
+      'https://i.pravatar.cc/100?img=5',
+      'https://i.pravatar.cc/100?img=12',
+    ],
+  ),
+  Project(
+    id: 'p-103',
+    category: 'Web',
+    title: 'Next.js E-commerce Prototype',
+    description: 'Product listing, cart, and checkout with mock payments.',
+    budget: '10',
+    days: 20,
+    location: 'On-site',
+    proposals: 5,
+    memberImages: [],
+  ),
+];
+
+// tiny inline helper for const strings
+String _fmtInline(int n) {
   final s = n.toString();
   final buf = StringBuffer();
   for (var i = 0; i < s.length; i++) {

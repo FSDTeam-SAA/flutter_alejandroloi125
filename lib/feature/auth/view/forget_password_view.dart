@@ -6,8 +6,7 @@ import 'package:alejandroloi/feature/auth/view/reset_password_security_code_view
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
-
-import '../controllers/onboarding_provider.dart';
+import 'package:alejandroloi/feature/auth/providers/auth_provider.dart';
 
 class ForgetPasswordView extends StatefulWidget {
   const ForgetPasswordView({super.key});
@@ -17,66 +16,63 @@ class ForgetPasswordView extends StatefulWidget {
 
 class _ForgetPasswordViewState extends State<ForgetPasswordView> {
   final emailController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
+
   @override
   void dispose() { emailController.dispose(); super.dispose(); }
 
   Future<void> _continue() async {
-    final email = emailController.text.trim();
-    if (email.isEmpty) {
-      Get.snackbar('Email required', 'Please enter your email');
-      return;
-    }
+    final ap = context.read<AuthProvider>();
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final flow = context.read<OnboardingProvider>();
-    final ok = await flow.requestPasswordReset(email);
-
+    final ok = await ap.sendResetOtp(emailController.text.trim());
     if (!mounted) return;
+
     if (ok) {
-      Get.to(() => ResetPasswordSecurityCode(email: email),
-        transition: Transition.rightToLeft,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeInOut,
+      Get.to(() => ResetPasswordSecurityCode(email: emailController.text.trim()));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('OTP sent to your email')),
       );
     } else {
-      Get.snackbar('Failed', flow.error ?? 'Could not send OTP');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ap.error ?? 'Failed to send OTP')),
+      );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final loading = context.watch<OnboardingProvider>().loading;
-
+    final ap = context.watch<AuthProvider>();
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         centerTitle: true,
-        leading: InkWell(
-          onTap: () => Get.back(),
-          child: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
-        ),
+        leading: InkWell(onTap: () => Get.back(),
+            child: const Icon(Icons.arrow_back, color: Colors.white, size: 30)),
         backgroundColor: Colors.transparent,
         title: const Text('Forgot Password', style: TextStyle(color: Colors.white)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(
-            'Select which contact details should we use to reset your password',
-            style: text16,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 15),
-            child: CustomTextField(
-              prefixIcon: Icons.email_outlined,
-              hintText: 'Email',
-              controller: emailController,
+        child: Form(
+          key: _formKey,
+          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Select which contact details should we use to reset your password', style: text16),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 15),
+              child: CustomTextField(
+                prefixIcon: Icons.email_outlined,
+                hintText: 'Email',
+                controller: emailController,
+                validator: (v) => ap.validateEmail(v),
+              ),
             ),
-          ),
-          GestureDetector(
-            onTap: loading ? null : _continue,
-            child: bottomWidget(text: loading ? 'Please wait...' : 'Continue'),
-          ),
-        ]),
+            GestureDetector(
+              onTap: ap.loading ? null : _continue,
+              child: bottomWidget(text: ap.loading ? 'Please wait...' : 'Continue'),
+            ),
+          ]),
+        ),
       ),
     );
   }

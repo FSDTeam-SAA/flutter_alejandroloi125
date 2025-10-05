@@ -1,35 +1,99 @@
-import 'package:alejandroloi/core/common/widgets/custom_image.dart';
+// lib/feature/project/view/create_project_view.dart
 import 'package:alejandroloi/core/common/widgets/custom_text_field.dart';
-import 'package:alejandroloi/core/common/widgets/custom_warp.dart';
 import 'package:alejandroloi/core/common/widgets/save_botton.dart';
 import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/styles.dart';
-import 'package:alejandroloi/feature/project/view/project.dart';
+import 'package:alejandroloi/feature/service/view/service_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/routes/transitions_type.dart';
-import 'package:http/http.dart';
-import 'package:provider/provider.dart';
 
-import '../../create_service/provider/project_provider.dart';
-import '../../service/view/service_view.dart';
-
-class CreateProjectView extends StatelessWidget {
+class CreateProjectView extends StatefulWidget {
   const CreateProjectView({super.key});
 
   @override
+  State<CreateProjectView> createState() => _CreateProjectViewState();
+}
+
+class _CreateProjectViewState extends State<CreateProjectView> {
+  final _formKey = GlobalKey<FormState>();
+  AutovalidateMode _auto = AutovalidateMode.disabled;
+
+  final _titleCtl = TextEditingController();
+  final _categoryCtl = TextEditingController();
+  final _descCtl = TextEditingController();
+  final _minBudgetCtl = TextEditingController();
+  final _maxBudgetCtl = TextEditingController();
+  final _durationCtl = TextEditingController();
+  final _locationCtl = TextEditingController();
+  final _skillsCtl = TextEditingController();
+
+  @override
+  void dispose() {
+    _titleCtl.dispose();
+    _categoryCtl.dispose();
+    _descCtl.dispose();
+    _minBudgetCtl.dispose();
+    _maxBudgetCtl.dispose();
+    _durationCtl.dispose();
+    _locationCtl.dispose();
+    _skillsCtl.dispose();
+    super.dispose();
+  }
+
+  String? _required(String? v, String label) {
+    if (v == null || v.trim().isEmpty) return '$label is required';
+    return null;
+  }
+
+  String? _numberRequired(String? v, String label, {int min = 0}) {
+    if (v == null || v.trim().isEmpty) return '$label is required';
+    final n = int.tryParse(v.trim());
+    if (n == null) return 'Enter a valid number';
+    if (n < min) return '$label must be ≥ $min';
+    return null;
+  }
+
+  void _submit() {
+    FocusScope.of(context).unfocus();
+    final valid = _formKey.currentState?.validate() ?? false;
+
+    // Additional cross-field check: min ≤ max
+    if (valid) {
+      final minB = int.tryParse(_minBudgetCtl.text.trim()) ?? 0;
+      final maxB = int.tryParse(_maxBudgetCtl.text.trim()) ?? 0;
+      if (maxB > 0 && minB > maxB) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Max budget must be greater than or equal to Min budget')),
+        );
+        return;
+      }
+
+      Get.snackbar('Success', 'Project created (local only)',
+          snackPosition: SnackPosition.TOP);
+
+      Get.off(
+            () => const ServiceView(initialIndex: 1),
+        transition: Transition.rightToLeft,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+      );
+    } else {
+      setState(() => _auto = AutovalidateMode.onUserInteraction);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fix the errors above')),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-
-    final p = context.watch<ProjectProvider>();
-
     return Scaffold(
       backgroundColor: Colors.black,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
-          key: p.formKey,
-          autovalidateMode: p.autovalidateMode,
+          key: _formKey,
+          autovalidateMode: _auto,
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,15 +103,16 @@ class CreateProjectView extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: CustomTextField(
                     hintText: "What Service do you need?",
-                    onChanged: p.setTitle,
-                    validator: p.requiredTitle,
+                    controller: _titleCtl,
+                    validator: (v) => _required(v, 'Title'),
                   ),
                 ),
+
                 Text("Category", style: bodyText1),
                 CustomTextField(
                   hintText: 'Enter your Category Name',
-                  onChanged: p.setCategory,
-                  validator: p.requiredCategory,
+                  controller: _categoryCtl,
+                  validator: (v) => _required(v, 'Category'),
                 ),
 
                 Padding(
@@ -55,20 +120,27 @@ class CreateProjectView extends StatelessWidget {
                   child: Text("Description", style: bodyText1),
                 ),
                 Container(
-                  decoration: BoxDecoration(color: AppColors.fieldColor, borderRadius: BorderRadius.circular(6)),
+                  decoration: BoxDecoration(
+                    color: AppColors.fieldColor,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: TextFormField(
+                      controller: _descCtl,
                       maxLines: 5,
                       textAlignVertical: TextAlignVertical.top,
                       keyboardType: TextInputType.multiline,
                       style: const TextStyle(color: Colors.white),
-                      onChanged: p.setDescription,
-                      validator: p.requiredDesc,
+                      validator: (v) => _required(v, 'Description'),
                       decoration: const InputDecoration(
                         hintText: "Describe your Project in detail",
                         border: InputBorder.none,
-                        hintStyle: TextStyle(color: Color(0xFFBFBFBF), fontWeight: FontWeight.w400, fontSize: 16),
+                        hintStyle: TextStyle(
+                          color: Color(0xFFBFBFBF),
+                          fontWeight: FontWeight.w400,
+                          fontSize: 16,
+                        ),
                       ),
                     ),
                   ),
@@ -85,8 +157,8 @@ class CreateProjectView extends StatelessWidget {
                         hintText: "Min",
                         prefixIcon: Icons.attach_money,
                         keyboardType: const TextInputType.numberWithOptions(decimal: false),
-                        onChanged: p.setBudgetMin,
-                        validator: (v) => p.numberRequired(v, 'Min budget', min: 0),
+                        controller: _minBudgetCtl,
+                        validator: (v) => _numberRequired(v, 'Min budget', min: 0),
                         showBorder: false,
                       ),
                     ),
@@ -96,8 +168,8 @@ class CreateProjectView extends StatelessWidget {
                         hintText: "Max",
                         prefixIcon: Icons.attach_money,
                         keyboardType: const TextInputType.numberWithOptions(decimal: false),
-                        onChanged: p.setBudgetMax,
-                        validator: (v) => p.numberRequired(v, 'Max budget', min: 0),
+                        controller: _maxBudgetCtl,
+                        validator: (v) => _numberRequired(v, 'Max budget', min: 0),
                         showBorder: false,
                       ),
                     ),
@@ -112,8 +184,8 @@ class CreateProjectView extends StatelessWidget {
                   hintText: "Number of day",
                   prefixIcon: Icons.watch_later_outlined,
                   keyboardType: const TextInputType.numberWithOptions(decimal: false),
-                  onChanged: p.setDurationDays,
-                  validator: (v) => p.numberRequired(v, 'Deadline (days)', min: 1),
+                  controller: _durationCtl,
+                  validator: (v) => _numberRequired(v, 'Deadline (days)', min: 1),
                 ),
 
                 Padding(
@@ -123,8 +195,8 @@ class CreateProjectView extends StatelessWidget {
                 CustomTextField(
                   hintText: "Enter Location",
                   prefixIcon: Icons.location_on_outlined,
-                  onChanged: p.setLocation,
-                  validator: p.requiredLocation,
+                  controller: _locationCtl,
+                  validator: (v) => _required(v, 'Location'),
                 ),
 
                 Padding(
@@ -134,27 +206,14 @@ class CreateProjectView extends StatelessWidget {
                 CustomTextField(
                   hintText: "e.g. Web Design, App Development …",
                   prefixIcon: Icons.grid_view_rounded,
-                  onChanged: p.setSkillsText,
+                  controller: _skillsCtl,
                 ),
 
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   child: bottomWidget(
-                    text: p.submitting ? "Creating..." : "Create Project Post",
-                    onTap: () async {
-                      if (p.submitting) return;
-                      final ok = await context.read<ProjectProvider>().submit();
-                      if (ok) {
-                        Get.off(() => const ServiceView(initialIndex: 1),
-                            transition: Transition.rightToLeft,
-                            duration: const Duration(milliseconds: 350),
-                            curve: Curves.easeInOut);
-                      } else if (p.error != null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(p.error!)),
-                        );
-                      }
-                    },
+                    text: "Create Project Post",
+                    onTap: _submit,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -164,148 +223,5 @@ class CreateProjectView extends StatelessWidget {
         ),
       ),
     );
-
-    // return Scaffold(
-    //     backgroundColor: Colors.black,
-    //     body: Padding(
-    //         padding: const EdgeInsets.all(16.0),
-    //         child: SingleChildScrollView(
-    //           child: Column(
-    //             crossAxisAlignment: CrossAxisAlignment.start,
-    //             children: [
-    //               Text("Project Title",style: bodyText1,),
-    //               Padding(
-    //                 padding: const EdgeInsets.symmetric(vertical: 8),
-    //                 child: CustomTextField(hintText: "What Service do you need?"),
-    //               ),
-    //               Text("Category",style: bodyText1,),
-    //               // CustomWrapWidget(
-    //               //   spacing: 8,
-    //               //   runSpacing: 8,
-    //               //   alignment: WrapAlignment.start,
-    //               //   children: List.generate(
-    //               //     10, (index) => Chip(label: Text("Item $index",style: TextStyle(color: Colors.white),), backgroundColor: Color(0xFF595959),
-    //               //
-    //               //   ),
-    //               //   ),
-    //               // ),
-    //               CustomTextField(
-    //                 hintText: 'Enter your Category Name',
-    //                 // onChanged: read.setCategory,
-    //                 // validator: p.requiredCategory,
-    //               ),
-    //
-    //
-    //               Padding(
-    //                 padding: const EdgeInsets.symmetric(vertical: 8),
-    //                 child: Text("Description",style: bodyText1,),
-    //               ),
-    //               Container(decoration: BoxDecoration(color: AppColors.fieldColor,borderRadius: BorderRadius.circular(6)),
-    //                   child: Padding(
-    //                     padding: const EdgeInsets.all(8.0),
-    //                     child: TextField(
-    //                       textAlignVertical: TextAlignVertical.top,
-    //                       maxLines: 5,
-    //                       decoration: InputDecoration(
-    //                         hintText: "Describe your Investment in detail",
-    //                         // helperText: "Optional: provide more details",
-    //                         border: InputBorder.none,
-    //                         hintStyle: const TextStyle(color: Color(0xFFBFBFBF), fontWeight: FontWeight.w400, fontSize: 16,),
-    //                       ),
-    //                     ),
-    //                   )
-    //
-    //               ),
-    //
-    //
-    //
-    //
-    //               // Padding(
-    //               //   padding: const EdgeInsets.symmetric(vertical: 8),
-    //               //   child: Text("Budget Range",style: bodyText1,),
-    //               // ),
-    //               // Row(
-    //               //   children: [
-    //               //
-    //               //   ],
-    //               // ),
-    //
-    //               Padding(
-    //                 padding: const EdgeInsets.symmetric(vertical: 8),
-    //                 child: Text("Budget Range", style: bodyText1),
-    //               ),
-    //               Row(
-    //                 children: [
-    //                   Expanded(
-    //                     child: CustomTextField(
-    //                       hintText: "Min",
-    //                       prefixIcon: Icons.attach_money,
-    //                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-    //                       // filled: true,
-    //                       // fillColor: AppColors.fieldColor,
-    //                       // borderRadius: 8,
-    //                       // contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-    //                       showBorder: false,
-    //                     ),
-    //                   ),
-    //                   const SizedBox(width: 12),
-    //                   Expanded(
-    //                     child: CustomTextField(
-    //                       hintText: "Max",
-    //                       prefixIcon: Icons.attach_money,
-    //                       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-    //                       // filled: true,
-    //                       // fillColor: AppColors.fieldColor,
-    //                       // borderRadius: 8,
-    //                       // contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-    //                       showBorder: false,
-    //                     ),
-    //                   ),
-    //                 ],
-    //               ),
-    //
-    //
-    //
-    //               Padding(
-    //                 padding: const EdgeInsets.symmetric(vertical: 8),
-    //                 child: Text("Deadline",style: bodyText1,),
-    //               ),
-    //               CustomTextField(hintText: "Number of day",prefixIcon: Icons.watch_later_outlined,),
-    //               Padding(
-    //                 padding: const EdgeInsets.symmetric(vertical: 8),
-    //                 child: Text("Location",style: bodyText1,),
-    //               ),
-    //               CustomTextField(hintText: "Enter Location",prefixIcon: Icons.location_on_outlined,),
-    //
-    //            Padding(
-    //                 padding: const EdgeInsets.symmetric(vertical: 8),
-    //                 child: Text("Required Skills",style: bodyText1,),
-    //               ),
-    //               CustomTextField(hintText: "e.g.web Design,App Development..",prefixIcon: Icons.location_on_outlined,),
-    //
-    //
-    //
-    //               Padding(
-    //                 padding: const EdgeInsets.symmetric(vertical: 15),
-    //                 child: bottomWidget(
-    //                     text: "Create Project Post",
-    //                   onTap: () {
-    //                     Get.off(                               // replace current page
-    //                           () => const ServiceView(initialIndex: 1),
-    //                       transition: Transition.rightToLeft,
-    //                       duration: const Duration(milliseconds: 350),
-    //                       curve: Curves.easeInOut,
-    //                     );
-    //
-    //                     // If you want to keep the current page in the stack, use:
-    //                     // Get.to(() => const ProjectScreen(), transition: Transition.rightToLeft);
-    //                   },
-    //
-    //                 ),
-    //               ),
-    //               SizedBox(height: 10,)
-    //             ],
-    //           ),
-    //         )));
   }
 }

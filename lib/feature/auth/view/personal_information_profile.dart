@@ -1,12 +1,10 @@
 import 'dart:ui';
-import 'package:alejandroloi/feature/auth/view/upload_profile.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:provider/provider.dart';
 
-import '../controllers/onboarding_provider.dart';
-// ✅ use the actual file you have
+// Removed Provider/Onboarding imports
+import '../../profile/view/upload_photos_view.dart';
 
 class PersonalInformationProfileView extends StatefulWidget {
   const PersonalInformationProfileView({super.key});
@@ -26,6 +24,8 @@ class _PersonalInformationProfileViewState
   String? _gender;
   String? _nationality;
 
+  bool _loading = false; // local-only (no API)
+
   // Colors
   static const bg = Color(0xFF0E0E0E);
   static const fieldFill = Color(0xFF1B1B1B);
@@ -44,39 +44,28 @@ class _PersonalInformationProfileViewState
 
   Future<void> _submit() async {
     final okForm = _formKey.currentState?.validate() ?? false;
-    if (!okForm) return;
+    if (!okForm || _loading) return;
 
-    final flow = context.read<OnboardingProvider>();
+    setState(() => _loading = true);
 
-    // Provider expects: name, (optional) phone/username, and address parts:
-    // street, city, state, zipCode. We only have a freeform address here,
-    // so map it to `street` (backend can split/normalize if needed).
-    final ok = await flow.savePersonalInfo(
-      name: _nameCtrl.text.trim(),
-      street: _addressCtrl.text.trim(),
-      // You can extend the provider later to include:
-      // extra: {'age': _ageCtrl.text, 'gender': _gender, 'nationality': _nationality}
+    // No API call — treat as success
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Info saved')),
     );
 
     if (!mounted) return;
+    Get.off(
+          () => const UploadProfileView(),
+      transition: Transition.rightToLeft,
+      duration: const Duration(milliseconds: 300),
+    );
 
-    if (ok) {
-      Get.off(
-            () => const UploadProfileView(),
-        transition: Transition.rightToLeft,
-        duration: const Duration(milliseconds: 300),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(flow.error ?? 'Could not save info')),
-      );
-    }
+    if (!mounted) return;
+    setState(() => _loading = false);
   }
 
   @override
   Widget build(BuildContext context) {
-    final isLoading = context.watch<OnboardingProvider>().loading;
-
     return Scaffold(
       backgroundColor: bg,
       appBar: AppBar(
@@ -84,7 +73,7 @@ class _PersonalInformationProfileViewState
         elevation: 0,
         leading: _RoundIconButton(
           icon: const Icon(CupertinoIcons.back, color: Colors.white),
-          onPressed: isLoading ? null : () => Get.back(),
+          onPressed: _loading ? null : () => Get.back(),
         ),
         title: const Text(
           'Personal Information',
@@ -98,7 +87,7 @@ class _PersonalInformationProfileViewState
       ),
       body: SafeArea(
         child: AbsorbPointer(
-          absorbing: isLoading,
+          absorbing: _loading,
           child: Form(
             key: _formKey,
             child: ListView(
@@ -166,9 +155,8 @@ class _PersonalInformationProfileViewState
                   controller: _addressCtrl,
                   hintText: 'Write your Address',
                   maxLines: 3,
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Address is required'
-                      : null,
+                  validator: (v) =>
+                  (v == null || v.trim().isEmpty) ? 'Address is required' : null,
                 ),
                 const SizedBox(height: 24),
 
@@ -183,9 +171,9 @@ class _PersonalInformationProfileViewState
                       ),
                       elevation: 0,
                     ),
-                    onPressed: isLoading ? null : _submit,
+                    onPressed: _loading ? null : _submit,
                     child: Text(
-                      isLoading ? 'Please wait...' : 'Continue',
+                      _loading ? 'Please wait...' : 'Continue',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,

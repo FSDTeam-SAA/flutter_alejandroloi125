@@ -1,15 +1,11 @@
-import 'dart:convert';
 import 'package:alejandroloi/core/common/widgets/custom_image.dart';
 import 'package:alejandroloi/core/common/widgets/custom_text_field.dart';
 import 'package:alejandroloi/core/common/widgets/save_botton.dart';
 import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/styles.dart';
-import 'package:alejandroloi/feature/auctions/controller/create_auctions_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:provider/provider.dart';
 
-import '../../create_service/provider/auction_provider.dart';
 import '../../service/view/service_view.dart';
 
 class CreateAuctionsView extends StatefulWidget {
@@ -20,10 +16,12 @@ class CreateAuctionsView extends StatefulWidget {
 }
 
 class _CreateAuctionsViewState extends State<CreateAuctionsView> {
-  final createAuctionsController = Get.put(CreateAuctionsController());
+  // Removed: Get.put(CreateAuctionsController());
+  // Removed: Provider/AuctionProvider usage
 
   int selectedValue = 0; // 1 = Public, 2 = Schedule
   int? _auctionMinutes;  // 10, 20, 30, 60
+  bool _submitting = false; // local-only, no API
 
   // controllers
   final _titleCtrl = TextEditingController();
@@ -33,6 +31,10 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
   final _shippingCtrl = TextEditingController();
   final _dateCtrl = TextEditingController();
   final _timeCtrl = TextEditingController();
+
+  // simple local state mirrors (optional, used only if you want immediate reads)
+  String? _title, _category, _desc, _startingBid, _shipping;
+  String? _dateStr, _timeStr;
 
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
@@ -59,7 +61,6 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
   }
 
   Future<void> _pickDate(BuildContext context) async {
-    final p = context.read<AuctionProvider>();
     final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
@@ -84,13 +85,12 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
       setState(() {
         _selectedDate = picked;
         _dateCtrl.text = _fmtDate(picked);
+        _dateStr = _dateCtrl.text.trim();
       });
-      p.setSchedule(date: _dateCtrl.text.trim());
     }
   }
 
   Future<void> _pickTime(BuildContext context) async {
-    final p = context.read<AuctionProvider>();
     final picked = await showTimePicker(
       context: context,
       initialTime: _selectedTime ?? TimeOfDay.now(),
@@ -112,8 +112,8 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
       setState(() {
         _selectedTime = picked;
         _timeCtrl.text = _fmtTime(picked);
+        _timeStr = _timeCtrl.text.trim();
       });
-      p.setSchedule(time: _timeCtrl.text.trim());
     }
   }
 
@@ -121,10 +121,32 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
     Get.snackbar(title, msg, backgroundColor: Colors.black87, colorText: Colors.white);
   }
 
+  Future<void> _onCreateTap() async {
+    if (_submitting) return;
+
+    // Require date & time ALWAYS (same behavior as before)
+    if (_dateCtrl.text.trim().isEmpty || _timeCtrl.text.trim().isEmpty) {
+      _toast('Missing info', 'Please select fields.');
+      return;
+    }
+
+    // (Optional) Local validations you may want:
+    // if (_titleCtrl.text.trim().isEmpty) { _toast('Title required', 'Please enter a title.'); return; }
+    // if (_auctionMinutes == null) { _toast('Duration required', 'Please choose a duration.'); return; }
+
+    // No API call — just show success and navigate
+    _toast('Success', 'Auction created locally (no API).');
+
+    Get.to(
+          () => const ServiceView(initialIndex: 2),
+      transition: Transition.rightToLeft,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeInOut,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final p = context.watch<AuctionProvider>();
-
     return Scaffold(
       backgroundColor: Colors.black,
       body: Padding(
@@ -143,7 +165,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                     child: CustomTextField(
                       controller: _titleCtrl,
                       hintText: "Enter your Auction title",
-                      onChanged: p.setTitle,
+                      onChanged: (v) => setState(() => _title = v),
                     ),
                   ),
 
@@ -151,7 +173,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                   CustomTextField(
                     controller: _categoryCtrl,
                     hintText: 'Enter your Category Name',
-                    onChanged: p.setCategory,
+                    onChanged: (v) => setState(() => _category = v),
                   ),
 
                   Padding(
@@ -159,7 +181,10 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                     child: Text("Description", style: bodyText1),
                   ),
                   Container(
-                    decoration: BoxDecoration(color: AppColors.fieldColor, borderRadius: BorderRadius.circular(6)),
+                    decoration: BoxDecoration(
+                      color: AppColors.fieldColor,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: TextField(
@@ -168,11 +193,15 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                         keyboardType: TextInputType.multiline,
                         style: const TextStyle(color: Colors.white),
                         maxLines: 5,
-                        onChanged: p.setDescription,
+                        onChanged: (v) => setState(() => _desc = v),
                         decoration: const InputDecoration(
                           hintText: "Describe your Auction in detail",
                           border: InputBorder.none,
-                          hintStyle: TextStyle(color: Color(0xFFBFBFBF), fontWeight: FontWeight.w400, fontSize: 16),
+                          hintStyle: TextStyle(
+                            color: Color(0xFFBFBFBF),
+                            fontWeight: FontWeight.w400,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                     ),
@@ -187,7 +216,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                     hintText: "Enter amount",
                     prefixIcon: Icons.attach_money,
                     keyboardType: TextInputType.number,
-                    onChanged: p.setStartingBid,
+                    onChanged: (v) => setState(() => _startingBid = v),
                   ),
 
                   Padding(
@@ -202,10 +231,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                           label: '10 minutes',
                           minutes: 10,
                           selectedMinutes: _auctionMinutes,
-                          onTap: () {
-                            setState(() => _auctionMinutes = 10);
-                            p.setDurationMinutes(10);
-                          },
+                          onTap: () => setState(() => _auctionMinutes = 10),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -214,10 +240,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                           label: '20 minutes',
                           minutes: 20,
                           selectedMinutes: _auctionMinutes,
-                          onTap: () {
-                            setState(() => _auctionMinutes = 20);
-                            p.setDurationMinutes(20);
-                          },
+                          onTap: () => setState(() => _auctionMinutes = 20),
                         ),
                       ),
                     ],
@@ -230,10 +253,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                           label: '30 minutes',
                           minutes: 30,
                           selectedMinutes: _auctionMinutes,
-                          onTap: () {
-                            setState(() => _auctionMinutes = 30);
-                            p.setDurationMinutes(30);
-                          },
+                          onTap: () => setState(() => _auctionMinutes = 30),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -242,10 +262,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                           label: '1 hour',
                           minutes: 60,
                           selectedMinutes: _auctionMinutes,
-                          onTap: () {
-                            setState(() => _auctionMinutes = 60);
-                            p.setDurationMinutes(60);
-                          },
+                          onTap: () => setState(() => _auctionMinutes = 60),
                         ),
                       ),
                     ],
@@ -256,7 +273,10 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                     child: Text("Shipping Details", style: bodyText1),
                   ),
                   Container(
-                    decoration: BoxDecoration(color: AppColors.fieldColor, borderRadius: BorderRadius.circular(6)),
+                    decoration: BoxDecoration(
+                      color: AppColors.fieldColor,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.all(8.0),
                       child: TextField(
@@ -265,10 +285,13 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                         textAlignVertical: TextAlignVertical.top,
                         keyboardType: TextInputType.multiline,
                         style: const TextStyle(color: Colors.white),
-                        onChanged: p.setLocation, // reusing as location field
+                        onChanged: (v) => setState(() => _shipping = v),
                         decoration: const InputDecoration(
                           hintText: "Describe shipping options, costs, and estimated delivery times",
-                          hintStyle: TextStyle(color: Color(0xFFBFBFBF), fontWeight: FontWeight.w400, fontSize: 16),
+                          hintStyle: TextStyle(
+                              color: Color(0xFFBFBFBF),
+                              fontWeight: FontWeight.w400,
+                              fontSize: 16),
                           border: InputBorder.none,
                         ),
                       ),
@@ -322,7 +345,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                               hintText: "Date",
                               prefixIcon: Icons.calendar_today_outlined,
                               showBorder: true,
-                              onChanged: (_) => p.setSchedule(date: _dateCtrl.text.trim()),
+                              onChanged: (_) => setState(() => _dateStr = _dateCtrl.text.trim()),
                             ),
                           ),
                         ),
@@ -337,7 +360,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                               hintText: "Time",
                               prefixIcon: Icons.watch_later_outlined,
                               showBorder: true,
-                              onChanged: (_) => p.setSchedule(time: _timeCtrl.text.trim()),
+                              onChanged: (_) => setState(() => _timeStr = _timeCtrl.text.trim()),
                             ),
                           ),
                         ),
@@ -348,38 +371,8 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     child: bottomWidget(
-                      text: p.submitting ? "Creating..." : "Create Auctions",
-                      onTap: p.submitting
-                          ? null
-                          : () async {
-                        // Require date & time ALWAYS per your request
-                        if (_dateCtrl.text.trim().isEmpty || _timeCtrl.text.trim().isEmpty) {
-                          _toast('Missing info', 'Please select fields.');
-                          return;
-                        }
-
-                        // push current text values into provider (just in case)
-                        p
-                          ..setTitle(_titleCtrl.text)
-                          ..setCategory(_categoryCtrl.text)
-                          ..setDescription(_descCtrl.text)
-                          ..setStartingBid(_startingBidCtrl.text)
-                          ..setLocation(_shippingCtrl.text)
-                          ..setDurationMinutes(_auctionMinutes)
-                          ..setSchedule(date: _dateCtrl.text, time: _timeCtrl.text);
-
-                        final ok = await p.submit();
-                        if (ok) {
-                          Get.to(
-                                () => const ServiceView(initialIndex: 2),
-                            transition: Transition.rightToLeft,
-                            duration: const Duration(milliseconds: 350),
-                            curve: Curves.easeInOut,
-                          );
-                        } else if (p.error != null) {
-                          _toast('Error', p.error!);
-                        }
-                      },
+                      text: _submitting ? "Creating..." : "Create Auctions",
+                      onTap: _onCreateTap,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -387,16 +380,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
               ),
             ),
 
-            if (p.submitting)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: Container(
-                    color: Colors.black.withOpacity(0.35),
-                    alignment: Alignment.center,
-                    child: const CircularProgressIndicator(),
-                  ),
-                ),
-              ),
+            // Removed: Provider-based submitting overlay/spinner
           ],
         ),
       ),
@@ -446,5 +430,3 @@ class _DurationPill extends StatelessWidget {
     );
   }
 }
-
-

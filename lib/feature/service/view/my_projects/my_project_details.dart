@@ -1,24 +1,43 @@
 // lib/feature/service/view/my_projects/my_project_details.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import '../../../create_service/provider/project_provider.dart';
 
 class MyProjectDetailScreen extends StatefulWidget {
   final String projectId;
-  const MyProjectDetailScreen({super.key, required this.projectId});
+
+  /// Optional: pass the whole project to avoid any fetching.
+  final MyProjectData? project;
+
+  const MyProjectDetailScreen({
+    super.key,
+    required this.projectId,
+    this.project,
+  });
 
   @override
   State<MyProjectDetailScreen> createState() => _MyProjectDetailScreenState();
 }
 
 class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
+  late MyProjectData pr;
+  bool _refreshing = false;
+
   @override
   void initState() {
     super.initState();
-    Future.microtask(
-          () => context.read<ProjectProvider>().fetchProjectById(widget.projectId),
-    );
+    // Use injected project if provided, else fall back to a local demo
+    pr = widget.project ?? _sampleProject(widget.projectId);
+  }
+
+  Future<void> _refresh() async {
+    setState(() => _refreshing = true);
+    await Future.delayed(const Duration(milliseconds: 500));
+    if (!mounted) return;
+    // Simulate a "data update"
+    setState(() {
+      pr = pr.copyWith(createdAt: DateTime.now());
+      _refreshing = false;
+    });
   }
 
   @override
@@ -28,322 +47,343 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
     const border = Color(0xFF242931);
     const accent = Color(0xFFFF8A34);
 
+    final title = pr.title ?? '';
+    final category = pr.category ?? '';
+    final description = pr.description ?? '';
+    final budget = _fmtBudget(pr.budgetMin, pr.budgetMax);
+    final days = pr.durationDays != null ? '${pr.durationDays} Days' : '-';
+    final location = (pr.location ?? '').isEmpty ? '-' : pr.location!;
+    final proposals = '${pr.proposalsCount ?? 0} Proposals';
+    final created = _fmtDate(pr.createdAt);
+    final due = _fmtDate(_dueDate(pr.createdAt, pr.durationDays));
+    final skills = pr.skills?.isNotEmpty == true ? pr.skills! : const ['-'];
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value:
       SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
       child: Scaffold(
         backgroundColor: bg,
         body: SafeArea(
-          child: Consumer<ProjectProvider>(
-            builder: (context, p, _) {
-              if (!p.loadingOne &&
-                  (p.currentProject == null ||
-                      p.currentProject!.id != widget.projectId) &&
-                  p.error == null) {
-                Future.microtask(
-                      () => p.fetchProjectById(widget.projectId),
-                );
-              }
-
-              if (p.loadingOne && p.currentProject == null) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              if (p.error != null && p.currentProject == null) {
-                return Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          p.error!,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                        const SizedBox(height: 12),
-                        ElevatedButton(
-                          onPressed: () =>
-                              p.fetchProjectById(widget.projectId),
-                          child: const Text('Retry'),
-                        ),
-                      ],
-                    ),
+          child: RefreshIndicator(
+            onRefresh: _refresh,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+              children: [
+                // Main card
+                Container(
+                  decoration: BoxDecoration(
+                    color: cardBg,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: border),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black54,
+                        blurRadius: 12,
+                        offset: Offset(0, 6),
+                      )
+                    ],
                   ),
-                );
-              }
-
-              final pr = p.currentProject!;
-              final title = pr.title;
-              final category = pr.category;
-              final description = pr.description;
-              final budget = _fmtBudget(pr.budgetMin, pr.budgetMax);
-              final days = pr.durationDays != null
-                  ? '${pr.durationDays} Days'
-                  : '-';
-              final location = pr.location.isEmpty ? '-' : pr.location;
-              final proposals = '${pr.proposalsCount ?? 0} Proposals';
-              final created = _fmtDate(pr.createdAt);
-              final due = _fmtDate(_dueDate(pr.createdAt, pr.durationDays));
-
-              return RefreshIndicator(
-                onRefresh: () => p.fetchProjectById(widget.projectId),
-                child: ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                  children: [
-                    // Main card
-                    Container(
-                      decoration: BoxDecoration(
-                        color: cardBg,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: border),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Colors.black54,
-                            blurRadius: 12,
-                            offset: Offset(0, 6),
-                          )
-                        ],
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Header row (back + actions)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
+                        child: Row(
+                          children: [
+                            _CircleIconButton(
+                              icon: Icons.arrow_back_ios_new,
+                              onTap: () => Navigator.pop(context),
+                            ),
+                            const Spacer(),
+                            _CircleIconButton(
+                              icon: Icons.favorite_border,
+                              onTap: () {},
+                            ),
+                            const SizedBox(width: 8),
+                            _CircleIconButton(
+                              icon: Icons.more_horiz,
+                              onTap: () {},
+                            ),
+                          ],
+                        ),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Header row (back + actions)
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
-                            child: Row(
-                              children: [
-                                _CircleIconButton(
-                                  icon: Icons.arrow_back_ios_new,
-                                  onTap: () => Navigator.pop(context),
+                      const SizedBox(height: 12),
+
+                      // Title block
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _Badge(
+                              text: category.isEmpty ? '-' : category,
+                              color: accent,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              title.isEmpty ? '(Untitled Project)' : title,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              description.isEmpty
+                                  ? 'No description provided.'
+                                  : description,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.75),
+                                height: 1.35,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                          ],
+                        ),
+                      ),
+
+                      // Stats rows (as per figma)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Column(
+                          children: [
+                            _StatRow(
+                              leadingLabel: 'Posted on',
+                              leadingValue: created,
+                              // Figma shows "Posted on" on the right as well
+                              trailingLabel: 'Posted on',
+                              trailingValue: due == '-' ? created : due,
+                            ),
+                            const SizedBox(height: 12),
+                            _IconRow(
+                              items: [
+                                _IconRowItem(
+                                  icon: Icons.attach_money,
+                                  label: budget,
                                 ),
-                                const Spacer(),
-                                _CircleIconButton(
-                                  icon: Icons.favorite_border,
-                                  onTap: () {},
-                                ),
-                                const SizedBox(width: 8),
-                                _CircleIconButton(
-                                  icon: Icons.more_horiz,
-                                  onTap: () {},
+                                _IconRowItem(
+                                  icon: Icons.schedule,
+                                  label: days,
                                 ),
                               ],
                             ),
-                          ),
-                          const SizedBox(height: 12),
+                            const SizedBox(height: 10),
+                            _IconRow(
+                              items: [
+                                _IconRowItem(
+                                  icon: Icons.location_on_outlined,
+                                  label: location,
+                                ),
+                                _IconRowItem(
+                                  icon: Icons.group_outlined,
+                                  label: proposals,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
 
-                          // Title block
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
-                            child: Column(
+                      // Client line (Figma)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+                        child: Row(
+                          children: [
+                            const CircleAvatar(
+                              radius: 16,
+                              backgroundImage: NetworkImage(
+                                'https://images.unsplash.com/photo-1544005313-94ddf0286df2',
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                _Badge(
-                                  text: category.isEmpty ? '-' : category,
-                                  color: accent,
-                                ),
-                                const SizedBox(height: 8),
                                 Text(
-                                  title.isEmpty
-                                      ? '(Untitled Project)'
-                                      : title,
+                                  'Eleanor Pena',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.95),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                Text(
+                                  'Success Rate 100%',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.7),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const Spacer(),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                const Text(
+                                  'Posted on',
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  created,
                                   style: const TextStyle(
                                     color: Colors.white,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w800,
+                                    fontWeight: FontWeight.w700,
                                   ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  description.isEmpty
-                                      ? 'No description provided.'
-                                      : description,
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.75),
-                                    height: 1.35,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                              ],
-                            ),
-                          ),
-
-                          // Stats rows (as per figma)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 14),
-                            child: Column(
-                              children: [
-                                _StatRow(
-                                  leadingLabel: 'Posted on',
-                                  leadingValue: created,
-                                  // Figma shows "Posted on" on the right as well
-                                  trailingLabel: 'Posted on',
-                                  trailingValue: due == '-' ? created : due,
-                                ),
-                                const SizedBox(height: 12),
-                                _IconRow(
-                                  items: [
-                                    _IconRowItem(
-                                      icon: Icons.attach_money,
-                                      label: budget,
-                                    ),
-                                    _IconRowItem(
-                                      icon: Icons.schedule,
-                                      label: days,
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
-                                _IconRow(
-                                  items: [
-                                    _IconRowItem(
-                                      icon: Icons.location_on_outlined,
-                                      label: location,
-                                    ),
-                                    _IconRowItem(
-                                      icon: Icons.group_outlined,
-                                      label: proposals,
-                                    ),
-                                  ],
                                 ),
                               ],
                             ),
-                          ),
-
-                          // Client line (Figma)
-                          Padding(
-                            padding:
-                            const EdgeInsets.fromLTRB(14, 14, 14, 0),
-                            child: Row(
-                              children: [
-                                const CircleAvatar(
-                                  radius: 16,
-                                  backgroundImage: NetworkImage(
-                                    'https://images.unsplash.com/photo-1544005313-94ddf0286df2',
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      // pr.clientName ?? 'Client',
-                                      'El',
-                                      style: TextStyle(
-                                        color: Colors.white.withOpacity(0.95),
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    Text(
-                                      // '${(pr.clientStats ?? '3 Projects')} · ${(pr.clientSuccessRate ?? 'Success Rate 100%')}',
-                                      'Success Rate 100%',
-                                      style: TextStyle(
-                                        color: Colors.white.withOpacity(0.7),
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const Spacer(),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
-                                  children: [
-                                    const Text(
-                                      'Posted on',
-                                      style: TextStyle(
-                                        color: Colors.white70,
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 2),
-                                    Text(
-                                      created,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Project Description (Figma label)
-                          const _SectionHeader('Project Description'),
-                          if (description.isNotEmpty)
-                            Padding(
-                              padding:
-                              const EdgeInsets.symmetric(horizontal: 14),
-                              child: _Para(description),
-                            )
-                          else
-                            const Padding(
-                              padding:
-                              EdgeInsets.symmetric(horizontal: 14),
-                              child: _Para('No description provided.'),
-                            ),
-                          const SizedBox(height: 12),
-
-                          // Skills Required (chips)
-                          const _SectionHeader('Skills Required'),
-                          Padding(
-                            padding:
-                            const EdgeInsets.symmetric(horizontal: 14),
-                            child: Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              children: (pr.skills.isEmpty
-                                  ? const ['-']
-                                  : pr.skills)
-                                  .map((s) => _SkillChip(s))
-                                  .toList(),
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-
-                          // Project Proposal (Figma cards) – placeholders unless you have real data list
-                          const _SectionHeader('Project Proposal'),
-                          const SizedBox(height: 8),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 14),
-                            child: _ProposalCard(
-                              name: 'Eleanor Pena',
-                              summary:
-                              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
-                                  'Nunc interdum metus eu egestas pharetra. Fusce bibendum odio '
-                                  'et venenatis efficitur.',
-                              budgetText: '\$1200',
-                              deliveryText: '14 days',
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 14),
-                            child: _ProposalCard(
-                              name: 'Eleanor Pena',
-                              summary:
-                              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
-                                  'Nunc interdum metus eu egestas pharetra.',
-                              budgetText: '\$1200',
-                              deliveryText: '14 days',
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+
+                      // Project Description (Figma label)
+                      const _SectionHeader('Project Description'),
+                      if (description.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          child: _Para(description),
+                        )
+                      else
+                        const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 14),
+                          child: _Para('No description provided.'),
+                        ),
+                      const SizedBox(height: 12),
+
+                      // Skills Required (chips)
+                      const _SectionHeader('Skills Required'),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children:
+                          skills.map((s) => _SkillChip(s)).toList(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Project Proposal (Figma cards) – placeholders
+                      const _SectionHeader('Project Proposal'),
+                      const SizedBox(height: 8),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 14),
+                        child: _ProposalCard(
+                          name: 'Eleanor Pena',
+                          summary:
+                          'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
+                              'Nunc interdum metus eu egestas pharetra. Fusce bibendum odio '
+                              'et venenatis efficitur.',
+                          budgetText: '\$1200',
+                          deliveryText: '14 days',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 14),
+                        child: _ProposalCard(
+                          name: 'Eleanor Pena',
+                          summary:
+                          'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
+                              'Nunc interdum metus eu egestas pharetra.',
+                          budgetText: '\$1200',
+                          deliveryText: '14 days',
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
                 ),
-              );
-            },
+
+                if (_refreshing) const SizedBox(height: 16),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 }
+
+// ====== Local data model & sample ======
+class MyProjectData {
+  final String id;
+  final String? category;
+  final String? title;
+  final String? description;
+  final int? budgetMin;
+  final int? budgetMax;
+  final int? durationDays;
+  final String? location;
+  final int? proposalsCount;
+  final DateTime? createdAt;
+  final List<String>? skills;
+
+  const MyProjectData({
+    required this.id,
+    this.category,
+    this.title,
+    this.description,
+    this.budgetMin,
+    this.budgetMax,
+    this.durationDays,
+    this.location,
+    this.proposalsCount,
+    this.createdAt,
+    this.skills,
+  });
+
+  MyProjectData copyWith({
+    String? id,
+    String? category,
+    String? title,
+    String? description,
+    int? budgetMin,
+    int? budgetMax,
+    int? durationDays,
+    String? location,
+    int? proposalsCount,
+    DateTime? createdAt,
+    List<String>? skills,
+  }) {
+    return MyProjectData(
+      id: id ?? this.id,
+      category: category ?? this.category,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      budgetMin: budgetMin ?? this.budgetMin,
+      budgetMax: budgetMax ?? this.budgetMax,
+      durationDays: durationDays ?? this.durationDays,
+      location: location ?? this.location,
+      proposalsCount: proposalsCount ?? this.proposalsCount,
+      createdAt: createdAt ?? this.createdAt,
+      skills: skills ?? this.skills,
+    );
+  }
+}
+
+MyProjectData _sampleProject(String id) => MyProjectData(
+  id: id,
+  category: 'Design',
+  title: 'E-commerce UI Overhaul',
+  description:
+  'Redesign storefront, cart, and checkout for higher conversion.',
+  budgetMin: 2000,
+  budgetMax: 4500,
+  durationDays: 14,
+  location: 'Remote',
+  proposalsCount: 6,
+  createdAt: DateTime.now().subtract(const Duration(days: 3)),
+  skills: const ['UI/UX', 'Figma', 'Responsive Web', 'Design Systems'],
+);
 
 // ====== Helpers & UI atoms ======
 

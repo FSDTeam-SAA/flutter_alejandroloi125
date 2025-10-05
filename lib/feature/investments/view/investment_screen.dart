@@ -1,14 +1,25 @@
+// lib/feature/investment/view/investments_screen.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:provider/provider.dart';
 
 import '../../app_ground.dart';
-import '../../create_service/provider/investment_provider.dart';
-import 'investment_detail.dart';
+import 'investment_detail.dart'; // <- Make sure this screen accepts `investment:` now
 
 class InvestmentsScreen extends StatefulWidget {
-  const InvestmentsScreen({super.key});
+  const InvestmentsScreen({
+    super.key,
+    this.investments = const <dynamic>[],
+    this.loading = false,
+    this.error,
+  });
+
+  /// Prefetched investments (no provider/API here).
+  final List<dynamic> investments;
+
+  /// Optional UI flags (if you want to show a loader or an error).
+  final bool loading;
+  final String? error;
 
   @override
   State<InvestmentsScreen> createState() => _InvestmentsScreenState();
@@ -16,15 +27,6 @@ class InvestmentsScreen extends StatefulWidget {
 
 class _InvestmentsScreenState extends State<InvestmentsScreen> {
   final _searchCtl = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    // kick off initial load
-    Future.microtask(
-          () => context.read<InvestmentProvider>().fetchAllInvestments(),
-    );
-  }
 
   @override
   void dispose() {
@@ -38,10 +40,8 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
     const card = Color(0xFF1B1E23);
     const accent = Color(0xFFFF7A1A);
 
-    final p = context.watch<InvestmentProvider>();
     final query = _searchCtl.text.trim().toLowerCase();
-
-    final items = p.investments; // List<Investment>
+    final items = widget.investments;
 
     final filtered = items.where((inv) {
       final name = _name(inv).toLowerCase();
@@ -68,7 +68,8 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
         body: SafeArea(
           bottom: false,
           child: RefreshIndicator(
-            onRefresh: () => context.read<InvestmentProvider>().fetchAllInvestments(),
+            // Local no-op refresh to keep the UX (no API calls).
+            onRefresh: () async => Future<void>.delayed(const Duration(milliseconds: 350)),
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               children: [
@@ -141,24 +142,24 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
                     ),
                     const SizedBox(width: 10),
                     _IconBtn(
-                      onTap: () {},
+                      onTap: () {}, // (future local filters, no API)
                       child: const Icon(CupertinoIcons.slider_horizontal_3, size: 18),
                     ),
                   ],
                 ),
                 const SizedBox(height: 14),
 
-                // Content
-                if (p.loadingList) ...[
+                // Content states (purely local)
+                if (widget.loading) ...[
                   const _ShimmerCard(),
                   const SizedBox(height: 14),
                   const _ShimmerCard(),
                   const SizedBox(height: 14),
                   const _ShimmerCard(),
-                ] else if ((p.error ?? '').isNotEmpty) ...[
+                ] else if ((widget.error ?? '').isNotEmpty) ...[
                   _ErrorBox(
-                    message: p.error!,
-                    onRetry: () => context.read<InvestmentProvider>().fetchAllInvestments(),
+                    message: widget.error!,
+                    onRetry: () => setState(() {}), // no-op retry
                   ),
                 ] else if (filtered.isEmpty) ...[
                   const _EmptyState(),
@@ -166,15 +167,13 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
                   for (final inv in filtered) ...[
                     InkWell(
                       onTap: () {
-                        final id = _id(inv);
-                        if (id.isNotEmpty) {
-                          Get.to(
-                                () => InvestmentDetailScreen(investmentId: id),
-                            transition: Transition.rightToLeft,
-                            duration: const Duration(milliseconds: 350),
-                            curve: Curves.easeInOut,
-                          );
-                        }
+                        // Navigate by passing the whole object — NO id/API needed.
+                        Get.to(
+                              () => InvestmentDetailScreen(investment: inv),
+                          transition: Transition.rightToLeft,
+                          duration: const Duration(milliseconds: 350),
+                          curve: Curves.easeInOut,
+                        );
                       },
                       child: _InvestmentCard(
                         imageUrl: _imageUrl(inv),
@@ -200,15 +199,8 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
   }
 
   // -------------------------------
-  // Safe helpers (no crashes if fields are absent)
+  // Safe helpers (handle mixed shapes without crashing)
   // -------------------------------
-
-  String _id(dynamic inv) {
-    try { final v = (inv as dynamic).id; if (v is String) return v; } catch (_) {}
-    try { final v = (inv as dynamic)._id; if (v is String) return v; } catch (_) {}
-    try { final v = (inv as dynamic).sId; if (v is String) return v; } catch (_) {}
-    return '';
-  }
 
   String _name(dynamic inv) {
     try { final v = (inv as dynamic).name; if (v is String && v.isNotEmpty) return v; } catch (_) {}
@@ -241,9 +233,7 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
   }
 
   String _imageUrl(dynamic inv) {
-    // direct string
     try { final v = (inv as dynamic).imageUrl; if (v is String && v.isNotEmpty) return v; } catch (_) {}
-    // { image: [ { url: ... }, ... ] }
     try {
       final images = (inv as dynamic).image;
       if (images is List && images.isNotEmpty) {
@@ -251,7 +241,6 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
         if (first is Map && first['url'] is String) return first['url'] as String;
       }
     } catch (_) {}
-    // some backends use 'images'
     try {
       final images = (inv as dynamic).images;
       if (images is List && images.isNotEmpty) {
@@ -288,11 +277,9 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
   }
 
   int _progressPct(dynamic inv) {
-    // 1) if a progress field exists, use it
     try { final v = (inv as dynamic).progressPct; if (v is num) return v.clamp(0, 100).toInt(); } catch (_) {}
     try { final v = (inv as dynamic).progress;    if (v is num) return v.clamp(0, 100).toInt(); } catch (_) {}
 
-    // 2) compute from raised/goal
     final g = _goal(inv);
     final r = _raised(inv);
     if (g > 0) return ((r / g) * 100).clamp(0, 100).toInt();
@@ -409,7 +396,8 @@ class _InvestmentCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(category,
-                    style: TextStyle(color: Colors.white.withOpacity(.65), fontSize: 12)),
+                    style:
+                    TextStyle(color: Colors.white.withOpacity(.65), fontSize: 12)),
                 const SizedBox(height: 2),
                 Text(title,
                     style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
@@ -418,7 +406,8 @@ class _InvestmentCard extends StatelessWidget {
                   description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: Colors.white.withOpacity(.72), fontSize: 12),
+                  style:
+                  TextStyle(color: Colors.white.withOpacity(.72), fontSize: 12),
                 ),
                 const SizedBox(height: 10),
 
@@ -428,7 +417,8 @@ class _InvestmentCard extends StatelessWidget {
                     color: inner,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
                   child: Column(
                     children: [
                       _ProgressBar(
@@ -464,8 +454,8 @@ class _InvestmentCard extends StatelessWidget {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(ownerName,
-                          style:
-                          const TextStyle(fontWeight: FontWeight.w700, fontSize: 13)),
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w700, fontSize: 13)),
                     ),
                     Container(
                       height: 36,
@@ -528,7 +518,8 @@ class _ShimmerCard extends StatelessWidget {
     const card = Color(0xFF1B1E23);
     return Container(
       height: 240,
-      decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(14)),
+      decoration:
+      BoxDecoration(color: card, borderRadius: BorderRadius.circular(14)),
     );
   }
 }
@@ -541,7 +532,8 @@ class _EmptyState extends StatelessWidget {
     return Column(
       children: [
         const SizedBox(height: 40),
-        Icon(CupertinoIcons.doc_richtext, size: 36, color: Colors.white.withOpacity(.6)),
+        Icon(CupertinoIcons.doc_richtext,
+            size: 36, color: Colors.white.withOpacity(.6)),
         const SizedBox(height: 10),
         Text('No investments found',
             style: TextStyle(color: Colors.white.withOpacity(.8))),
@@ -550,7 +542,6 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-// Error box
 class _ErrorBox extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
@@ -561,7 +552,8 @@ class _ErrorBox extends StatelessWidget {
     const card = Color(0xFF1B1E23);
     return Container(
       padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(color: card, borderRadius: BorderRadius.circular(12)),
+      decoration:
+      BoxDecoration(color: card, borderRadius: BorderRadius.circular(12)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -1,103 +1,153 @@
+// lib/feature/auction/view/my_auction_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:provider/provider.dart';
 
-import '../../../create_service/provider/auction_provider.dart';
 import 'my_auction_details.dart';
 
-class MyAuctionScreen extends StatelessWidget {
-  const MyAuctionScreen({super.key});
+/// Local-only version (no Provider/API).
+/// Pass pre-fetched [auctions], and optionally toggle [loading]/[error].
+class MyAuctionScreen extends StatefulWidget {
+  const MyAuctionScreen({
+    super.key,
+    this.auctions = const <AuctionItem>[],
+    this.loading = false,
+    this.error,
+    this.onDelete, // optional callback if you still want to hook into something external
+  });
 
-  // call fetchAll once on first frame if not already loading/loaded
-  void _ensureLoaded(BuildContext context) {
-    final p = context.read<AuctionProvider>();
-    if (!p.loadingList && p.items.isEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) => p.fetchAll());
-    }
+  final List<AuctionItem> auctions;
+  final bool loading;
+  final String? error;
+
+  /// Optional: will be invoked after a local delete succeeds.
+  final Future<void> Function(String id)? onDelete;
+
+  @override
+  State<MyAuctionScreen> createState() => _MyAuctionScreenState();
+}
+
+class _MyAuctionScreenState extends State<MyAuctionScreen> {
+  late List<AuctionItem> _items;
+  final Set<String> _deleting = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _items = List<AuctionItem>.from(widget.auctions);
   }
 
   @override
   Widget build(BuildContext context) {
-    _ensureLoaded(context);
+    if (widget.loading && _items.isEmpty) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF0D0F12),
+        body: SafeArea(child: Center(child: CircularProgressIndicator())),
+      );
+    }
+
+    if (widget.error != null && _items.isEmpty) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF0D0F12),
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(widget.error!, style: const TextStyle(color: Colors.white70)),
+                  const SizedBox(height: 8),
+                  const Text('No auctions to show', style: TextStyle(color: Colors.white54)),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (_items.isEmpty) {
+      return const Scaffold(
+        backgroundColor: Color(0xFF0D0F12),
+        body: SafeArea(
+          child: Center(
+            child: Text('No auctions found', style: TextStyle(color: Colors.white70)),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D0F12),
       body: SafeArea(
-        child: Consumer<AuctionProvider>(
-          builder: (context, p, _) {
-            if (p.loadingList && p.items.isEmpty) {
-              return const Center(child: CircularProgressIndicator());
-            }
-            if (p.error != null && p.items.isEmpty) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(p.error!, style: const TextStyle(color: Colors.white70)),
-                      const SizedBox(height: 8),
-                      OutlinedButton(onPressed: () => p.fetchAll(), child: const Text('Retry')),
+        child: ListView.separated(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          itemCount: _items.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 14),
+          itemBuilder: (context, i) {
+            final a = _items[i];
+            final priceLabel = a.startingBid != null ? '\$${_comma(a.startingBid!)}' : '-';
+            final timeLabel = _timeLabel(a);
+            const status = 'In Progress';
+            const statusColor = Color(0xFFFF8A34);
+
+            return _AuctionCard.dynamic(
+              imageUrl: a.imageUrl ?? 'assets/images/watch.jpg',
+              title: a.name ?? 'Auction',
+              priceLabel: priceLabel,
+              timeLabel: timeLabel,
+              status: status,
+              statusColor: statusColor,
+              completed: false,
+              deleting: a.id != null && _deleting.contains(a.id),
+              onView: (a.id == null || a.id!.isEmpty)
+                  ? null
+                  : () {
+                Get.to(
+                      () => MyAuctionDetailScreen(auctionId: a.id!),
+                  transition: Transition.rightToLeft,
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+              },
+              onDelete: (a.id == null)
+                  ? null
+                  : () async {
+                final ok = await showDialog<bool>(
+                  context: context,
+                  builder: (_) => AlertDialog(
+                    title: const Text('Delete auction?'),
+                    content: const Text('This action cannot be undone.'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Delete'),
+                      ),
                     ],
                   ),
-                ),
-              );
-            }
+                ) ??
+                    false;
+                if (!ok) return;
 
-            return ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              itemCount: p.items.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 14),
-              itemBuilder: (context, i) {
-                final a = p.items[i];
-                final priceLabel =
-                a.startingBid != null ? '\$${_comma(a.startingBid!)}' : '-';
-                final timeLabel = _timeLabel(a);
-                const status = 'In Progress';
-                const statusColor = Color(0xFFFF8A34);
+                setState(() => _deleting.add(a.id!));
+                // Local-only delete
+                await Future.delayed(const Duration(milliseconds: 350));
+                setState(() {
+                  _items.removeWhere((e) => e.id == a.id);
+                  _deleting.remove(a.id);
+                });
 
-                return _AuctionCard.dynamic(
-                  imageUrl: 'assets/images/watch.jpg', // keep your asset
-                  title: a.name ?? 'Auction',
-                  priceLabel: priceLabel,
-                  timeLabel: timeLabel,
-                  status: status,
-                  statusColor: statusColor,
-                  completed: false,
-                  onView: () {
-                    if (a.id == null) return;
-                    Get.to(
-                          () => MyAuctionDetailScreen(auctionId: a.id!),
-                      transition: Transition.rightToLeft,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOut,
-                    );
-                  },
-                  onDelete: (a.id == null)
-                      ? null
-                      : () async {
-                    final ok = await showDialog<bool>(
-                      context: context,
-                      builder: (_) => AlertDialog(
-                        title: const Text('Delete auction?'),
-                        content:
-                        const Text('This action cannot be undone.'),
-                        actions: [
-                          TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Cancel')),
-                          TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: const Text('Delete')),
-                        ],
-                      ),
-                    ) ??
-                        false;
-                    if (!ok) return;
-                    await context.read<AuctionProvider>().deleteById(a.id!);
-                  },
-                  deleting: a.id != null && p.deletingIds.contains(a.id),
-                );
+                // Optionally notify upstream
+                if (widget.onDelete != null) {
+                  await widget.onDelete!(a.id!);
+                }
+
+                Get.snackbar('Deleted', 'Auction removed',
+                    snackPosition: SnackPosition.TOP);
               },
             );
           },
@@ -105,37 +155,59 @@ class MyAuctionScreen extends StatelessWidget {
       ),
     );
   }
-
-  static String _comma(int n) {
-    final s = n.toString();
-    final b = StringBuffer();
-    for (int i = 0; i < s.length; i++) {
-      b.write(s[i]);
-      final left = s.length - i - 1;
-      if (left % 3 == 0 && left != 0) b.write(',');
-    }
-    return b.toString();
-  }
-
-  static String _timeLabel(a) {
-    final date = (a.scheduleDate ?? '').trim();
-    final time = (a.scheduleTime ?? '').trim();
-    if (date.isEmpty && time.isEmpty) {
-      final dur = a.duration;
-      if (dur is int) {
-        if (dur >= 60) {
-          final h = dur ~/ 60;
-          return '${h}h auction';
-        }
-        return '${dur}m auction';
-      }
-      return 'No schedule';
-    }
-    return '$date ${time.isEmpty ? '' : time}';
-  }
 }
 
-// ---- card (unchanged look) ----
+/// Local, minimal auction model for this screen (no API/provider).
+class AuctionItem {
+  final String? id;
+  final String? name;
+  final int? startingBid; // in USD
+  final String? scheduleDate; // e.g., "2025-10-10"
+  final String? scheduleTime; // e.g., "15:30"
+  final int? duration; // minutes
+  final String? imageUrl; // optional override for card image
+
+  const AuctionItem({
+    this.id,
+    this.name,
+    this.startingBid,
+    this.scheduleDate,
+    this.scheduleTime,
+    this.duration,
+    this.imageUrl,
+  });
+}
+
+// ---------- helpers ----------
+String _comma(int n) {
+  final s = n.toString();
+  final b = StringBuffer();
+  for (int i = 0; i < s.length; i++) {
+    b.write(s[i]);
+    final left = s.length - i - 1;
+    if (left % 3 == 0 && left != 0) b.write(',');
+  }
+  return b.toString();
+}
+
+String _timeLabel(AuctionItem a) {
+  final date = (a.scheduleDate ?? '').trim();
+  final time = (a.scheduleTime ?? '').trim();
+  if (date.isEmpty && time.isEmpty) {
+    final dur = a.duration;
+    if (dur is int) {
+      if (dur >= 60) {
+        final h = dur ~/ 60;
+        return '${h}h auction';
+      }
+      return '${dur}m auction';
+    }
+    return 'No schedule';
+  }
+  return '$date ${time.isEmpty ? '' : time}';
+}
+
+// ---- card (kept design) ----
 class _AuctionCard extends StatelessWidget {
   final String imageUrl;
   final String title;
@@ -186,14 +258,16 @@ class _AuctionCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(10),
               child: AspectRatio(
                 aspectRatio: 16 / 9,
-                child: Image.asset(
+                child: imageUrl.startsWith('http')
+                    ? Image.network(
                   imageUrl,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                    color: Colors.black26,
-                    alignment: Alignment.center,
-                    child: const Icon(Icons.broken_image_outlined),
-                  ),
+                  errorBuilder: (_, __, ___) => _broken(),
+                )
+                    : Image.asset(
+                  imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _broken(),
                 ),
               ),
             ),
@@ -231,8 +305,7 @@ class _AuctionCard extends StatelessWidget {
                       ),
                     ),
                     Container(
-                      padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
                         color: statusColor.withOpacity(0.14),
                         borderRadius: BorderRadius.circular(12),
@@ -257,9 +330,7 @@ class _AuctionCard extends StatelessWidget {
                     Expanded(
                       child: OutlinedButton(
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(
-                            color: Colors.white.withOpacity(0.15),
-                          ),
+                          side: BorderSide(color: Colors.white.withOpacity(0.15)),
                           foregroundColor: Colors.white.withOpacity(0.9),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -301,6 +372,12 @@ class _AuctionCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _broken() => Container(
+    color: Colors.black26,
+    alignment: Alignment.center,
+    child: const Icon(Icons.broken_image_outlined),
+  );
 }
 
 class _InfoBar extends StatelessWidget {

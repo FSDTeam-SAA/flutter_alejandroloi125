@@ -4,30 +4,25 @@ import 'package:alejandroloi/core/common/widgets/save_botton.dart';
 import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/images.dart';
 import 'package:alejandroloi/core/util/styles.dart';
-import 'package:alejandroloi/feature/auth/controllers/auth_provider.dart';
 import 'package:alejandroloi/feature/auth/view/sign_up_screen.dart';
-
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-
+import 'package:provider/provider.dart';
+import 'package:alejandroloi/feature/auth/providers/auth_provider.dart';
 import '../../app_ground.dart';
 import 'forget_password_view.dart';
-import 'package:flutter/gestures.dart'; // <—
-import 'package:provider/provider.dart';
-
 
 class LoginScreenView extends StatefulWidget {
   LoginScreenView({super.key});
-
   @override
   State<LoginScreenView> createState() => _LoginScreenViewState();
 }
 
 class _LoginScreenViewState extends State<LoginScreenView> {
-  TextEditingController emailController = TextEditingController();
-  TextEditingController passwordController = TextEditingController();
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final emailController = TextEditingController();
+  final passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   @override
   void dispose() {
@@ -36,53 +31,65 @@ class _LoginScreenViewState extends State<LoginScreenView> {
     super.dispose();
   }
 
+  Future<void> _handleLogin() async {
+    final ap = context.read<AuthProvider>();
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    final ok = await ap.login(
+      email: emailController.text.trim(),
+      password: passwordController.text,
+    );
+    if (!mounted) return;
+
+    if (ok) {
+      Get.offAll(() => const AppGround(),
+        transition: Transition.rightToLeft,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ap.error ?? 'Login failed')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-
-    final auth = context.watch<AuthProvider>();     // listens for changes
-    final isLoading = auth.isLoggedIn;
-
+    final ap = context.watch<AuthProvider>();
+    final loading = ap.loading;
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
-          key:_formKey,
+          key: _formKey,
           child: ListView(
             children: [
               const SizedBox(height: 80),
-
               Image.asset(Images.appIcon, height: 52, width: 165),
-              SizedBox(height: 40),
+              const SizedBox(height: 40),
               Center(child: Text("Welcome Back", style: headingText)),
-              SizedBox(height: 10),
-              Center(
-                child: Text("Sign in to access your account", style: bodyText1),
-              ),
-              SizedBox(height: 20),
+              const SizedBox(height: 10),
+              Center(child: Text("Sign in to access your account", style: bodyText1)),
+              const SizedBox(height: 20),
+
               CustomTextField(
                 controller: emailController,
                 hintText: "Email",
                 prefixIcon: Icons.email_outlined,
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) return "Enter your email";
-                  // add email regex if you want
-                  return null;
-                },
+                // validator: ap.validateEmail,
+                keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 10),
               CustomTextField(
                 controller: passwordController,
                 hintText: "Password",
                 prefixIcon: Icons.lock_outline,
-                validator: (v) {
-                  if (v == null || v.isEmpty) return "Enter your password";
-                  if (v.length < 6) return "Min 6 characters";
-                  return null;
-                },
+                // validator: ap.validatePassword,
               ),
+
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 15),
                 child: Row(
@@ -94,74 +101,20 @@ class _LoginScreenViewState extends State<LoginScreenView> {
                         duration: const Duration(milliseconds: 350),
                         curve: Curves.easeInOut,
                       ),
-                      child: Text(
-                        "Forget Password",
+                      child: Text("Forget Password",
                         style: bodyText1.copyWith(color: AppColors.bottomColor1),
                       ),
                     ),
                   ],
                 ),
               ),
-              // bottomWidget(text: "Login"),
-            bottomWidget(
-              text: "Login",
-              // onTap: () {
-              //   if (_formKey.currentState!.validate()) {
-              //
-              //     Get.offAll(
-              //           () => const AppGround(),
-              //       transition: Transition.rightToLeft,
-              //       duration: const Duration(milliseconds: 350),
-              //       curve: Curves.easeInOut,
-              //     );
-              //
-              //   } else {
-              //     ScaffoldMessenger.of(context).showSnackBar(
-              //       const SnackBar(content: Text("Please fill all required fields correctly")),
-              //     );
-              //   }
-              // },
 
-                onTap: isLoading
-                    ? null
-                    : () async {
-                  // 1) Validate first
-                  if (!_formKey.currentState!.validate()) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Please fill all required fields correctly")),
-                    );
-                    return;
-                  }
+              bottomWidget(
+                text: loading ? "Please wait..." : "Login",
+                onTap: loading ? null : _handleLogin,
+              ),
 
-                  // 2) Call provider once
-                  final auth = context.read<AuthProvider>();
-                  final ok = await auth.login(
-                    emailController.text.trim(),
-                    passwordController.text,
-                  );
-
-                  // 3) Ensure the widget is still in the tree after await
-                  if (!mounted) return;
-
-                  // 4) Navigate or show error
-                  if (ok) {
-                    Get.offAll(
-                          () => const AppGround(),
-                      transition: Transition.rightToLeft,
-                      duration: const Duration(milliseconds: 350),
-                      curve: Curves.easeInOut,
-                    );
-                  } else {
-                    final err = auth.error ?? 'Login failed';
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(err)),
-                    );
-                  }
-                }
-
-            ),
-
-            Padding(
+              Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -173,10 +126,9 @@ class _LoginScreenViewState extends State<LoginScreenView> {
                 ),
               ),
 
-              CustomOutlineContainer(name:  'Continue With Google',image: Images.googleIcon,),
+              const CustomOutlineContainer(name: 'Continue With Google', image: Images.googleIcon),
               const SizedBox(height: 10),
-              CustomOutlineContainer(name:  'Continue With Apple',image: Images.macIcon,),
-
+              const CustomOutlineContainer(name: 'Continue With Apple', image: Images.macIcon),
             ],
           ),
         ),
@@ -186,23 +138,19 @@ class _LoginScreenViewState extends State<LoginScreenView> {
         padding: const EdgeInsets.symmetric(vertical: 30),
         child: RichText(
           textAlign: TextAlign.center,
-          text: TextSpan(style: const TextStyle(color: Colors.white, fontSize: 16,), // root style
+          text: TextSpan(
+            style: const TextStyle(color: Colors.white, fontSize: 16),
             children: [
               const TextSpan(text: "Don’t have an account? "),
               TextSpan(
                 text: "Sign Up",
-                style: TextStyle(color: AppColors.bottomColor1, fontWeight: FontWeight.bold,
-
-              ),
+                style: TextStyle(color: AppColors.bottomColor1, fontWeight: FontWeight.bold),
                 recognizer: TapGestureRecognizer()
-                  ..onTap = () => Get.to(() =>  SignUpScreenView(),
-                    transition: Transition.rightToLeft,
-                    duration: const Duration(milliseconds: 350),
-                    curve: Curves.easeInOut,
-                  ),
+                  ..onTap = () => Get.to(() => const SignUpScreenView(),
+                      transition: Transition.rightToLeft,
+                      duration: const Duration(milliseconds: 350),
+                      curve: Curves.easeInOut),
               ),
-
-
             ],
           ),
         ),

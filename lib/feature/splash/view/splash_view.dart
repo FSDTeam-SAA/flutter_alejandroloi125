@@ -1,21 +1,22 @@
-import 'package:alejandroloi/feature/app_ground.dart';
+// lib/feature/splash/splash_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:http/http.dart';
 
-import '../../auth/controllers/auth_provider.dart';
+import '../../app_ground.dart';
 import '../../auth/view/login_screen_view.dart';
-import '../../home/view/home_view.dart';
-import 'package:provider/provider.dart';
-
-
-
-
-
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  const SplashScreen({
+    super.key,
+    this.isLoggedIn = false,                 // <- set true to go to AppGround
+    this.hold = const Duration(milliseconds: 1200), // how long to show splash
+  });
+
+  /// If true, navigate to AppGround; otherwise to LoginScreenView.
+  final bool isLoggedIn;
+
+  /// How long the splash should remain on screen.
+  final Duration hold;
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -23,53 +24,51 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
 
-
   @override
   void initState() {
     super.initState();
-    _checkAndRoute();
+    _routeAfterDelay();
   }
 
-  Future<void> _checkAndRoute() async {
-    final auth = context.read<AuthProvider>();
-    await auth.loadSession();                     // restore token/user
-    await Future.delayed(const Duration(seconds: 1)); // keep splash a moment
+  Future<void> _routeAfterDelay() async {
+    await Future.delayed(widget.hold);
     if (!mounted) return;
 
-    if (auth.isLoggedIn) {
-      Get.offAll(() => const AppGround(),
+    if (widget.isLoggedIn) {
+      Get.offAll(
+            () => const AppGround(),
         transition: Transition.rightToLeft,
         duration: const Duration(milliseconds: 350),
       );
     } else {
-      Get.offAll(() => LoginScreenView(),
+      Get.offAll(
+            () => LoginScreenView(),
         transition: Transition.rightToLeft,
         duration: const Duration(milliseconds: 350),
       );
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-
+    return const Scaffold(
       resizeToAvoidBottomInset: false,
       backgroundColor: Color(0xFF283280),
-      body: Stack(children: [
-        Container(
-          width: double.infinity,
-          height: double.infinity,
-          decoration: const BoxDecoration(
-            image: DecorationImage(
-              image: AssetImage("assets/images/splash.png"),
-
-              fit: BoxFit.cover,
+      body: Stack(
+        children: [
+          // Background image
+          SizedBox.expand(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: AssetImage("assets/images/splash.png"),
+                  fit: BoxFit.cover,
+                ),
+              ),
             ),
           ),
-        ),
-      ],),
+        ],
+      ),
     );
   }
 }

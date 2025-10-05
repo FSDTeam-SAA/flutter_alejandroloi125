@@ -1,16 +1,20 @@
 // lib/feature/auth/view/create_new_password.dart
 import 'package:alejandroloi/core/util/app_colors.dart';
-import 'package:alejandroloi/core/util/styles.dart';
-import 'package:alejandroloi/feature/auth/controllers/onboarding_provider.dart';
+// import 'package:alejandroloi/core/util/styles.dart'; // not used anymore
+// import 'package:alejandroloi/feature/auth/controllers/onboarding_provider.dart'; // removed
 import 'package:alejandroloi/feature/auth/view/login_screen_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:provider/provider.dart';
+// import 'package:provider/provider.dart'; // removed
 
 class CreateNewPasswordScreen extends StatefulWidget {
   final String email;
-  final String otp; // ← comes from previous screen
-  const CreateNewPasswordScreen({super.key, required this.email, required this.otp});
+  final String otp; // kept for compatibility, not used in this no-API version
+  const CreateNewPasswordScreen({
+    super.key,
+    required this.email,
+    required this.otp,
+  });
 
   @override
   State<CreateNewPasswordScreen> createState() => _CreateNewPasswordScreenState();
@@ -23,44 +27,38 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
   bool _ob1 = true, _ob2 = true;
 
   @override
-  void dispose() { passCtrl.dispose(); confirmCtrl.dispose(); super.dispose(); }
+  void dispose() {
+    passCtrl.dispose();
+    confirmCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _submit() async {
     final okForm = _formKey.currentState?.validate() ?? false;
     if (!okForm) return;
 
-    final flow = context.read<OnboardingProvider>();
-    final ok = await flow.resetPassword(
-      email: widget.email,
-      otp: widget.otp,
-      newPassword: passCtrl.text.trim(),
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Password updated successfully')),
     );
 
-    if (!mounted) return;
-    if (ok) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Password updated successfully')));
-      Get.offAll(() => LoginScreenView(),
-        transition: Transition.rightToLeft,
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeInOut,
-      );
-    } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(flow.error ?? 'Reset failed')));
-    }
+    Get.offAll(
+          () => LoginScreenView(),
+      transition: Transition.rightToLeft,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final loading = context.watch<OnboardingProvider>().loading;
-
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
         centerTitle: true,
         leading: InkWell(
-          onTap: loading ? null : () => Get.back(),
+          onTap: () => Get.back(),
           child: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
         ),
         backgroundColor: Colors.transparent,
@@ -98,13 +96,13 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: loading ? null : _submit,
+                  onPressed: _submit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.bottomColor1,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
-                  child: Text(loading ? 'Please wait…' : 'Continue'),
+                  child: const Text('Continue'),
                 ),
               ),
             ],

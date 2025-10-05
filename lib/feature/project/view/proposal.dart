@@ -1,12 +1,16 @@
+// lib/feature/project/view/proposal.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:provider/provider.dart';
-
-import '../../create_service/provider/project_provider.dart';
 
 class ProposalScreen extends StatelessWidget {
   final String projectId;
-  const ProposalScreen({super.key, required this.projectId});
+  final ValueChanged<ProposalSubmission>? onSubmit; // optional callback (local-only)
+
+  const ProposalScreen({
+    super.key,
+    required this.projectId,
+    this.onSubmit,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -41,14 +45,20 @@ class ProposalScreen extends StatelessWidget {
           contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         ),
       ),
-      home: SubmitProposalPage(projectId: projectId),
+      home: SubmitProposalPage(projectId: projectId, onSubmit: onSubmit),
     );
   }
 }
 
 class SubmitProposalPage extends StatefulWidget {
   final String projectId;
-  const SubmitProposalPage({super.key, required this.projectId});
+  final ValueChanged<ProposalSubmission>? onSubmit;
+
+  const SubmitProposalPage({
+    super.key,
+    required this.projectId,
+    this.onSubmit,
+  });
 
   @override
   State<SubmitProposalPage> createState() => _SubmitProposalPageState();
@@ -76,34 +86,36 @@ class _SubmitProposalPageState extends State<SubmitProposalPage> {
 
     setState(() => _submitting = true);
 
-    final provider = context.read<ProjectProvider>();
+    // Local-only: build a submission object and return it.
     final amount = int.tryParse(_budgetCtrl.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
     final days = int.tryParse(_daysCtrl.text) ?? 0;
     final cover = _coverCtrl.text.trim();
 
-    final ok = await provider.submitProposal(
+    final submission = ProposalSubmission(
       projectId: widget.projectId,
       budgetAmount: amount,
       days: days,
       coverLetter: cover,
+      createdAt: DateTime.now(),
     );
 
+    // Simulate a short delay for UX; no API call here.
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    if (!mounted) return;
     setState(() => _submitting = false);
 
-    if (ok) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Proposal submitted successfully!'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      Get.back();
-    } else {
-      final msg = provider.error?.isNotEmpty == true ? provider.error! : 'Failed to submit proposal';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating),
-      );
-    }
+    widget.onSubmit?.call(submission);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Proposal submitted (local)'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+
+    // Return the submission to the previous screen if they want to use it.
+    Get.back(result: submission);
   }
 
   @override
@@ -136,7 +148,7 @@ class _SubmitProposalPageState extends State<SubmitProposalPage> {
                 ),
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return 'Please enter a budget';
-                  final value = int.tryParse(v.replaceAll(',', ''));
+                  final value = int.tryParse(v.replaceAll(RegExp(r'[^0-9]'), ''));
                   if (value == null || value <= 0) return 'Enter a valid amount';
                   return null;
                 },
@@ -217,4 +229,21 @@ class _FieldLabel extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Local model representing a proposal submission (no API).
+class ProposalSubmission {
+  final String projectId;
+  final int budgetAmount;
+  final int days;
+  final String coverLetter;
+  final DateTime createdAt;
+
+  const ProposalSubmission({
+    required this.projectId,
+    required this.budgetAmount,
+    required this.days,
+    required this.coverLetter,
+    required this.createdAt,
+  });
 }

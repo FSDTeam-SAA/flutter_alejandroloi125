@@ -46,7 +46,7 @@ class ApiConstants {
   };
 
   /// Build a Uri by safely joining baseUrl + path
-  static Uri api(String path) {
+  static Uri api(String path, Map<String, String> map) {
     final b = baseUrl.endsWith('/')
         ? baseUrl.substring(0, baseUrl.length - 1)
         : baseUrl;
