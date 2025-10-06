@@ -1,6 +1,9 @@
+// lib/feature/aven/view/my_event_investments/my_event_investment_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'my_event_investment_detail.dart' as detail;
+
+import '../../../models/investment.dart';
+import 'my_event_investment_detail.dart';
 
 // ------- Theme -------
 const _card = Color(0xFF1E1F22);
@@ -9,21 +12,21 @@ const _textDim = Colors.white70;
 const _barTrack = Color(0xFF3A3A3E);
 
 /// Pure UI screen — no API/Provider integration.
-/// Pass a pre-fetched list of [detail.Investment]s from the caller.
+/// Pass a pre-fetched list of [Investment] from the caller.
 class MyEventInvestmentScreen extends StatelessWidget {
   const MyEventInvestmentScreen({
     super.key,
     this.investments = const [],
   });
 
-  /// Provide pre-fetched investments (no API/provider here).
-  final List<detail.Investment> investments;
+  final List<Investment> investments;
 
   @override
   Widget build(BuildContext context) {
     if (investments.isEmpty) {
       return const Center(
-        child: Text('No investments found', style: TextStyle(color: Colors.white70)),
+        child: Text('No investments found',
+            style: TextStyle(color: Colors.white70)),
       );
     }
 
@@ -32,19 +35,26 @@ class MyEventInvestmentScreen extends StatelessWidget {
       itemCount: investments.length,
       itemBuilder: (context, i) {
         final it = investments[i];
-        final amountStr = '\$${it.fundingGoal.toStringAsFixed(0)}';
-        final daysStr = '${it.daysLeft} days left';
+
+        final amountStr = '\$${_comma(it.fundingGoal ?? 0)}';
+        final daysStr = '${it.daysLeft ?? 0} days left';
+        final progress =
+        ((it.progressPct) / 100).clamp(0, 1).toDouble(); // 0..1
+        final category =
+        it.category.isNotEmpty ? it.category.first : 'General';
+        final hero =
+            it.primaryImageUrl ?? 'assets/images/wind-mill.jpg';
 
         return _InvestmentCard(
-          image: it.images.isNotEmpty ? it.images.first : 'assets/images/wind-mill.jpg',
-          category: it.category.isNotEmpty ? it.category.first : 'General',
+          image: hero,
+          category: category,
           title: it.name,
           description: it.description,
-          progress: it.progress.clamp(0, 1),
+          progress: progress,
           amount: amountStr,
           daysLeft: daysStr,
           onView: () => Get.to(
-                () => detail.MyEventInvestmentDetail(investment: it),
+                () => MyEventInvestmentDetail(investment: it),
             transition: Transition.rightToLeft,
             duration: const Duration(milliseconds: 300),
           ),
@@ -78,13 +88,18 @@ class _InvestmentCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: _card,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4))],
+        boxShadow: const [
+          BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4))
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipRRect(
-            borderRadius: const BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12)),
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(12),
+              topRight: Radius.circular(12),
+            ),
             child: _CardImage(image),
           ),
           Padding(
@@ -92,32 +107,54 @@ class _InvestmentCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(category, style: const TextStyle(color: _accent, fontSize: 12, fontWeight: FontWeight.w600)),
+                Text(category,
+                    style: const TextStyle(
+                        color: _accent,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600)),
                 const SizedBox(height: 4),
-                Text(title, style: const TextStyle(color: Colors.white, fontSize: 16.5, fontWeight: FontWeight.w800, height: 1.1)),
+                Text(title,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w800,
+                        height: 1.1)),
                 const SizedBox(height: 6),
                 Text(
                   description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: _textDim, fontSize: 13.5, height: 1.25),
+                  style: const TextStyle(
+                      color: _textDim, fontSize: 13.5, height: 1.25),
                 ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
                     Expanded(child: _Label(text: pctText, strong: true)),
-                    Text(daysLeft, style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                    Text(daysLeft,
+                        style:
+                        const TextStyle(color: Colors.white60, fontSize: 12)),
                   ],
                 ),
                 const SizedBox(height: 6),
                 LayoutBuilder(
                   builder: (context, c) => Stack(
                     children: [
-                      Container(height: 6, width: double.infinity, decoration: BoxDecoration(color: _barTrack, borderRadius: BorderRadius.circular(6))),
+                      Container(
+                        height: 6,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: _barTrack,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
                       Container(
                         height: 6,
                         width: (c.maxWidth * progress).clamp(0.0, c.maxWidth),
-                        decoration: BoxDecoration(color: _accent, borderRadius: BorderRadius.circular(6)),
+                        decoration: BoxDecoration(
+                          color: _accent,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
                       ),
                     ],
                   ),
@@ -131,9 +168,12 @@ class _InvestmentCard extends StatelessWidget {
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: _accent, width: 1.2),
                       foregroundColor: _accent,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                    child: const Text('View Details', style: TextStyle(fontWeight: FontWeight.w700)),
+                    child: const Text('View Details',
+                        style: TextStyle(fontWeight: FontWeight.w700)),
                   ),
                 ),
               ],
@@ -185,4 +225,16 @@ class _Label extends StatelessWidget {
       ),
     );
   }
+}
+
+// --- helpers ---
+String _comma(int n) {
+  final s = n.toString();
+  final b = StringBuffer();
+  for (int i = 0; i < s.length; i++) {
+    b.write(s[i]);
+    final left = s.length - i - 1;
+    if (left % 3 == 0 && left != 0) b.write(',');
+  }
+  return b.toString();
 }

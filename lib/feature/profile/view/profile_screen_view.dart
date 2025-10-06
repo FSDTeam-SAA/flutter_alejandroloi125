@@ -141,6 +141,8 @@ class ProfileScreenView extends StatelessWidget {
                     transition: Transition.rightToLeft,
                     duration: const Duration(milliseconds: 320),
                     curve: Curves.easeInOut);
+
+
               },
             ),
             profileBottom(

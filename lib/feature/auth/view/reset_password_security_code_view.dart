@@ -5,9 +5,11 @@ import 'package:alejandroloi/core/util/styles.dart';
 // import 'package:alejandroloi/feature/auth/controllers/onboarding_provider.dart'; // removed
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart';
 import 'package:pinput/pinput.dart';
-// import 'package:provider/provider.dart'; // removed
+import 'package:provider/provider.dart'; // removed
 
+import '../providers/auth_provider.dart';
 import 'create_new_password.dart';
 
 class ResetPasswordSecurityCode extends StatefulWidget {
@@ -48,41 +50,69 @@ class _ResetPasswordSecurityCodeState extends State<ResetPasswordSecurityCode> {
     super.dispose();
   }
 
-  Future<void> _verify() async {
-    if (_loading) return;
+  // Future<void> _verify() async {
+  //   if (_loading) return;
+  //
+  //   final code = otpController.text.trim();
+  //   if (code.length != 6) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('Enter the 6-digit OTP from your email')),
+  //     );
+  //     return;
+  //   }
+  //
+  //   setState(() => _loading = true);
+  //
+  //   // No API call — proceed to new password screen with entered OTP
+  //   if (!mounted) return;
+  //   Get.to(
+  //         () => CreateNewPasswordScreen(email: widget.email, otp: code),
+  //     transition: Transition.rightToLeft,
+  //     duration: const Duration(milliseconds: 350),
+  //     curve: Curves.easeInOut,
+  //   );
+  //
+  //   if (!mounted) return;
+  //   setState(() => _loading = false);
+  // }
 
+  Future<void> _verify() async {
+// _verify()
+    final ap = context.read<AuthProvider>();
     final code = otpController.text.trim();
-    if (code.length != 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter the 6-digit OTP from your email')),
-      );
+    final err  = ap.validateOtp(code);
+    if (err != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
       return;
     }
-
-    setState(() => _loading = true);
-
-    // No API call — proceed to new password screen with entered OTP
-    if (!mounted) return;
-    Get.to(
-          () => CreateNewPasswordScreen(email: widget.email, otp: code),
-      transition: Transition.rightToLeft,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeInOut,
-    );
-
-    if (!mounted) return;
-    setState(() => _loading = false);
+    Get.to(() => CreateNewPasswordScreen(email: widget.email, otp: code));
   }
 
-  Future<void> _resend() async {
-    if (_loading || _seconds > 0) return;
 
-    // No API call — just restart timer and notify the user
-    _startTimer();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Code resent')),
-    );
+  // Future<void> _resend() async {
+  //   if (_loading || _seconds > 0) return;
+  //
+  //   // No API call — just restart timer and notify the user
+  //   _startTimer();
+  //   if (!mounted) return;
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     const SnackBar(content: Text('Code resent')),
+  //   );
+  // }
+
+  Future<void> _resend() async {
+    // _resend()
+    if (_seconds == 0) {
+      final ok = await context.read<AuthProvider>().sendResetOtp(widget.email);
+      if (ok) {
+        _startTimer();
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('OTP resent')));
+      } else {
+        final ap = context.read<AuthProvider>();
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ap.error ?? 'Resend failed')));
+      }
+    }
+
   }
 
   @override

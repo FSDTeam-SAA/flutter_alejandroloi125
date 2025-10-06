@@ -6,7 +6,8 @@ import 'package:alejandroloi/core/common/widgets/custom_text_field.dart';
 import 'package:alejandroloi/core/common/widgets/save_botton.dart';      // bottomWidget
 import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/styles.dart';
-
+import 'package:provider/provider.dart';
+import '../../../providers/investment_provider.dart';
 import '../../service/view/service_view.dart'; // your existing screen
 
 class CreateInvestmentsView extends StatefulWidget {
@@ -20,6 +21,7 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
   final _formKey = GlobalKey<FormState>();
   AutovalidateMode _auto = AutovalidateMode.disabled;
   bool _submitting = false;
+  late final inv = context.read<InvestmentProvider>();
 
   // Local fields
   dynamic _image; // keep dynamic since ImagePickerSlot's type may vary (File/XFile/String)
@@ -53,28 +55,38 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
           snackPosition: SnackPosition.TOP);
       return;
     }
-
     if (_submitting) return;
     setState(() => _submitting = true);
 
-    // No API calls — pretend success
-    if (!mounted) return;
-    Get.off(
-          () => const ServiceView(),
-      transition: Transition.rightToLeft,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeInOut,
+    final created = await inv.create(
+      name: _title.trim(),
+      description: _desc.trim(),
+      category: _category.trim(),
+      fundingGoal: int.parse(_fundingGoal),
+      fundingDuration: '${_durationDays.trim()} day', // or "6 month" – your choice
+      location: _location.trim(),
+      investmentTerms: _terms.trim(),
+      imageFile: _image, // File? If you use your ImagePickerSlot to return File
     );
 
-    Get.snackbar('Success', 'Investment created successfully',
-        snackPosition: SnackPosition.TOP);
+    setState(() => _submitting = false);
 
     if (!mounted) return;
-    setState(() => _submitting = false);
+    if (created) {
+      Get.back(result: true);
+      Get.snackbar('Success', 'Investment created successfully',
+          snackPosition: SnackPosition.TOP);
+    } else {
+      Get.snackbar('Error', inv.error ?? 'Create failed',
+          snackPosition: SnackPosition.TOP);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+
+    // in CreateInvestmentsView
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Padding(

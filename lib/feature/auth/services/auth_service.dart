@@ -61,16 +61,16 @@ class AuthService {
     return Map<String, dynamic>.from(r.data ?? const {});
   }
 
-  Future<Map<String, dynamic>> changePassword({
-    required String oldPassword,
-    required String newPassword,
-  }) async {
-    final r = await _dio.post(ApiPaths.changePassword, data: {
-      'oldPassword': oldPassword,
-      'newPassword': newPassword,
-    });
-    return Map<String, dynamic>.from(r.data ?? const {});
-  }
+  // Future<Map<String, dynamic>> changePassword({
+  //   required String oldPassword,
+  //   required String newPassword,
+  // }) async {
+  //   final r = await _dio.post(ApiPaths.changePassword, data: {
+  //     'oldPassword': oldPassword,
+  //     'newPassword': newPassword,
+  //   });
+  //   return Map<String, dynamic>.from(r.data ?? const {});
+  // }
 
   // RESEND: hit the resend endpoint with {email}
   Future<void> resendOtp(String email) async {
@@ -81,6 +81,15 @@ class AuthService {
   Future<Map<String, dynamic>> sendResetOtp({required String email}) async {
     // POST /auth/forget → { success: true, message: "OTP sent to your email" }
     final r = await _dio.post(ApiPaths.forgetPassword, data: {'email': email});
+    return Map<String, dynamic>.from(r.data ?? const {});
+  }
+
+  Future<Map<String, dynamic>> changePassword({
+    required String oldPassword, required String newPassword,
+  }) async {
+    final r = await _dio.post(ApiPaths.changePassword, data: {
+      'oldPassword': oldPassword, 'newPassword': newPassword,
+    });
     return Map<String, dynamic>.from(r.data ?? const {});
   }
 

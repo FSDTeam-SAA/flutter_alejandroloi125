@@ -11,13 +11,7 @@ class AuthRepository {
   AuthRepository({required this.service, required this.tokenStore});
 
 
-  Exception _wrap(DioException e) {
-    final m = e.response?.data;
-    final msg = (m is Map && m['message'] is String)
-        ? m['message'] as String
-        : (e.message ?? 'Network error');
-    return Exception(msg);
-  }
+
 
   Future<User> register({
     required String name,
@@ -73,6 +67,8 @@ class AuthRepository {
       final refresh = data['refreshToken'] ?? res['refreshToken'];
       await tokenStore.saveTokens(access: access as String?, refresh: refresh as String?);
 
+
+
       return User.fromJson(userJson);
     } on DioException catch (e) {
       final m = e.response?.data;
@@ -101,10 +97,51 @@ class AuthRepository {
   Future<void> logout() => tokenStore.clear();
 
 
-  Future<void> resetPassword({required String email, required String otp, required String newPassword}) async {
+
+
+  // Future<void> changePassword({required String oldPassword, required String newPassword}) async {
+  //   try {
+  //     final res = await service.changePassword(oldPassword: oldPassword, newPassword: newPassword);
+  //     if (res['success'] != true) throw Exception(res['message'] ?? 'Change password failed');
+  //   } on DioException catch (e) {
+  //     throw _wrap(e);
+  //   }
+  // }
+
+
+
+
+  Exception _wrap(DioException e) {
+    final d = e.response?.data;
+    final msg = (d is Map && d['message'] is String)
+        ? d['message'] as String
+        : (e.message ?? 'Network error');
+    return Exception(msg);
+  }
+
+  Future<void> sendResetOtp(String email) async {
     try {
-      final res = await service.resetPassword(email: email, otp: otp, newPassword: newPassword);
-      if (res['success'] != true) throw Exception(res['message'] ?? 'Reset failed');
+      final res = await service.sendResetOtp(email: email);
+      if (res['success'] != true) {
+        throw Exception(res['message'] ?? 'Failed to send OTP');
+      }
+    } on DioException catch (e) {
+      throw _wrap(e);
+    }
+  }
+
+  Future<void> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    try {
+      final res = await service.resetPassword(
+        email: email, otp: otp, newPassword: newPassword,
+      );
+      if (res['success'] != true) {
+        throw Exception(res['message'] ?? 'Reset failed');
+      }
     } on DioException catch (e) {
       throw _wrap(e);
     }
@@ -112,20 +149,9 @@ class AuthRepository {
 
   Future<void> changePassword({required String oldPassword, required String newPassword}) async {
     try {
-      final res = await service.changePassword(oldPassword: oldPassword, newPassword: newPassword);
-      if (res['success'] != true) throw Exception(res['message'] ?? 'Change password failed');
-    } on DioException catch (e) {
-      throw _wrap(e);
-    }
-  }
-
-  Future<void> sendResetOtp(String email) async {
-    try {
-      final res = await service.sendResetOtp(email: email);
-      if (res['success'] != true) throw Exception(res['message'] ?? 'Failed to send OTP');
-    } on DioException catch (e) {
-      throw _wrap(e);
-    }
+      final r = await service.changePassword(oldPassword: oldPassword, newPassword: newPassword);
+      if (r['success'] != true) throw Exception(r['message'] ?? 'Change password failed');
+    } on DioException catch (e) { throw _wrap(e); }
   }
 
 

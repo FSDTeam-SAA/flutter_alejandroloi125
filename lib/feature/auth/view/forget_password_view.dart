@@ -21,7 +21,27 @@ class _ForgetPasswordViewState extends State<ForgetPasswordView> {
   @override
   void dispose() { emailController.dispose(); super.dispose(); }
 
+  // Future<void> _continue() async {
+  //   final ap = context.read<AuthProvider>();
+  //   if (!(_formKey.currentState?.validate() ?? false)) return;
+  //
+  //   final ok = await ap.sendResetOtp(emailController.text.trim());
+  //   if (!mounted) return;
+  //
+  //   if (ok) {
+  //     Get.to(() => ResetPasswordSecurityCode(email: emailController.text.trim()));
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       const SnackBar(content: Text('OTP sent to your email')),
+  //     );
+  //   } else {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text(ap.error ?? 'Failed to send OTP')),
+  //     );
+  //   }
+  // }
+
   Future<void> _continue() async {
+    // onTap of Continue button
     final ap = context.read<AuthProvider>();
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
@@ -64,7 +84,8 @@ class _ForgetPasswordViewState extends State<ForgetPasswordView> {
                 prefixIcon: Icons.email_outlined,
                 hintText: 'Email',
                 controller: emailController,
-                validator: (v) => ap.validateEmail(v),
+                // validator: (v) => ap.validateEmail(v),
+                validator: (v) => context.read<AuthProvider>().validateEmail(v),
               ),
             ),
             GestureDetector(

@@ -5,7 +5,10 @@ import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/feature/auth/view/login_screen_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-// import 'package:provider/provider.dart'; // removed
+import 'package:http/http.dart';
+
+import '../providers/auth_provider.dart';
+import 'package:provider/provider.dart'; // removed
 
 class CreateNewPasswordScreen extends StatefulWidget {
   final String email;
@@ -33,22 +36,47 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
     super.dispose();
   }
 
-  Future<void> _submit() async {
-    final okForm = _formKey.currentState?.validate() ?? false;
-    if (!okForm) return;
+  // Future<void> _submit() async {
+  //   final okForm = _formKey.currentState?.validate() ?? false;
+  //   if (!okForm) return;
+  //
+  //   if (!mounted) return;
+  //
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     const SnackBar(content: Text('Password updated successfully')),
+  //   );
+  //
+  //   Get.offAll(
+  //         () => LoginScreenView(),
+  //     transition: Transition.rightToLeft,
+  //     duration: const Duration(milliseconds: 350),
+  //     curve: Curves.easeInOut,
+  //   );
+  // }
 
+  Future<void> _submit() async {
+    // onPressed of Continue
+    final ap = context.read<AuthProvider>();
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    final ok = await ap.resetPassword(
+      email: widget.email,
+      otp: widget.otp,
+      newPassword: passCtrl.text.trim(),
+    );
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Password updated successfully')),
-    );
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password reset successfully')),
+      );
+      Get.offAll(() => LoginScreenView());
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ap.error ?? 'Reset failed')),
+      );
+    }
 
-    Get.offAll(
-          () => LoginScreenView(),
-      transition: Transition.rightToLeft,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeInOut,
-    );
   }
 
   @override
