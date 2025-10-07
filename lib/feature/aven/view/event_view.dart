@@ -1,7 +1,10 @@
 import 'package:alejandroloi/core/common/widgets/pilltabs.dart';
 import 'package:alejandroloi/core/util/styles.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 
+import '../../app_ground.dart';
 import 'my_event_investments/my_event_investment.dart';
 import 'my_event_project/my_event_project.dart';
 import 'my_event_auctions/my_event_auction.dart';
@@ -28,15 +31,6 @@ class _EventViewState extends State<EventView>
     );
   }
 
-  // (Optional) if parent rebuilds EventView with a different initialTab
-  // @override
-  // void didUpdateWidget(covariant EventView oldWidget) {
-  //   super.didUpdateWidget(oldWidget);
-  //   if (oldWidget.initialTab != widget.initialTab &&
-  //       _tabController.index != widget.initialTab.index) {
-  //     _tabController.animateTo(widget.initialTab.index);
-  //   }
-  // }
 
   @override
   void dispose() {
@@ -52,6 +46,14 @@ class _EventViewState extends State<EventView>
         title: const Text('My Event', style: headingText),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Get.offAll(() => const AppGround(),
+            transition: Transition.rightToLeft,
+            duration: const Duration(milliseconds: 320),
+            curve: Curves.easeInOut,
+          ),
+        ),
       ),
       body: Column(
         children: [

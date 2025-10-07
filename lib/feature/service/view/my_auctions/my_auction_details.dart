@@ -1,8 +1,20 @@
+// lib/feature/auction/view/my_auction_details.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
+/// Local-only detail screen (no Provider/API).
+/// Keep your existing route calls working: pass the id you have,
+/// and optionally pass a fully-populated [detail] to render real data.
 class MyAuctionDetailScreen extends StatelessWidget {
-  const MyAuctionDetailScreen({super.key});
+  final String auctionId;
+  final AuctionDetail? detail;
+
+  const MyAuctionDetailScreen({
+    super.key,
+    required this.auctionId,
+    this.detail,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -11,45 +23,97 @@ class MyAuctionDetailScreen extends StatelessWidget {
     const border = Color(0xFF242931);
     const accent = Color(0xFFFF8A34);
 
+    // Fallback demo content if no detail provided.
+    final a = detail ??
+        AuctionDetail(
+          name: 'Auction #$auctionId',
+          description:
+          'No description provided. (This is placeholder content shown because no data was passed in.)',
+          startingBid: null,
+          scheduleDate: '',
+          scheduleTime: '',
+          durationMinutes: null,
+          heroImageAsset: 'assets/images/earpod.jpg',
+        );
+
+    final title = a.name ?? 'Auction';
+    final desc = (a.description ?? '').trim().isEmpty
+        ? 'No description provided.'
+        : a.description!.trim();
+    final start =
+    a.startingBid != null ? '\$${_comma(a.startingBid!)}' : '-';
+    final schedule = _schedule(a.scheduleDate, a.scheduleTime);
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
+      value:
+      SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
       child: Scaffold(
         backgroundColor: bg,
         body: SafeArea(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             children: [
-              // main card
               Container(
                 decoration: BoxDecoration(
                   color: cardBg,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: border),
                   boxShadow: const [
-                    BoxShadow(color: Colors.black54, blurRadius: 12, offset: Offset(0, 6)),
+                    BoxShadow(
+                        color: Colors.black54,
+                        blurRadius: 12,
+                        offset: Offset(0, 6)),
                   ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // header image with actions & live badge
+                    // ===== Header image + overlays =====
                     Stack(
                       children: [
                         ClipRRect(
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(14)),
+                          borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(14)),
                           child: AspectRatio(
                             aspectRatio: 16 / 9,
-                            child: Image.asset(
-                              'assets/images/earpod.jpg', // replace with your asset
+                            child: a.heroImageAsset != null
+                                ? Image.asset(
+                              a.heroImageAsset!,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                color: Colors.black26,
-                                alignment: Alignment.center,
-                                child: const Icon(Icons.broken_image_outlined),
+                              errorBuilder: (_, __, ___) => _broken(),
+                            )
+                                : (a.heroImageUrl != null
+                                ? Image.network(
+                              a.heroImageUrl!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => _broken(),
+                            )
+                                : _broken()),
+                          ),
+                        ),
+
+                        // soft bottom gradient for text legibility
+                        Positioned.fill(
+                          child: IgnorePointer(
+                            child: DecoratedBox(
+                              decoration: BoxDecoration(
+                                borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(14)),
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.black.withOpacity(0.08),
+                                    Colors.black.withOpacity(0.26),
+                                  ],
+                                ),
                               ),
                             ),
                           ),
                         ),
+
+                        // top actions
                         Positioned(
                           top: 10,
                           left: 10,
@@ -58,36 +122,49 @@ class MyAuctionDetailScreen extends StatelessWidget {
                             children: [
                               _CircleIconButton(
                                 icon: Icons.arrow_back_ios_new,
-                                onTap: () => Navigator.pop(context),
+                                onTap: () => Get.back(),
                               ),
                               const Spacer(),
-                              _CircleIconButton(icon: Icons.share_outlined, onTap: () {}),
+                              _CircleIconButton(
+                                  icon: Icons.share_outlined, onTap: () {}),
                               const SizedBox(width: 8),
-                              _CircleIconButton(icon: Icons.more_horiz, onTap: () {}),
+                              _CircleIconButton(
+                                  icon: Icons.more_horiz, onTap: () {}),
                             ],
                           ),
                         ),
+
                         // LIVE pill
                         Positioned(
                           top: 44,
                           left: 58,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(.92),
+                              color: Colors.red.withOpacity(.96),
                               borderRadius: BorderRadius.circular(999),
+                              boxShadow: const [
+                                BoxShadow(
+                                    color: Colors.black45,
+                                    blurRadius: 6,
+                                    offset: Offset(0, 2)),
+                              ],
                             ),
-                            child: Row(
-                              children: const [
-                                Icon(Icons.fiber_manual_record, size: 12, color: Colors.white),
+                            child: const Row(
+                              children: [
+                                Icon(Icons.fiber_manual_record,
+                                    size: 12, color: Colors.white),
                                 SizedBox(width: 6),
                                 Text('LIVE',
                                     style: TextStyle(
-                                        color: Colors.white, fontWeight: FontWeight.w800)),
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w800)),
                               ],
                             ),
                           ),
                         ),
+
                         // author chip + stats
                         Positioned(
                           left: 12,
@@ -111,60 +188,71 @@ class MyAuctionDetailScreen extends StatelessWidget {
                                           fontWeight: FontWeight.w700)),
                                   Text('@eleanorpena',
                                       style: TextStyle(
-                                          color: Colors.white.withOpacity(.7), fontSize: 12)),
+                                          color: Colors.white.withOpacity(.7),
+                                          fontSize: 12)),
                                 ],
                               ),
                               const Spacer(),
-                              _TinyPill(icon: Icons.remove_red_eye_outlined, text: '142'),
+                              const _TinyPill(
+                                  icon: Icons.remove_red_eye_outlined,
+                                  text: '142'),
                               const SizedBox(width: 6),
-                              _TinyPill(icon: Icons.favorite_border, text: '86'),
+                              const _TinyPill(
+                                  icon: Icons.favorite_border, text: '86'),
                             ],
                           ),
                         ),
                       ],
                     ),
 
-                    // body
+                    // ===== Body =====
                     Padding(
                       padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // title and timer
+                          // title + timer
                           Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Expanded(
+                              Expanded(
                                 child: Text(
-                                  'Gaming Console',
-                                  style: TextStyle(
+                                  title,
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 18.5,
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
                               ),
-                              _TimerPill(text: 'Ends in: 2:57'),
+                              const _TimerPill(text: 'Ends in: 2:57'),
                             ],
                           ),
                           const SizedBox(height: 8),
+
+                          // description
                           Text(
-                            'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum metus eu egestas pharetra. Fusce bibendum odio et venenatis efficitur.',
+                            desc,
                             style: TextStyle(
                               color: Colors.white.withOpacity(.75),
                               height: 1.35,
                             ),
                           ),
                           const SizedBox(height: 12),
+
+                          // current bid
                           Row(
                             children: [
-                              Text('Current Bid ',
-                                  style: TextStyle(
-                                      color: Colors.white.withOpacity(.85),
-                                      fontWeight: FontWeight.w600)),
-                              const Text(
-                                '\$1,200',
+                              Text(
+                                'Current Bid ',
                                 style: TextStyle(
+                                  color: Colors.white.withOpacity(.85),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                start,
+                                style: const TextStyle(
                                   color: accent,
                                   fontWeight: FontWeight.w900,
                                 ),
@@ -178,17 +266,34 @@ class MyAuctionDetailScreen extends StatelessWidget {
 
                     const Divider(height: 1, color: border),
 
-                    // live chat header
+                    // schedule + duration
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 2),
+                      child: Row(
+                        children: [
+                          _InfoPill(icon: Icons.event, text: schedule),
+                          const SizedBox(width: 12),
+                          _InfoPill(
+                              icon: Icons.schedule,
+                              text: _duration(a.durationMinutes)),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+                    const Divider(height: 1, color: border),
+
+                    // section header
                     const _SectionHeaderWithIcon(
                       icon: Icons.chat_bubble_outline,
                       text: 'Live Chat',
                     ),
 
-                    // chat list
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+                    // static sample chat list (kept for layout)
+                    const Padding(
+                      padding: EdgeInsets.fromLTRB(14, 0, 14, 14),
                       child: Column(
-                        children: const [
+                        children: [
                           _ChatItem(
                             avatar:
                             'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91',
@@ -217,27 +322,6 @@ class MyAuctionDetailScreen extends StatelessWidget {
                             timeAgo: '2m ago',
                             message: '\$1000',
                           ),
-                          _ChatItem(
-                            avatar:
-                            'https://images.unsplash.com/photo-1502685104226-ee32379fefbe',
-                            name: 'Devon Lane',
-                            timeAgo: '2m ago',
-                            message: 'Beautiful !',
-                          ),
-                          _ChatItem(
-                            avatar:
-                            'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91',
-                            name: 'Robert Fox',
-                            timeAgo: '2m ago',
-                            message: "I'll go \$1,200",
-                          ),
-                          _ChatItem(
-                            avatar:
-                            'https://images.unsplash.com/photo-1517841905240-472988babdf9',
-                            name: 'Darlene Robertson',
-                            timeAgo: '2m ago',
-                            message: '\$1250',
-                          ),
                         ],
                       ),
                     ),
@@ -250,10 +334,65 @@ class MyAuctionDetailScreen extends StatelessWidget {
       ),
     );
   }
+
+  // ===== helpers =====
+  static String _comma(int n) {
+    final s = n.toString();
+    final b = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      b.write(s[i]);
+      final left = s.length - i - 1;
+      if (left % 3 == 0 && left != 0) b.write(',');
+    }
+    return b.toString();
+  }
+
+  static String _schedule(String? d, String? t) {
+    final dd = (d ?? '').trim(), tt = (t ?? '').trim();
+    if (dd.isEmpty && tt.isEmpty) return '-';
+    return '$dd ${tt.isEmpty ? '' : tt}';
+  }
+
+  static String _duration(int? m) {
+    if (m == null) return '-';
+    if (m >= 60) {
+      final h = m ~/ 60;
+      return '$h hour${h > 1 ? 's' : ''}';
+    }
+    return '$m minutes';
+  }
+
+  Widget _broken() => Container(
+    color: Colors.black26,
+    alignment: Alignment.center,
+    child: const Icon(Icons.broken_image_outlined),
+  );
+}
+
+/// Lightweight local model for this screen (no API/provider).
+class AuctionDetail {
+  final String? name;
+  final String? description;
+  final int? startingBid; // USD
+  final String? scheduleDate; // e.g. "2025-10-10"
+  final String? scheduleTime; // e.g. "15:30"
+  final int? durationMinutes; // e.g. 120
+  final String? heroImageAsset; // use asset OR:
+  final String? heroImageUrl; // ...a network image
+
+  const AuctionDetail({
+    this.name,
+    this.description,
+    this.startingBid,
+    this.scheduleDate,
+    this.scheduleTime,
+    this.durationMinutes,
+    this.heroImageAsset,
+    this.heroImageUrl,
+  });
 }
 
 // ===== atoms & small widgets =====
-
 class _CircleIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
@@ -367,6 +506,43 @@ class _SectionHeaderWithIcon extends StatelessWidget {
   }
 }
 
+class _InfoPill extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _InfoPill({required this.icon, required this.text});
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Container(
+        height: 38,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1F26),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFF2A313A)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: Colors.white.withOpacity(0.85)),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                text,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.85),
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _ChatItem extends StatelessWidget {
   final String avatar;
   final String name;
@@ -401,8 +577,8 @@ class _ChatItem extends StatelessWidget {
                     ),
                     Text(
                       timeAgo,
-                      style: TextStyle(
-                          color: Colors.white.withOpacity(.7), fontSize: 12),
+                      style:
+                      TextStyle(color: Colors.white.withOpacity(.7), fontSize: 12),
                     ),
                   ],
                 ),

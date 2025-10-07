@@ -1,223 +1,73 @@
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import 'package:get/get_core/src/get_main.dart';
-//
-// import 'my_event_investment_detail.dart';
-//
-//
-// class MyEventInvestmentScreen extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//       debugShowCheckedModeBanner: false,
-//       home: EventScreen(),
-//     );
-//   }
-// }
-//
-// class EventScreen extends StatelessWidget {
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: Colors.black,
-//       body: Padding(
-//         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20),
-//         child: ListView(
-//           children: [
-//             EventCard(
-//               image: 'assets/images/garden.jpg',
-//               title: 'Urban Farming Initiative',
-//               description: 'Looking for an experienced web designer to revamp our company website. Need',
-//               progress: '100%',
-//               amount: '\$25,000',
-//               daysLeft: '10 days left',
-//             ),
-//             EventCard(
-//               image: 'assets/images/diamond.jpg',
-//               title: 'Urban Farming Initiative',
-//               description: 'Looking for an experienced web designer to revamp our company website. Need',
-//               progress: '45%',
-//               amount: '\$25,000',
-//               daysLeft: '10 days left',
-//             ),
-//             EventCard(
-//               image: 'assets/images/wind-mill.jpg',
-//               title: 'Urban Farming Initiative',
-//               description: 'Looking for an experienced web designer to revamp our company website. Need',
-//               progress: '60%',
-//               amount: '\$25,000',
-//               daysLeft: '10 days left',
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-// }
-//
-// class EventCard extends StatelessWidget {
-//   final String image;
-//   final String title;
-//   final String description;
-//   final String progress;
-//   final String amount;
-//   final String daysLeft;
-//
-//   EventCard({
-//     required this.image,
-//     required this.title,
-//     required this.description,
-//     required this.progress,
-//     required this.amount,
-//     required this.daysLeft,
-//   });
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Card(
-//       margin: EdgeInsets.only(bottom: 16.0),
-//       color: Colors.grey[900],
-//       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           ClipRRect(
-//             borderRadius: BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10)),
-//             child: Image.asset(
-//               image,
-//               width: double.infinity,
-//               height: 180,
-//               fit: BoxFit.cover,
-//             ),
-//           ),
-//           Padding(
-//             padding: const EdgeInsets.all(12.0),
-//             child: Text(
-//               title,
-//               style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-//             ),
-//           ),
-//           Padding(
-//             padding: const EdgeInsets.symmetric(horizontal: 12.0),
-//             child: Text(
-//               description,
-//               style: TextStyle(color: Colors.white70, fontSize: 14),
-//             ),
-//           ),
-//           Padding(
-//             padding: const EdgeInsets.all(12.0),
-//             child: Row(
-//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//               children: [
-//                 Text(
-//                   progress,
-//                   style: TextStyle(color: Colors.orange, fontSize: 14),
-//                 ),
-//                 Text(
-//                   amount,
-//                   style: TextStyle(color: Colors.white, fontSize: 14),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           Padding(
-//             padding: const EdgeInsets.symmetric(
-//                 horizontal: 12.0,
-//                 // bottom: 12.0,
-//             ),
-//             child: Row(
-//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//               children: [
-//                 Text(
-//                   daysLeft,
-//                   style: TextStyle(color: Colors.white70, fontSize: 12),
-//                 ),
-//                 TextButton(
-//                   onPressed: () {
-//                     // Navigate to the ProjectDetailsScreen with a right-to-left transition
-//                     Get.to(
-//                       MyEventInvestmentDetail(),
-//                       transition: Transition.rightToLeft,  // Set right-to-left transition
-//                       duration: Duration(milliseconds: 300),  // Set the transition duration (optional)
-//                     );
-//                   },
-//                   child: Text(
-//                     'View Details',
-//                     style: TextStyle(color: Colors.orange, fontSize: 14),
-//                   ),
-//                 ),
-//               ],
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-
+// lib/feature/aven/view/my_event_investments/my_event_investment_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
+import '../../../models/investment.dart';
 import 'my_event_investment_detail.dart';
 
-// ------- Theme (kept consistent with your other screens) -------
-const _bg = Color(0xFF000000);
+// ------- Theme -------
 const _card = Color(0xFF1E1F22);
 const _accent = Color(0xFFFF7A00);
 const _textDim = Colors.white70;
 const _barTrack = Color(0xFF3A3A3E);
 
+/// Pure UI screen — no API/Provider integration.
+/// Pass a pre-fetched list of [Investment] from the caller.
 class MyEventInvestmentScreen extends StatelessWidget {
-  const MyEventInvestmentScreen({super.key});
+  const MyEventInvestmentScreen({
+    super.key,
+    this.investments = const [],
+  });
+
+  final List<Investment> investments;
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
+    if (investments.isEmpty) {
+      return const Center(
+        child: Text('No investments found',
+            style: TextStyle(color: Colors.white70)),
+      );
+    }
+
+    return ListView.builder(
       padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-      children: const [
-        _InvestmentCard(
-          image: 'assets/images/garden.jpg',
-          category: 'Agriculture',
-          title: 'Urban Farming Initiative',
-          description:
-          'Looking for an experienced web designer to revamp our company website. Need',
-          progress: 1.00, // 100%
-          amount: '\$25,000',
-          daysLeft: '10 days left',
-        ),
-        _InvestmentCard(
-          image: 'assets/images/diamond.jpg',
-          category: 'Agriculture',
-          title: 'Urban Farming Initiative',
-          description:
-          'Looking for an experienced web designer to revamp our company website. Need',
-          progress: 0.45, // 45%
-          amount: '\$25,000',
-          daysLeft: '10 days left',
-        ),
-        _InvestmentCard(
-          image: 'assets/images/wind-mill.jpg',
-          category: 'Agriculture',
-          title: 'Urban Farming Initiative',
-          description:
-          'Looking for an experienced web designer to revamp our company website. Need',
-          progress: 0.60, // 60%
-          amount: '\$25,000',
-          daysLeft: '10 days left',
-        ),
-      ],
+      itemCount: investments.length,
+      itemBuilder: (context, i) {
+        final it = investments[i];
+
+        final amountStr = '\$${_comma(it.fundingGoal ?? 0)}';
+        final daysStr = '${it.daysLeft ?? 0} days left';
+        final progress =
+        ((it.progressPct) / 100).clamp(0, 1).toDouble(); // 0..1
+        final category =
+        it.category.isNotEmpty ? it.category.first : 'General';
+        final hero =
+            it.primaryImageUrl ?? 'assets/images/wind-mill.jpg';
+
+        return _InvestmentCard(
+          image: hero,
+          category: category,
+          title: it.name,
+          description: it.description,
+          progress: progress,
+          amount: amountStr,
+          daysLeft: daysStr,
+          onView: () => Get.to(
+                () => MyEventInvestmentDetail(investment: it),
+            transition: Transition.rightToLeft,
+            duration: const Duration(milliseconds: 300),
+          ),
+        );
+      },
     );
   }
 }
 
 class _InvestmentCard extends StatelessWidget {
-  final String image;
-  final String category;
-  final String title;
-  final String description;
-  final double progress; // 0.0 - 1.0
-  final String amount;
-  final String daysLeft;
+  final String image, category, title, description, amount, daysLeft;
+  final double progress; // 0..1
+  final VoidCallback onView;
 
   const _InvestmentCard({
     required this.image,
@@ -227,81 +77,66 @@ class _InvestmentCard extends StatelessWidget {
     required this.progress,
     required this.amount,
     required this.daysLeft,
+    required this.onView,
   });
 
   @override
   Widget build(BuildContext context) {
     final pctText = '${(progress * 100).round()}% of $amount';
-
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: _card,
         borderRadius: BorderRadius.circular(12),
         boxShadow: const [
-          BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4)),
+          BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4))
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // header image
           ClipRRect(
             borderRadius: const BorderRadius.only(
               topLeft: Radius.circular(12),
               topRight: Radius.circular(12),
             ),
-            child: Image.asset(image, height: 168, width: double.infinity, fit: BoxFit.cover),
+            child: _CardImage(image),
           ),
-
-          // content
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // category
-                Text(
-                  category,
-                  style: const TextStyle(
-                    color: _accent,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                Text(category,
+                    style: const TextStyle(
+                        color: _accent,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600)),
                 const SizedBox(height: 4),
-                // title
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16.5,
-                    fontWeight: FontWeight.w800,
-                    height: 1.1,
-                  ),
-                ),
+                Text(title,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16.5,
+                        fontWeight: FontWeight.w800,
+                        height: 1.1)),
                 const SizedBox(height: 6),
-                // description
                 Text(
                   description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(color: _textDim, fontSize: 13.5, height: 1.25),
+                  style: const TextStyle(
+                      color: _textDim, fontSize: 13.5, height: 1.25),
                 ),
                 const SizedBox(height: 12),
-
-                // progress labels
                 Row(
                   children: [
-                    Expanded(
-                      child: _Label(text: pctText, strong: true),
-                    ),
-                    Text(daysLeft, style: const TextStyle(color: Colors.white60, fontSize: 12)),
+                    Expanded(child: _Label(text: pctText, strong: true)),
+                    Text(daysLeft,
+                        style:
+                        const TextStyle(color: Colors.white60, fontSize: 12)),
                   ],
                 ),
                 const SizedBox(height: 6),
-
-                // progress bar
                 LayoutBuilder(
                   builder: (context, c) => Stack(
                     children: [
@@ -325,28 +160,20 @@ class _InvestmentCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 12),
-
-                // view details (outlined full-width)
                 SizedBox(
                   width: double.infinity,
                   height: 42,
                   child: OutlinedButton(
-                    onPressed: () {
-                      Get.to(
-                        const MyEventInvestmentDetail(),
-                        transition: Transition.rightToLeft,
-                        duration: const Duration(milliseconds: 300),
-                      );
-                    },
+                    onPressed: onView,
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: _accent, width: 1.2),
                       foregroundColor: _accent,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
-                    child: const Text(
-                      'View Details',
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
+                    child: const Text('View Details',
+                        style: TextStyle(fontWeight: FontWeight.w700)),
                   ),
                 ),
               ],
@@ -354,6 +181,30 @@ class _InvestmentCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _CardImage extends StatelessWidget {
+  final String src;
+  const _CardImage(this.src);
+
+  @override
+  Widget build(BuildContext context) {
+    final isNet = src.startsWith('http');
+    return SizedBox(
+      height: 168,
+      width: double.infinity,
+      child: isNet
+          ? Image.network(
+        src,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => const ColoredBox(
+          color: Colors.black26,
+          child: Center(child: Icon(Icons.broken_image_outlined)),
+        ),
+      )
+          : Image.asset(src, fit: BoxFit.cover),
     );
   }
 }
@@ -374,4 +225,16 @@ class _Label extends StatelessWidget {
       ),
     );
   }
+}
+
+// --- helpers ---
+String _comma(int n) {
+  final s = n.toString();
+  final b = StringBuffer();
+  for (int i = 0; i < s.length; i++) {
+    b.write(s[i]);
+    final left = s.length - i - 1;
+    if (left % 3 == 0 && left != 0) b.write(',');
+  }
+  return b.toString();
 }

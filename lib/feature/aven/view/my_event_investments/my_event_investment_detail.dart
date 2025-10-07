@@ -1,8 +1,13 @@
+// lib/feature/aven/view/my_event_investments/my_event_investment_detail.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../models/investment.dart';
+
+
 class MyEventInvestmentDetail extends StatelessWidget {
-  const MyEventInvestmentDetail({super.key});
+  final Investment investment;
+  const MyEventInvestmentDetail({super.key, required this.investment});
 
   @override
   Widget build(BuildContext context) {
@@ -11,53 +16,58 @@ class MyEventInvestmentDetail extends StatelessWidget {
     const border = Color(0xFF242931);
     const accent = Color(0xFFFF8A34);
 
+    // hero image
+    final heroUrl = investment.primaryImageUrl;
+    final hero = (heroUrl != null && heroUrl.startsWith('http'))
+        ? Image.network(
+      heroUrl,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) =>
+          Image.asset('assets/images/wind-mill.jpg', fit: BoxFit.cover),
+    )
+        : Image.asset('assets/images/wind-mill.jpg', fit: BoxFit.cover);
+
+    final category =
+    investment.category.isNotEmpty ? investment.category.first : 'General';
+    final title = investment.name.isEmpty ? '—' : investment.name;
+    final desc =
+    investment.description.isEmpty ? '—' : investment.description.trim();
+
+    final progress = (investment.progressPct / 100).clamp(0, 1).toDouble();
+    final goalText = _comma(investment.fundingGoal ?? 0);
+    final daysLeft = investment.daysLeft ?? 0;
+
+    final terms = investment.investmentTerms.trim();
+    final galleryUrls = investment.images.map((e) => e.url).toList();
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light.copyWith(
-        statusBarColor: Colors.transparent,
-      ),
+      value:
+      SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
       child: Scaffold(
-        // No AppBar — we use the custom back button on the image
         backgroundColor: bg,
         body: SafeArea(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             children: [
-              // main card
               Container(
                 decoration: BoxDecoration(
                   color: cardBg,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: border),
                   boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black54,
-                      blurRadius: 12,
-                      offset: Offset(0, 6),
-                    )
+                    BoxShadow(color: Colors.black54, blurRadius: 12, offset: Offset(0, 6))
                   ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // hero image + top actions + author row
+                    // ===== Hero =====
                     Stack(
                       children: [
                         ClipRRect(
-                          borderRadius: const BorderRadius.vertical(
-                            top: Radius.circular(14),
-                          ),
-                          child: AspectRatio(
-                            aspectRatio: 16 / 9,
-                            child: Image.asset(
-                              'assets/images/wind-mill.jpg',
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
-                                color: Colors.black26,
-                                alignment: Alignment.center,
-                                child: const Icon(Icons.broken_image_outlined),
-                              ),
-                            ),
-                          ),
+                          borderRadius:
+                          const BorderRadius.vertical(top: Radius.circular(14)),
+                          child: AspectRatio(aspectRatio: 16 / 9, child: hero),
                         ),
                         Positioned(
                           top: 8,
@@ -66,128 +76,89 @@ class MyEventInvestmentDetail extends StatelessWidget {
                           child: Row(
                             children: [
                               _CircleIconButton(
-                                icon: Icons.arrow_back_ios_new,
-                                onTap: () => Navigator.pop(context),
-                              ),
+                                  icon: Icons.arrow_back_ios_new,
+                                  onTap: () => Navigator.pop(context)),
                               const Spacer(),
                               _CircleIconButton(
-                                icon: Icons.favorite_border,
-                                onTap: () {},
-                              ),
+                                  icon: Icons.favorite_border, onTap: () {}),
                               const SizedBox(width: 8),
                               _CircleIconButton(
-                                icon: Icons.more_horiz,
-                                onTap: () {},
-                              ),
+                                  icon: Icons.more_horiz, onTap: () {}),
                             ],
                           ),
                         ),
-                        // author chip
                         const Positioned(
-                          left: 12,
-                          bottom: 10,
-                          child: _AuthorChip(),
-                        ),
+                            left: 12, bottom: 10, child: _AuthorChip()),
                       ],
                     ),
 
-                    // body
+                    // ===== Body =====
                     Padding(
                       padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          _Badge(text: 'Agriculture', color: accent),
-                          SizedBox(height: 8),
-                          Text(
-                            'Urban Farming Initiative',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          _Para(
-                            'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum metus eu egestas pharetra. Fusce bibendum odio et venenatis efficitur.',
-                          ),
-                          SizedBox(height: 12),
-                          _InfoBar(
-                            icon: Icons.location_on_outlined,
-                            label: 'New York, NY',
-                          ),
-                          SizedBox(height: 16),
+                        children: [
+                          _Badge(text: category, color: accent),
+                          const SizedBox(height: 8),
+                          Text(title,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w800)),
+                          const SizedBox(height: 8),
+                          _Para(desc),
+                          const SizedBox(height: 12),
+                          const _InfoBar(
+                              icon: Icons.location_on_outlined, label: '—'),
+                          const SizedBox(height: 16),
+
                           _ProgressBar(
-                            value: 0.45,
-                            background: Color(0xFF1E232A),
-                            fill: accent,
+                              value: progress,
+                              background: const Color(0xFF1E232A),
+                              fill: accent),
+                          const SizedBox(height: 8),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              _Metric(
+                                  top: '${(progress * 100).round()}%',
+                                  bottom: 'of \$$goalText'),
+                              const _Metric(top: '—', bottom: 'Backers'),
+                              _Metric(top: '$daysLeft', bottom: 'Days left'),
+                            ],
                           ),
-                          SizedBox(height: 8),
-                          _MetricsRow(),
-                          SizedBox(height: 18),
-                          _SectionTitle('About This Project'),
-                          SizedBox(height: 8),
-                          _Para(
-                              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum quis velit eget auctor mollis. Curabitur sed dui neque.'),
-                          SizedBox(height: 10),
-                          _Para(
-                              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur sapien nulla, ultrices a ligula interdum, tempus rutrum libero. Nam tempus erat vel dui eleifend volutpat. Aliquam elementum, ipsum at placerat volutpat, quam orci pharetra dolor, at porttitor magna augue nec lectus. In fermentum nisi.'),
-                          SizedBox(height: 16),
-                          _SectionTitle('Gallery'),
-                          SizedBox(height: 8),
-                          _GalleryRow(),
-                          SizedBox(height: 16),
-                          _SectionTitle('Investment Terms'),
-                          SizedBox(height: 6),
-                          _Bullet('Lorem ipsum dolor sit amet, consectetur adipiscing elit.'),
-                          _Bullet('Quisque fermentum tortor nec pharetra viverra.'),
-                          _Bullet('Fusce id metus at lacus leo convallis convallis.'),
-                          _Bullet('Duis mollis dolor sit amet tortor egestas, vel consectetur enim blandit.'),
-                          _Bullet('Duis lacus augue velit eu sodales, sit amet tristique mauris fringilla.'),
-                          _Bullet('Sed in mi vel velit ultrices dignissim.'),
-                          SizedBox(height: 16),
-                          _SectionTitle('Investor'),
-                          SizedBox(height: 8),
-                          InvestorTile(
+
+                          const SizedBox(height: 18),
+                          const _SectionTitle('Investment Terms'),
+                          const SizedBox(height: 6),
+                          _Para(terms.isEmpty ? '—' : terms),
+
+                          const SizedBox(height: 16),
+                          const _SectionTitle('Gallery'),
+                          const SizedBox(height: 8),
+                          _GalleryRow(urls: galleryUrls),
+
+                          const SizedBox(height: 16),
+                          const _SectionTitle('Recent Investors'),
+                          const SizedBox(height: 8),
+                          const InvestorTile(
                             name: 'Eleanor Pena',
                             subtitle: '3 Investments',
                             amount: '\$1000',
                             avatar: 'https://picsum.photos/200',
                           ),
-
-                          InvestorTile(
-                            name: 'Eleanor Pena',
-                            subtitle: '3 Investments',
-                            amount: '\$1000',
-                            avatar: 'https://picsum.photos/200',
+                          const InvestorTile(
+                            name: 'Jane Cooper',
+                            subtitle: '5 Investments',
+                            amount: '\$250',
+                            avatar: 'https://picsum.photos/210',
                           ),
-
                         ],
                       ),
                     ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 16),
-
-              // // Bottom CTA
-              // SizedBox(
-              //   width: double.infinity,
-              //   child: ElevatedButton(
-              //     style: ElevatedButton.styleFrom(
-              //       backgroundColor: accent,
-              //       foregroundColor: Colors.black,
-              //       padding: const EdgeInsets.symmetric(vertical: 14),
-              //       shape: RoundedRectangleBorder(
-              //         borderRadius: BorderRadius.circular(12),
-              //       ),
-              //       elevation: 0,
-              //     ),
-              //     onPressed: () {},
-              //     child: const Text('Invest Now'),
-              //   ),
-              // ),
             ],
           ),
         ),
@@ -196,7 +167,7 @@ class MyEventInvestmentDetail extends StatelessWidget {
   }
 }
 
-// ====== atoms & molecules ======
+// ===== UI bits =====
 
 class _CircleIconButton extends StatelessWidget {
   final IconData icon;
@@ -230,27 +201,19 @@ class _AuthorChip extends StatelessWidget {
         const CircleAvatar(
           radius: 14,
           backgroundImage: NetworkImage(
-            'https://images.unsplash.com/photo-1544005313-94ddf0286df2',
-          ),
+              'https://images.unsplash.com/photo-1544005313-94ddf0286df2'),
         ),
         const SizedBox(width: 8),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Eleanor Pena',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.95),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            Text(
-              '@eleanorp',
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.7),
-                fontSize: 12,
-              ),
-            ),
+            Text('Eleanor Pena',
+                style: TextStyle(
+                    color: Colors.white.withOpacity(0.95),
+                    fontWeight: FontWeight.w600)),
+            Text('@eleanorp',
+                style: TextStyle(
+                    color: Colors.white.withOpacity(0.7), fontSize: 12)),
           ],
         ),
         const SizedBox(width: 8),
@@ -274,14 +237,9 @@ class _TinyPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: Colors.white24),
       ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+      child: Text(text,
+          style: const TextStyle(
+              color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
     );
   }
 }
@@ -300,14 +258,9 @@ class _Badge extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withOpacity(0.7)),
       ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: color,
-          fontWeight: FontWeight.w700,
-          fontSize: 12,
-        ),
-      ),
+      child: Text(text,
+          style: TextStyle(
+              color: color, fontWeight: FontWeight.w700, fontSize: 12)),
     );
   }
 }
@@ -331,14 +284,11 @@ class _InfoBar extends StatelessWidget {
           Icon(icon, size: 16, color: Colors.white.withOpacity(0.85)),
           const SizedBox(width: 8),
           Flexible(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.85),
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            child: Text(label,
+                style: TextStyle(
+                    color: Colors.white.withOpacity(0.85),
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -350,81 +300,44 @@ class _ProgressBar extends StatelessWidget {
   final double value;
   final Color background;
   final Color fill;
-  const _ProgressBar({
-    required this.value,
-    required this.background,
-    required this.fill,
-  });
-
+  const _ProgressBar(
+      {required this.value, required this.background, required this.fill});
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, c) {
-        final width = c.maxWidth;
-        final filled = (width * value).clamp(0.0, width);
-        return Container(
-          height: 8,
-          decoration: BoxDecoration(
-            color: background,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
+    return LayoutBuilder(builder: (context, c) {
+      final width = c.maxWidth;
+      final filled = (width * value).clamp(0.0, width);
+      return Container(
+        height: 8,
+        decoration: BoxDecoration(
+            color: background, borderRadius: BorderRadius.circular(8)),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Container(
               width: filled,
               decoration: BoxDecoration(
-                color: fill,
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _MetricsRow extends StatelessWidget {
-  const _MetricsRow();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: const [
-        _Metric(top: '45%', bottom: 'of \$25,000'),
-        _Metric(top: '28', bottom: 'Backers'),
-        _Metric(top: '10', bottom: 'Days left'),
-      ],
-    );
+                  color: fill, borderRadius: BorderRadius.circular(8))),
+        ),
+      );
+    });
   }
 }
 
 class _Metric extends StatelessWidget {
-  final String top;
-  final String bottom;
+  final String top, bottom;
   const _Metric({required this.top, required this.bottom});
-
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          top,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
+        Text(top,
+            style: const TextStyle(
+                color: Colors.white, fontWeight: FontWeight.w800)),
         const SizedBox(height: 2),
-        Text(
-          bottom,
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
-            fontSize: 12,
-          ),
-        ),
+        Text(bottom,
+            style: TextStyle(
+                color: Colors.white.withOpacity(0.7), fontSize: 12)),
       ],
     );
   }
@@ -435,14 +348,9 @@ class _SectionTitle extends StatelessWidget {
   const _SectionTitle(this.text);
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: const TextStyle(
-        color: Colors.white,
-        fontWeight: FontWeight.w800,
-        fontSize: 16,
-      ),
-    );
+    return Text(text,
+        style: const TextStyle(
+            color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16));
   }
 }
 
@@ -451,34 +359,30 @@ class _Para extends StatelessWidget {
   const _Para(this.text);
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: TextStyle(
-        color: Colors.white.withOpacity(0.78),
-        height: 1.45,
-      ),
-    );
+    return Text(text,
+        style:
+        TextStyle(color: Colors.white.withOpacity(0.78), height: 1.45));
   }
 }
 
 class _GalleryRow extends StatelessWidget {
-  const _GalleryRow();
+  final List<String> urls;
+  const _GalleryRow({required this.urls});
 
   @override
   Widget build(BuildContext context) {
+    // choose up to two images; fallbacks if missing
+    final a = urls.isNotEmpty
+        ? urls[0]
+        : 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6';
+    final b = urls.length > 1
+        ? urls[1]
+        : 'https://images.unsplash.com/photo-1509395176047-4a66953fd231';
     return Row(
-      children: const [
-        Expanded(
-          child: _RoundedImage(
-            'https://images.unsplash.com/photo-1501004318641-b39e6451bec6',
-          ),
-        ),
-        SizedBox(width: 10),
-        Expanded(
-          child: _RoundedImage(
-            'https://images.unsplash.com/photo-1509395176047-4a66953fd231',
-          ),
-        ),
+      children: [
+        Expanded(child: _RoundedImage(a)),
+        const SizedBox(width: 10),
+        Expanded(child: _RoundedImage(b)),
       ],
     );
   }
@@ -487,7 +391,6 @@ class _GalleryRow extends StatelessWidget {
 class _RoundedImage extends StatelessWidget {
   final String url;
   const _RoundedImage(this.url);
-
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
@@ -500,88 +403,19 @@ class _RoundedImage extends StatelessWidget {
   }
 }
 
-// class _InvestorTile extends StatelessWidget {
-//   final String name;
-//   final String time;
-//   final String amount;
-//   final String avatar;
-//   const _InvestorTile({
-//     required this.name,
-//     required this.time,
-//     required this.amount,
-//     required this.avatar,
-//   });
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     const border = Color(0xFF2A313A);
-//     return Container(
-//       decoration: BoxDecoration(
-//         color: const Color(0xFF1A1F26),
-//         borderRadius: BorderRadius.circular(12),
-//         border: Border.all(color: border),
-//       ),
-//       padding: const EdgeInsets.all(12),
-//       child: Row(
-//         children: [
-//           CircleAvatar(backgroundImage: NetworkImage(avatar), radius: 18),
-//           const SizedBox(width: 10),
-//           Expanded(
-//             child: Column(
-//               crossAxisAlignment: CrossAxisAlignment.start,
-//               children: [
-//                 Text(name,
-//                     style: const TextStyle(
-//                         color: Colors.white, fontWeight: FontWeight.w700)),
-//                 const SizedBox(height: 2),
-//                 Text(
-//                   time,
-//                   style: TextStyle(
-//                       color: Colors.white.withOpacity(0.7), fontSize: 12),
-//                 ),
-//               ],
-//             ),
-//           ),
-//           Container(
-//             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-//             decoration: BoxDecoration(
-//               color: const Color(0xFFFF8A34).withOpacity(0.14),
-//               borderRadius: BorderRadius.circular(10),
-//               border: Border.all(color: const Color(0xFFFF8A34).withOpacity(0.7)),
-//             ),
-//             child: Text(
-//               amount,
-//               style: const TextStyle(
-//                 color: Color(0xFFFF8A34),
-//                 fontWeight: FontWeight.w800,
-//               ),
-//             ),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
 class InvestorTile extends StatelessWidget {
-  final String name;
-  final String subtitle; // e.g. "3 Investments"
-  final String amount;   // e.g. "$1000"
-  final String avatar;
-
-  const InvestorTile({
-    super.key,
-    required this.name,
-    required this.subtitle,
-    required this.amount,
-    required this.avatar,
-  });
-
+  final String name, subtitle, amount, avatar;
+  const InvestorTile(
+      {super.key,
+        required this.name,
+        required this.subtitle,
+        required this.amount,
+        required this.avatar});
   @override
   Widget build(BuildContext context) {
-    const cardBg  = Color(0xFF1A1F26);
-    const border  = Color(0xFF2A313A);
-    const accent  = Color(0xFFFF6A00);
+    const cardBg = Color(0xFF1A1F26);
+    const border = Color(0xFF2A313A);
+    const accent = Color(0xFFFF6A00);
 
     return Container(
       decoration: BoxDecoration(
@@ -589,66 +423,47 @@ class InvestorTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: border),
         boxShadow: const [
-          BoxShadow(color: Colors.black54, blurRadius: 10, offset: Offset(0, 6)),
+          BoxShadow(color: Colors.black54, blurRadius: 10, offset: Offset(0, 6))
         ],
       ),
       padding: const EdgeInsets.all(14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header row: avatar + name + subtitle
           Row(
             children: [
               CircleAvatar(radius: 18, backgroundImage: NetworkImage(avatar)),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(name,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16)),
+                      const SizedBox(height: 2),
+                      Text(subtitle,
+                          style: TextStyle(
+                              color: Colors.white.withOpacity(0.7),
+                              fontSize: 12)),
+                    ]),
               ),
             ],
           ),
-
           const SizedBox(height: 14),
-
-          // Amount row: label left, orange amount right
           Row(
             children: [
-              const Text(
-                'Investment Amount:',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
+              const Text('Investment Amount:',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600)),
               const Spacer(),
-              Text(
-                amount,
-                style: const TextStyle(
-                  color: accent,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
+              Text(amount,
+                  style: const TextStyle(
+                      color: accent, fontSize: 16, fontWeight: FontWeight.w800)),
             ],
           ),
         ],
@@ -657,39 +472,14 @@ class InvestorTile extends StatelessWidget {
   }
 }
 
-
-class _Bullet extends StatelessWidget {
-  final String text;
-  const _Bullet(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            margin: const EdgeInsets.only(top: 6),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.85),
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.78),
-                height: 1.45,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+// --- helpers ---
+String _comma(int n) {
+  final s = n.toString();
+  final b = StringBuffer();
+  for (int i = 0; i < s.length; i++) {
+    b.write(s[i]);
+    final left = s.length - i - 1;
+    if (left % 3 == 0 && left != 0) b.write(',');
   }
+  return b.toString();
 }

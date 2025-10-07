@@ -1,151 +1,152 @@
+// lib/feature/auth/view/create_new_password.dart
+import 'package:alejandroloi/core/util/app_colors.dart';
+// import 'package:alejandroloi/core/util/styles.dart'; // not used anymore
+// import 'package:alejandroloi/feature/auth/controllers/onboarding_provider.dart'; // removed
+import 'package:alejandroloi/feature/auth/view/login_screen_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
+import 'package:http/http.dart';
 
-import 'login_screen_view.dart';
+import '../providers/auth_provider.dart';
+import 'package:provider/provider.dart'; // removed
 
-/// Dark-themed "Create new password" screen that matches the mock.
-///
-/// Drop this file anywhere in your project and navigate to
-/// `CreateNewPasswordScreen()`.
 class CreateNewPasswordScreen extends StatefulWidget {
-  const CreateNewPasswordScreen({super.key, this.onDone});
-
-  /// Optional: called after successful validation + submit
-  final VoidCallback? onDone;
+  final String email;
+  final String otp; // kept for compatibility, not used in this no-API version
+  const CreateNewPasswordScreen({
+    super.key,
+    required this.email,
+    required this.otp,
+  });
 
   @override
   State<CreateNewPasswordScreen> createState() => _CreateNewPasswordScreenState();
 }
 
 class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
+  final passCtrl = TextEditingController();
+  final confirmCtrl = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  final _passCtrl = TextEditingController();
-  final _confirmCtrl = TextEditingController();
-  bool _obscure1 = true;
-  bool _obscure2 = true;
+  bool _ob1 = true, _ob2 = true;
 
   @override
   void dispose() {
-    _passCtrl.dispose();
-    _confirmCtrl.dispose();
+    passCtrl.dispose();
+    confirmCtrl.dispose();
     super.dispose();
+  }
+
+  // Future<void> _submit() async {
+  //   final okForm = _formKey.currentState?.validate() ?? false;
+  //   if (!okForm) return;
+  //
+  //   if (!mounted) return;
+  //
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     const SnackBar(content: Text('Password updated successfully')),
+  //   );
+  //
+  //   Get.offAll(
+  //         () => LoginScreenView(),
+  //     transition: Transition.rightToLeft,
+  //     duration: const Duration(milliseconds: 350),
+  //     curve: Curves.easeInOut,
+  //   );
+  // }
+
+  Future<void> _submit() async {
+    // onPressed of Continue
+    final ap = context.read<AuthProvider>();
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    final ok = await ap.resetPassword(
+      email: widget.email,
+      otp: widget.otp,
+      newPassword: passCtrl.text.trim(),
+    );
+    if (!mounted) return;
+
+    if (ok) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password reset successfully')),
+      );
+      Get.offAll(() => LoginScreenView());
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ap.error ?? 'Reset failed')),
+      );
+    }
+
   }
 
   @override
   Widget build(BuildContext context) {
-    const bg = Color(0xFF0F0F0F); // deep dark background
-    const field = Color(0xFF262626); // dark field color
-    const accent = Color(0xFFFF7A00); // orange button
-
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: Colors.black,
       appBar: AppBar(
-        elevation: 0,
-        backgroundColor: bg,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.of(context).maybePop(),
+        centerTitle: true,
+        leading: InkWell(
+          onTap: () => Get.back(),
+          child: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
         ),
-        title: const Text('Create new password', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-        centerTitle: false,
+        backgroundColor: Colors.transparent,
+        title: const Text('Create new password', style: TextStyle(color: Colors.white)),
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 8),
-                _PasswordField(
-                  controller: _passCtrl,
-                  hint: 'New Password',
-                  obscure: _obscure1,
-                  onToggle: () => setState(() => _obscure1 = !_obscure1),
-                  validator: (v) {
-                    final value = (v ?? '').trim();
-                    if (value.isEmpty) return 'Enter a password';
-                    if (value.length < 8) return 'Use at least 8 characters';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 12),
-                _PasswordField(
-                  controller: _confirmCtrl,
-                  hint: 'Repeat New Password',
-                  obscure: _obscure2,
-                  onToggle: () => setState(() => _obscure2 = !_obscure2),
-                  validator: (v) {
-                    if ((v ?? '').trim() != _passCtrl.text.trim()) {
-                      return 'Passwords don\'t match';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 18),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: accent,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                    ),
-                    onPressed: _submit,
-                    child: const Text('Continue', style: TextStyle(fontWeight: FontWeight.w600)),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: ListView(
+            children: [
+              const SizedBox(height: 8),
+              _passwordField(
+                controller: passCtrl,
+                hint: 'New Password',
+                obscure: _ob1,
+                toggle: () => setState(() => _ob1 = !_ob1),
+                validator: (v) {
+                  final t = (v ?? '').trim();
+                  if (t.isEmpty) return 'Enter a password';
+                  if (t.length < 8) return 'Use at least 8 characters';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 12),
+              _passwordField(
+                controller: confirmCtrl,
+                hint: 'Repeat New Password',
+                obscure: _ob2,
+                toggle: () => setState(() => _ob2 = !_ob2),
+                validator: (v) =>
+                (v ?? '').trim() != passCtrl.text.trim() ? "Passwords don't match" : null,
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _submit,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.bottomColor1,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   ),
+                  child: const Text('Continue'),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Future<void> _submit() async {
-    final ok = _formKey.currentState?.validate() ?? false;
-    if (!ok) return;
-
-    // TODO: await your reset-password API call here.
-
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Password updated successfully')),
-    );
-
-    await Future.delayed(const Duration(milliseconds: 800)); // optional: let the snackbar show briefly
-    Get.offAll(() => LoginScreenView(),
-      transition: Transition.rightToLeft,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeInOut,
-    ); // go to Login and clear back stack
-  }
-}
-
-class _PasswordField extends StatelessWidget {
-  final TextEditingController controller;
-  final String hint;
-  final bool obscure;
-  final VoidCallback onToggle;
-  final String? Function(String?)? validator;
-
-  const _PasswordField({
-    required this.controller,
-    required this.hint,
-    required this.obscure,
-    required this.onToggle,
-    this.validator,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const field = Color(0xFF262626);
-
+  Widget _passwordField({
+    required TextEditingController controller,
+    required String hint,
+    required bool obscure,
+    required VoidCallback toggle,
+    String? Function(String?)? validator,
+  }) {
     return TextFormField(
       controller: controller,
       obscureText: obscure,
@@ -156,14 +157,14 @@ class _PasswordField extends StatelessWidget {
         hintStyle: TextStyle(color: Colors.white.withOpacity(.7)),
         isDense: true,
         filled: true,
-        fillColor: field,
+        fillColor: AppColors.fieldColor,
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
           borderSide: BorderSide.none,
         ),
         suffixIcon: IconButton(
-          onPressed: onToggle,
+          onPressed: toggle,
           icon: Icon(obscure ? Icons.visibility_off : Icons.visibility),
           color: Colors.white70,
         ),

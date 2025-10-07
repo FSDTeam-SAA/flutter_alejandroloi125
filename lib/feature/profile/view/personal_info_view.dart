@@ -19,31 +19,31 @@ final TextStyle typeStyle = TextStyle(fontSize: 16, color: Colors.white, fontWei
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text("Name",style: typeStyle,),
         ),
-        CustomTextField(hintText: "Suman"),
+        CustomTextField(hintText: "e.g John Deo"),
 
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text("Age",style: typeStyle,),
         ),
-        CustomTextField(hintText: "25"),
+        CustomTextField(hintText: "e.g: 25"),
 
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text("Gender",style: typeStyle,),
         ),
-        CustomTextField(hintText: "Male"),
+        CustomTextField(hintText: "e.g: Male"),
 
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text("Nationality",style: typeStyle,),
         ),
-        CustomTextField(hintText: "Bangladesh"),
+        CustomTextField(hintText: "e.g: USA"),
 
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text("Address",style: typeStyle,),
         ),
-        CustomTextField(hintText: "Bangladesh"),
+        CustomTextField(hintText: "e.g: LA"),
 
       ],),
     ),
