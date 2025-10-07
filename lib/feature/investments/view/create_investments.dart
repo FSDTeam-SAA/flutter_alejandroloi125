@@ -6,9 +6,15 @@ import 'package:alejandroloi/core/common/widgets/custom_text_field.dart';
 import 'package:alejandroloi/core/common/widgets/save_botton.dart';      // bottomWidget
 import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/styles.dart';
-import 'package:provider/provider.dart';
+
 import '../../../providers/investment_provider.dart';
+import '../../app_ground.dart';
+import '../../create_service/view/create_services_view.dart';
 import '../../service/view/service_view.dart'; // your existing screen
+
+// inside _CreateInvestmentsViewState
+import 'dart:io';
+import 'package:provider/provider.dart';
 
 class CreateInvestmentsView extends StatefulWidget {
   const CreateInvestmentsView({super.key});
@@ -21,7 +27,6 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
   final _formKey = GlobalKey<FormState>();
   AutovalidateMode _auto = AutovalidateMode.disabled;
   bool _submitting = false;
-  late final inv = context.read<InvestmentProvider>();
 
   // Local fields
   dynamic _image; // keep dynamic since ImagePickerSlot's type may vary (File/XFile/String)
@@ -47,26 +52,37 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
     return null;
   }
 
+
+
   Future<void> _submit() async {
     final okForm = _formKey.currentState?.validate() ?? false;
     if (!okForm) {
       setState(() => _auto = AutovalidateMode.onUserInteraction);
-      Get.snackbar('Fix errors', 'Please correct the highlighted fields',
-          snackPosition: SnackPosition.TOP);
+      Get.snackbar('Fix errors', 'Please correct the highlighted fields', snackPosition: SnackPosition.TOP);
       return;
     }
     if (_submitting) return;
     setState(() => _submitting = true);
 
+    final inv = context.read<InvestmentProvider>();
+
+    // Convert dynamic image to File (supports File or XFile)
+    File? asFile;
+    if (_image is File) {
+      asFile = _image as File;
+    } else if (_image != null && _image.path != null) {
+      asFile = File(_image.path); // XFile
+    }
+
     final created = await inv.create(
       name: _title.trim(),
       description: _desc.trim(),
       category: _category.trim(),
-      fundingGoal: int.parse(_fundingGoal),
-      fundingDuration: '${_durationDays.trim()} day', // or "6 month" – your choice
+      fundingGoalStr: _fundingGoal.trim(),
+      durationDaysStr: _durationDays.trim(),
       location: _location.trim(),
       investmentTerms: _terms.trim(),
-      imageFile: _image, // File? If you use your ImagePickerSlot to return File
+      imageFile: asFile!, // provider will validate null and show error
     );
 
     setState(() => _submitting = false);
@@ -74,19 +90,28 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
     if (!mounted) return;
     if (created) {
       Get.back(result: true);
-      Get.snackbar('Success', 'Investment created successfully',
-          snackPosition: SnackPosition.TOP);
+
+      Get.snackbar('Success', 'Investment created successfully', snackPosition: SnackPosition.TOP);
+
+      // RIGHT: go to AppGround, select Services bottom tab + Investments inner tab
+      Get.offAll(
+            () => const AppGround(
+          initialIndex: 1,        // bottom bar: 0=Home, 1=Services, 2=Event, 3=Profile
+          servicesInitialTab: 0,  // ServiceView's pills: 0=Investments, 1=Project, 2=Auctions
+        ),
+        transition: Transition.rightToLeft,
+        duration: Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+      );
+
     } else {
-      Get.snackbar('Error', inv.error ?? 'Create failed',
-          snackPosition: SnackPosition.TOP);
+      Get.snackbar('Error', inv.error ?? 'Create failed', snackPosition: SnackPosition.TOP);
     }
   }
 
+
   @override
   Widget build(BuildContext context) {
-
-    // in CreateInvestmentsView
-
     return Scaffold(
       backgroundColor: Colors.black,
       body: Padding(

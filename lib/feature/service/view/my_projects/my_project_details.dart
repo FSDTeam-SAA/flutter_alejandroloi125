@@ -4,9 +4,7 @@ import 'package:flutter/services.dart';
 
 class MyProjectDetailScreen extends StatefulWidget {
   final String projectId;
-
-  /// Optional: pass the whole project to avoid any fetching.
-  final MyProjectData? project;
+  final MyProjectData? project; // passed from list
 
   const MyProjectDetailScreen({
     super.key,
@@ -20,24 +18,11 @@ class MyProjectDetailScreen extends StatefulWidget {
 
 class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
   late MyProjectData pr;
-  bool _refreshing = false;
 
   @override
   void initState() {
     super.initState();
-    // Use injected project if provided, else fall back to a local demo
     pr = widget.project ?? _sampleProject(widget.projectId);
-  }
-
-  Future<void> _refresh() async {
-    setState(() => _refreshing = true);
-    await Future.delayed(const Duration(milliseconds: 500));
-    if (!mounted) return;
-    // Simulate a "data update"
-    setState(() {
-      pr = pr.copyWith(createdAt: DateTime.now());
-      _refreshing = false;
-    });
   }
 
   @override
@@ -59,253 +44,209 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
     final skills = pr.skills?.isNotEmpty == true ? pr.skills! : const ['-'];
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value:
-      SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
+      ),
       child: Scaffold(
         backgroundColor: bg,
         body: SafeArea(
-          child: RefreshIndicator(
-            onRefresh: _refresh,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-              children: [
-                // Main card
-                Container(
-                  decoration: BoxDecoration(
-                    color: cardBg,
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: border),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Colors.black54,
-                        blurRadius: 12,
-                        offset: Offset(0, 6),
-                      )
-                    ],
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header row (back + actions)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
-                        child: Row(
-                          children: [
-                            _CircleIconButton(
-                              icon: Icons.arrow_back_ios_new,
-                              onTap: () => Navigator.pop(context),
-                            ),
-                            const Spacer(),
-                            _CircleIconButton(
-                              icon: Icons.favorite_border,
-                              onTap: () {},
-                            ),
-                            const SizedBox(width: 8),
-                            _CircleIconButton(
-                              icon: Icons.more_horiz,
-                              onTap: () {},
-                            ),
-                          ],
-                        ),
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            children: [
+              // main card
+              Container(
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: border),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black54,
+                      blurRadius: 12,
+                      offset: Offset(0, 6),
+                    )
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // header row
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
+                      child: Row(
+                        children: [
+                          _CircleIconButton(
+                            icon: Icons.arrow_back_ios_new,
+                            onTap: () => Navigator.pop(context),
+                          ),
+                          const Spacer(),
+                          _CircleIconButton(
+                            icon: Icons.favorite_border,
+                            onTap: () {},
+                          ),
+                          const SizedBox(width: 8),
+                          _CircleIconButton(
+                            icon: Icons.more_horiz,
+                            onTap: () {},
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
+                    ),
+                    const SizedBox(height: 12),
 
-                      // Title block
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            _Badge(
-                              text: category.isEmpty ? '-' : category,
-                              color: accent,
+                    // title block
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _Badge(text: category.isEmpty ? '-' : category, color: accent),
+                          const SizedBox(height: 8),
+                          Text(
+                            title.isEmpty ? '(Untitled Project)' : title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              title.isEmpty ? '(Untitled Project)' : title,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.w800,
-                              ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            description.isEmpty
+                                ? 'No description provided.'
+                                : description,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.75),
+                              height: 1.35,
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              description.isEmpty
-                                  ? 'No description provided.'
-                                  : description,
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.75),
-                                height: 1.35,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
                       ),
+                    ),
 
-                      // Stats rows (as per figma)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        child: Column(
-                          children: [
-                            _StatRow(
-                              leadingLabel: 'Posted on',
-                              leadingValue: created,
-                              // Figma shows "Posted on" on the right as well
-                              trailingLabel: 'Posted on',
-                              trailingValue: due == '-' ? created : due,
-                            ),
-                            const SizedBox(height: 12),
-                            _IconRow(
-                              items: [
-                                _IconRowItem(
-                                  icon: Icons.attach_money,
-                                  label: budget,
-                                ),
-                                _IconRowItem(
-                                  icon: Icons.schedule,
-                                  label: days,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            _IconRow(
-                              items: [
-                                _IconRowItem(
-                                  icon: Icons.location_on_outlined,
-                                  label: location,
-                                ),
-                                _IconRowItem(
-                                  icon: Icons.group_outlined,
-                                  label: proposals,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                    // stats rows
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: Column(
+                        children: [
+                          _StatRow(
+                            leadingLabel: 'Posted on',
+                            leadingValue: created,
+                            trailingLabel: 'Posted on',
+                            trailingValue: due == '-' ? created : due,
+                          ),
+                          const SizedBox(height: 12),
+                          _IconRow(items: [
+                            _IconRowItem(icon: Icons.attach_money, label: budget),
+                            _IconRowItem(icon: Icons.schedule, label: days),
+                          ]),
+                          const SizedBox(height: 10),
+                          _IconRow(items: [
+                            _IconRowItem(icon: Icons.location_on_outlined, label: location),
+                            _IconRowItem(icon: Icons.group_outlined, label: proposals),
+                          ]),
+                        ],
                       ),
+                    ),
 
-                      // Client line (Figma)
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
-                        child: Row(
-                          children: [
-                            const CircleAvatar(
-                              radius: 16,
-                              backgroundImage: NetworkImage(
-                                'https://images.unsplash.com/photo-1544005313-94ddf0286df2',
-                              ),
+                    // client line (static to match mock)
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
+                      child: Row(
+                        children: [
+                          const CircleAvatar(
+                            radius: 16,
+                            backgroundImage: NetworkImage(
+                              'https://images.unsplash.com/photo-1544005313-94ddf0286df2',
                             ),
-                            const SizedBox(width: 10),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Eleanor Pena',
+                          ),
+                          const SizedBox(width: 10),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('Eleanor Pena',
                                   style: TextStyle(
                                     color: Colors.white.withOpacity(0.95),
                                     fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                Text(
-                                  'Success Rate 100%',
+                                  )),
+                              Text('Success Rate 100%',
                                   style: TextStyle(
                                     color: Colors.white.withOpacity(0.7),
                                     fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Spacer(),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                const Text(
-                                  'Posted on',
+                                  )),
+                            ],
+                          ),
+                          const Spacer(),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              const Text('Posted on',
                                   style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  created,
+                                      color: Colors.white70, fontSize: 12)),
+                              const SizedBox(height: 2),
+                              Text(created,
                                   style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700)),
+                            ],
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 16),
+                    ),
+                    const SizedBox(height: 16),
 
-                      // Project Description (Figma label)
-                      const _SectionHeader('Project Description'),
-                      if (description.isNotEmpty)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 14),
-                          child: _Para(description),
-                        )
-                      else
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 14),
-                          child: _Para('No description provided.'),
-                        ),
-                      const SizedBox(height: 12),
+                    // description section label
+                    const _SectionHeader('Project Description'),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: _Para(description.isEmpty
+                          ? 'No description provided.'
+                          : description),
+                    ),
+                    const SizedBox(height: 12),
 
-                      // Skills Required (chips)
-                      const _SectionHeader('Skills Required'),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
-                        child: Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
-                          children:
-                          skills.map((s) => _SkillChip(s)).toList(),
-                        ),
+                    // skills
+                    const _SectionHeader('Skills Required'),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: skills.map((s) => _SkillChip(s)).toList(),
                       ),
-                      const SizedBox(height: 16),
+                    ),
+                    const SizedBox(height: 16),
 
-                      // Project Proposal (Figma cards) – placeholders
-                      const _SectionHeader('Project Proposal'),
-                      const SizedBox(height: 8),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 14),
-                        child: _ProposalCard(
-                          name: 'Eleanor Pena',
-                          summary:
-                          'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
-                              'Nunc interdum metus eu egestas pharetra. Fusce bibendum odio '
-                              'et venenatis efficitur.',
-                          budgetText: '\$1200',
-                          deliveryText: '14 days',
-                        ),
+                    // proposals (static demo cards — bind real data later)
+                    const _SectionHeader('Project Proposal'),
+                    const SizedBox(height: 8),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 14),
+                      child: _ProposalCard(
+                        name: 'Eleanor Pena',
+                        summary:
+                        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum metus eu egestas pharetra. Fusce bibendum odio et venenatis efficitur.',
+                        budgetText: '\$1200',
+                        deliveryText: '14 days',
                       ),
-                      const SizedBox(height: 12),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 14),
-                        child: _ProposalCard(
-                          name: 'Eleanor Pena',
-                          summary:
-                          'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
-                              'Nunc interdum metus eu egestas pharetra.',
-                          budgetText: '\$1200',
-                          deliveryText: '14 days',
-                        ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 14),
+                      child: _ProposalCard(
+                        name: 'Eleanor Pena',
+                        summary:
+                        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum metus eu egestas pharetra.',
+                        budgetText: '\$1200',
+                        deliveryText: '14 days',
                       ),
-                      const SizedBox(height: 16),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
-
-                if (_refreshing) const SizedBox(height: 16),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -313,7 +254,7 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
   }
 }
 
-// ====== Local data model & sample ======
+// ====== local data type (no API hit here) ======
 class MyProjectData {
   final String id;
   final String? category;
@@ -340,77 +281,46 @@ class MyProjectData {
     this.createdAt,
     this.skills,
   });
-
-  MyProjectData copyWith({
-    String? id,
-    String? category,
-    String? title,
-    String? description,
-    int? budgetMin,
-    int? budgetMax,
-    int? durationDays,
-    String? location,
-    int? proposalsCount,
-    DateTime? createdAt,
-    List<String>? skills,
-  }) {
-    return MyProjectData(
-      id: id ?? this.id,
-      category: category ?? this.category,
-      title: title ?? this.title,
-      description: description ?? this.description,
-      budgetMin: budgetMin ?? this.budgetMin,
-      budgetMax: budgetMax ?? this.budgetMax,
-      durationDays: durationDays ?? this.durationDays,
-      location: location ?? this.location,
-      proposalsCount: proposalsCount ?? this.proposalsCount,
-      createdAt: createdAt ?? this.createdAt,
-      skills: skills ?? this.skills,
-    );
-  }
 }
 
 MyProjectData _sampleProject(String id) => MyProjectData(
   id: id,
   category: 'Design',
-  title: 'E-commerce UI Overhaul',
+  title: 'Website Redesign for Local Business',
   description:
-  'Redesign storefront, cart, and checkout for higher conversion.',
-  budgetMin: 2000,
-  budgetMax: 4500,
-  durationDays: 14,
-  location: 'Remote',
-  proposalsCount: 6,
-  createdAt: DateTime.now().subtract(const Duration(days: 3)),
-  skills: const ['UI/UX', 'Figma', 'Responsive Web', 'Design Systems'],
+  'Looking for an experienced web designer to revamp our company’s website. Need modern UI & responsive layout.',
+  budgetMin: 1500,
+  budgetMax: 3000,
+  durationDays: 15,
+  location: 'Brooklyn, NY',
+  proposalsCount: 8,
+  createdAt: DateTime.now().subtract(const Duration(days: 5)),
+  skills: const ['Web Design', 'Ecommerce', 'Shopify', 'WordPress', 'UI/UX'],
 );
 
-// ====== Helpers & UI atoms ======
+// ====== helpers & UI atoms ======
 
 String _fmtBudget(int? min, int? max) {
   if (min == null && max == null) return '-';
-  if (min != null && max != null) return '\$ ${_sep(min)} - ${_sep(max)}';
-  if (min != null) return '\$ ${_sep(min)}+';
-  return '\$ ${_sep(max!)}';
-}
-
-String _sep(int n) {
-  final s = n.toString();
-  final buf = StringBuffer();
-  for (int i = 0; i < s.length; i++) {
-    buf.write(s[i]);
-    final left = s.length - i - 1;
-    if (left % 3 == 0 && left != 0) buf.write(',');
+  String sep(int n) {
+    final s = n.toString();
+    final b = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      b.write(s[i]);
+      final left = s.length - i - 1;
+      if (left % 3 == 0 && left != 0) b.write(',');
+    }
+    return b.toString();
   }
-  return buf.toString();
+
+  if (min != null && max != null) return '\$ ${sep(min)} - ${sep(max)}';
+  if (min != null) return '\$ ${sep(min)}+';
+  return '\$ ${sep(max!)}';
 }
 
 String _fmtDate(DateTime? d) {
   if (d == null) return '-';
-  const m = [
-    'Jan','Feb','Mar','Apr','May','Jun',
-    'Jul','Aug','Sep','Oct','Nov','Dec'
-  ];
+  const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   final dt = d.toLocal();
   return '${m[dt.month - 1]} ${dt.day}, ${dt.year}';
 }
@@ -426,7 +336,6 @@ class _CircleIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
   const _CircleIconButton({required this.icon, required this.onTap});
-
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -448,7 +357,6 @@ class _Badge extends StatelessWidget {
   final String text;
   final Color color;
   const _Badge({required this.text, required this.color});
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -458,10 +366,37 @@ class _Badge extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withOpacity(0.7)),
       ),
+      child: Text(text,
+          style: TextStyle(
+              color: color, fontWeight: FontWeight.w700, fontSize: 12)),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String text;
+  const _SectionHeader(this.text);
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
       child: Text(
         text,
-        style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 12),
+        style: const TextStyle(
+            color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16),
       ),
+    );
+  }
+}
+
+class _Para extends StatelessWidget {
+  final String text;
+  const _Para(this.text);
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text,
+      style: TextStyle(color: Colors.white.withOpacity(0.78), height: 1.45),
     );
   }
 }
@@ -475,7 +410,6 @@ class _StatRow extends StatelessWidget {
     required this.trailingLabel,
     required this.trailingValue,
   });
-
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -491,12 +425,7 @@ class _StatRow extends StatelessWidget {
 class _LabeledText extends StatelessWidget {
   final String label, value;
   final bool alignEnd;
-  const _LabeledText({
-    required this.label,
-    required this.value,
-    this.alignEnd = false,
-  });
-
+  const _LabeledText({required this.label, required this.value, this.alignEnd = false});
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -522,7 +451,6 @@ class _IconRowItem {
 class _IconRow extends StatelessWidget {
   final List<_IconRowItem> items;
   const _IconRow({required this.items});
-
   @override
   Widget build(BuildContext context) {
     final children = <Widget>[];
@@ -564,40 +492,9 @@ class _IconRow extends StatelessWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  final String text;
-  const _SectionHeader(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
-      child: Text(
-        text,
-        style: const TextStyle(
-            color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16),
-      ),
-    );
-  }
-}
-
-class _Para extends StatelessWidget {
-  final String text;
-  const _Para(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: TextStyle(color: Colors.white.withOpacity(0.78), height: 1.45),
-    );
-  }
-}
-
 class _SkillChip extends StatelessWidget {
   final String label;
   const _SkillChip(this.label);
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -607,15 +504,13 @@ class _SkillChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: const Color(0xFF2A313A)),
       ),
-      child: Text(
-        label,
-        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
-      ),
+      child: Text(label,
+          style: const TextStyle(
+              color: Colors.white, fontWeight: FontWeight.w600)),
     );
   }
 }
 
-// Figma-like proposal card (static UI; bind to real data when available)
 class _ProposalCard extends StatelessWidget {
   final String name;
   final String summary;
@@ -631,18 +526,20 @@ class _ProposalCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const cardBg = Color(0xFF1A1F26);
+    const border = Color(0xFF2A313A);
     const accent = Color(0xFFFF8A34);
+
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1A1F26),
+        color: cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Color(0xFF2A313A)),
+        border: Border.all(color: border),
       ),
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header (avatar + name + stats)
           Row(
             children: [
               const CircleAvatar(
@@ -668,9 +565,11 @@ class _ProposalCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          _Para(summary),
+          Text(
+            summary,
+            style: TextStyle(color: Colors.white.withOpacity(0.78), height: 1.45),
+          ),
           const SizedBox(height: 12),
-          // Budget / Delivery aligned row
           Row(
             children: [
               const _LabeledText(label: 'Budget', value: ''),
@@ -686,7 +585,6 @@ class _ProposalCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // Buttons
           Row(
             children: [
               Expanded(

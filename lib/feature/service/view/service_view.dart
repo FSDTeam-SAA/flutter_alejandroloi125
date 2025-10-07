@@ -1,16 +1,14 @@
 import 'package:alejandroloi/core/common/widgets/pilltabs.dart';
 import 'package:alejandroloi/feature/app_ground.dart';
-import 'package:alejandroloi/feature/home/view/home_view.dart';
 import 'package:flutter/material.dart';
-
 
 import 'my_auctions/my_auctions.dart';
 import 'my_investments/my_investments.dart';
 import 'my_projects/my_projects.dart';
 
 class ServiceView extends StatefulWidget {
-  const ServiceView({super.key,this.initialIndex = 0});
-  final int initialIndex;
+  const ServiceView({super.key, this.initialIndex = 0});
+  final int initialIndex; // 0 = Investments, 1 = Project, 2 = Auctions
 
   @override
   State<ServiceView> createState() => _ServiceViewState();
@@ -23,8 +21,8 @@ class _ServiceViewState extends State<ServiceView>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this,initialIndex: widget.initialIndex.clamp(0, 2),);
-
+    final int safeIndex = widget.initialIndex.clamp(0, 2).toInt();
+    _tabController = TabController(length: 3, vsync: this, initialIndex: safeIndex);
   }
 
   @override
@@ -38,7 +36,7 @@ class _ServiceViewState extends State<ServiceView>
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text("My Services",style: TextStyle(color: Colors.white),),
+        title: const Text('My Services', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leadingWidth: 48,
@@ -53,7 +51,8 @@ class _ServiceViewState extends State<ServiceView>
                 transitionsBuilder: (_, animation, __, child) {
                   final curved = CurvedAnimation(parent: animation, curve: Curves.easeInOut);
                   return SlideTransition(
-                    position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(curved),
+                    position: Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero)
+                        .animate(curved),
                     child: child,
                   );
                 },
@@ -62,19 +61,17 @@ class _ServiceViewState extends State<ServiceView>
             );
           },
         ),
-
       ),
-     // extendBodyBehindAppBar: true, // Scaffold property
       body: Column(
         children: [
-          PillTabBar(tabController: _tabController,tabNames: ["Investments","Project","Auctions"],),
+          PillTabBar(
+            tabController: _tabController,
+            tabNames: const ['Investments', 'Project', 'Auctions'],
+          ),
           Expanded(
             child: TabBarView(
               controller: _tabController,
               children: const [
-                // Center(child: Text("Live Services")),
-                // Center(child: Text("Upcoming Services")),
-                // Center(child: Text("Ended Services")),
                 MyInvestmentScreen(),
                 MyProjectScreen(),
                 MyAuctionScreen(),
@@ -83,7 +80,6 @@ class _ServiceViewState extends State<ServiceView>
           ),
         ],
       ),
-
     );
   }
 }

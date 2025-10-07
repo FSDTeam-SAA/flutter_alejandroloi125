@@ -76,39 +76,3 @@ class _AuthInterceptor extends Interceptor {
 }
 
 
-
-// import 'package:alejandroloi/core/network/api_service/token_meneger.dart';
-// import 'package:dio/dio.dart';
-// import 'package:pretty_dio_logger/pretty_dio_logger.dart';
-//
-// import 'package:alejandroloi/core/network/api_service/token_store.dart';
-//
-// import '../../env/env.dart';
-//
-// class ApiClient {
-//   final TokenStore tokenStore;
-//   late final Dio dio;
-//
-//   ApiClient(this.tokenStore) {
-//     final options = BaseOptions(
-//       baseUrl: AppEnv.baseUrl,
-//       connectTimeout: const Duration(seconds: 25),
-//       receiveTimeout: const Duration(seconds: 25),
-//       contentType: 'application/json',
-//       responseType: ResponseType.json,
-//     );
-//
-//     dio = Dio(options);
-//
-//     // Interceptors order matters: logger first, then auth/refresh.
-//     dio.interceptors.add(PrettyDioLogger(
-//       requestBody: true, responseBody: true, compact: true,
-//     ));
-//     dio.interceptors.add(TokenMeneger(dio, tokenStore).interceptor);
-//   }
-//
-//
-//
-//
-//
-// }

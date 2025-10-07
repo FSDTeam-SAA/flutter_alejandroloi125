@@ -1,38 +1,61 @@
+// lib/feature/auctions/view/auction_screen.dart
 import 'dart:async';
-import 'package:alejandroloi/feature/auctions/view/auction_detail.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_navigation/src/routes/transitions_type.dart';
+import 'package:provider/provider.dart';
 
 import '../../app_ground.dart';
+import '../../../providers/auction_provider.dart';
+import '../../models/auction.dart' as api; // DTOs
+import 'auction_detail.dart';
+import '../../../core/env/env.dart' show AppEnv; // <-- to build absolute URLs
 
+enum AuctionStatus { live, upcoming, ended }
 
+class Auction {
+  final String id;
+  final String title;
+  final String imageUrl;
+  final int viewers;
+  final int interested;
+  final DateTime? startsAt;
+  final DateTime? endsAt;
+  final int? firstBid;
+  final int? finalBid;
+  final int? currentPrice;
+  final AuctionStatus status;
 
+  const Auction({
+    required this.id,
+    required this.title,
+    required this.imageUrl,
+    required this.status,
+    this.viewers = 0,
+    this.interested = 0,
+    this.startsAt,
+    this.endsAt,
+    this.firstBid,
+    this.finalBid,
+    this.currentPrice,
+  });
+}
 
-
-class AuctionScreen extends StatefulWidget {
+class AuctionScreen extends StatelessWidget {
   const AuctionScreen({super.key});
 
   @override
-  State<AuctionScreen> createState() => _AuctionScreenState();
-}
-
-class _AuctionScreenState extends State<AuctionScreen> {
-  @override
   Widget build(BuildContext context) {
     final dark = ThemeData.dark();
-    return MaterialApp(
-      title: 'Auctions',
-      debugShowCheckedModeBanner: false,
-      theme: dark.copyWith(
+    // NOTE: keep Providers available; UI is identical.
+    return Theme(
+      data: dark.copyWith(
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFF0F0F10),
         cardColor: const Color(0xFF1A1B1E),
         dividerColor: const Color(0xFF2B2C31),
         colorScheme: dark.colorScheme.copyWith(
-          primary: const Color(0xFFFF8C3B), // orange accent
-          secondary: const Color(0xFF2A2B30), // subtle surfaces/inputs
+          primary: const Color(0xFFFF8C3B),
+          secondary: const Color(0xFF2A2B30),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
@@ -56,121 +79,16 @@ class _AuctionScreenState extends State<AuctionScreen> {
           backgroundColor: Color(0xFF0F0F10),
           elevation: 0,
           centerTitle: false,
-          titleTextStyle: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-          ),
+          titleTextStyle: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
         ),
       ),
-      home: const AuctionsScreen(),
+      child: const AuctionsScreen(),
     );
   }
 }
 
-/// -------------------- MODELS --------------------
-
-enum AuctionStatus { live, upcoming, ended }
-
-class Auction {
-  final String id;
-  final String title;
-  final String imageUrl;
-  final int viewers; // live metric
-  final int interested; // upcoming metric
-  final DateTime? startsAt; // upcoming
-  final DateTime? endsAt; // ended
-  final int? firstBid; // ended
-  final int? finalBid; // ended
-  final int? currentPrice; // live & upcoming
-  final AuctionStatus status;
-
-  const Auction({
-    required this.id,
-    required this.title,
-    required this.imageUrl,
-    required this.status,
-    this.viewers = 0,
-    this.interested = 0,
-    this.startsAt,
-    this.endsAt,
-    this.firstBid,
-    this.finalBid,
-    this.currentPrice,
-  });
-}
-
-/// -------------------- FAKE REPOSITORY --------------------
-
-class AuctionsRepository {
-  static const _images = [
-    'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?q=80&w=1600&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1600&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1512446816042-444d641267d4?q=80&w=1600&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1600&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1600&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1600&auto=format&fit=crop',
-  ];
-
-  Future<List<Auction>> fetch({
-    required AuctionStatus status,
-    required int page,
-    int pageSize = 10,
-    String query = '',
-  }) async {
-    await Future.delayed(const Duration(milliseconds: 550));
-
-    final now = DateTime.now();
-    final base = List.generate(pageSize, (i) {
-      final idx = (page - 1) * pageSize + i;
-      switch (status) {
-        case AuctionStatus.live:
-          return Auction(
-            id: 'live-$idx',
-            title: 'Gaming Console',
-            imageUrl: _images[idx % _images.length],
-            status: AuctionStatus.live,
-            viewers: 25 + (idx % 70),
-            currentPrice: 400 + (idx % 6) * 50,
-          );
-        case AuctionStatus.upcoming:
-          return Auction(
-            id: 'up-$idx',
-            title: 'Gaming Console',
-            imageUrl: _images[(idx + 2) % _images.length],
-            status: AuctionStatus.upcoming,
-            interested: 12 + (idx % 15),
-            currentPrice: 1200,
-            startsAt: now.add(Duration(days: (idx % 3) + 1, hours: 15)),
-          );
-        case AuctionStatus.ended:
-          return Auction(
-            id: 'end-$idx',
-            title: 'Gaming Console',
-            imageUrl: _images[(idx + 3) % _images.length],
-            status: AuctionStatus.ended,
-            firstBid: 500,
-            finalBid: 1200,
-            endsAt: DateTime(now.year, now.month, (now.day - (idx % 10))),
-          );
-      }
-    });
-
-    // Simple "search"
-    final filtered = query.isEmpty
-        ? base
-        : base
-        .where((a) => a.title.toLowerCase().contains(query.toLowerCase()))
-        .toList();
-
-    return filtered;
-  }
-}
-
-/// -------------------- SCREEN --------------------
-
 class AuctionsScreen extends StatefulWidget {
   const AuctionsScreen({super.key});
-
   @override
   State<AuctionsScreen> createState() => _AuctionsScreenState();
 }
@@ -179,7 +97,6 @@ class _AuctionsScreenState extends State<AuctionsScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tab;
   final _queryCtrl = TextEditingController();
-  final _repo = AuctionsRepository();
 
   @override
   void initState() {
@@ -199,7 +116,7 @@ class _AuctionsScreenState extends State<AuctionsScreen>
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-          title: const Text('Auctions'),
+        title: const Text('Auctions'),
         leading: IconButton(
           onPressed: () => Get.offAll(
                 () => const AppGround(),
@@ -238,7 +155,8 @@ class _AuctionsScreenState extends State<AuctionsScreen>
                     tooltip: 'Filter',
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Hook up your filters here')),
+                        const SnackBar(
+                            content: Text('Hook up your filters here')),
                       );
                     },
                   ),
@@ -253,22 +171,11 @@ class _AuctionsScreenState extends State<AuctionsScreen>
               controller: _tab,
               children: [
                 AuctionListView(
-                  status: AuctionStatus.live,
-                  repository: _repo,
-                  query: _queryCtrl.text,
-                ),
+                    status: AuctionStatus.live, query: _queryCtrl.text),
                 AuctionListView(
-                  status: AuctionStatus.upcoming,
-                  repository: _repo,
-                  query: _queryCtrl.text,
-                ),
+                    status: AuctionStatus.upcoming, query: _queryCtrl.text),
                 AuctionListView(
-                  status: AuctionStatus.ended,
-                  repository: _repo,
-                  query: _queryCtrl.text,
-                ),
-
-
+                    status: AuctionStatus.ended, query: _queryCtrl.text),
               ],
             ),
           ),
@@ -277,8 +184,6 @@ class _AuctionsScreenState extends State<AuctionsScreen>
     );
   }
 }
-
-/// -------------------- UPDATED PILL TABS --------------------
 
 class _PillTabs extends StatelessWidget {
   const _PillTabs({required this.tabController});
@@ -314,11 +219,11 @@ class _PillTabs extends StatelessWidget {
                       fontWeight: FontWeight.w800, fontSize: 14),
                   unselectedLabelStyle:
                   const TextStyle(fontWeight: FontWeight.w700),
-                  labelColor: Colors.black,            // selected text
-                  unselectedLabelColor: Colors.white,  // unselected text
+                  labelColor: Colors.black,
+                  unselectedLabelColor: Colors.white,
                   indicatorSize: TabBarIndicatorSize.tab,
                   indicator: ShapeDecoration(
-                    color: cs.primary, // orange fill
+                    color: cs.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -330,19 +235,12 @@ class _PillTabs extends StatelessWidget {
                   ],
                 ),
               ),
-              // subtle separators beneath the indicator
               Positioned(
-                left: third,
-                top: 6,
-                bottom: 6,
-                child: Container(width: 1, color: border),
-              ),
+                  left: third, top: 6, bottom: 6,
+                  child: Container(width: 1, color: border)),
               Positioned(
-                left: third * 2,
-                top: 6,
-                bottom: 6,
-                child: Container(width: 1, color: border),
-              ),
+                  left: third * 2, top: 6, bottom: 6,
+                  child: Container(width: 1, color: border)),
             ],
           );
         },
@@ -351,19 +249,9 @@ class _PillTabs extends StatelessWidget {
   }
 }
 
-/// -------------------- LIST VIEW (paging + refresh) --------------------
-
 class AuctionListView extends StatefulWidget {
-  const AuctionListView({
-    super.key,
-    required this.status,
-    required this.repository,
-    this.query = '',
-  });
-
+  const AuctionListView({super.key, required this.status, this.query = ''});
   final AuctionStatus status;
-  final AuctionsRepository repository;
-
   final String query;
 
   @override
@@ -376,6 +264,7 @@ class _AuctionListViewState extends State<AuctionListView> {
   bool _loading = false;
   bool _end = false;
   int _page = 1;
+  static const _pageSize = 10;
 
   @override
   void initState() {
@@ -415,18 +304,28 @@ class _AuctionListViewState extends State<AuctionListView> {
       _items.clear();
     }
 
-    final data = await widget.repository.fetch(
-      status: widget.status,
-      page: _page,
-      query: widget.query,
-    );
+    try {
+      final prov = context.read<AuctionProvider>();
+      final resp = await prov.all(page: _page, limit: _pageSize);
 
-    setState(() {
-      _items.addAll(data);
-      _page++;
-      if (data.isEmpty) _end = true;
-      _loading = false;
-    });
+      // Map DTOs -> UI model, then filter by tab + query
+      final mapped = resp.auctions
+          .map(_mapToUi)
+          .where((a) => a.status == widget.status)
+          .where((a) => widget.query.isEmpty
+          ? true
+          : a.title.toLowerCase().contains(widget.query.toLowerCase()))
+          .toList();
+
+      setState(() {
+        _items.addAll(mapped);
+        _page++;
+        _end = (_page > resp.pages) || mapped.isEmpty;
+        _loading = false;
+      });
+    } catch (_) {
+      setState(() => _loading = false);
+    }
   }
 
   Future<void> _refresh() => _load(reset: true);
@@ -479,9 +378,76 @@ class _AuctionListViewState extends State<AuctionListView> {
       ),
     );
   }
+
+  // ---- mapper & parsers ----
+  Auction _mapToUi(api.AuctionDto d) {
+    final start = _parseDateTime(d.schedule.date, d.schedule.time);
+    final minutes = d.duration ?? 60;
+    final end = (start == null) ? null : start.add(Duration(minutes: minutes));
+
+    final now = DateTime.now();
+    final status = (start == null || end == null)
+        ? AuctionStatus.live
+        : now.isBefore(start)
+        ? AuctionStatus.upcoming
+        : now.isAfter(end)
+        ? AuctionStatus.ended
+        : AuctionStatus.live;
+
+    // ===== image fix: support relative URLs and empty/variant payloads =====
+    // The API returns: image: [{ url, filename, public_id }]  OR sometimes string(s).
+    String rawUrl = '';
+    if (d.image.isNotEmpty) {
+      // Prefer DTO's url field when present
+      rawUrl = d.image.first.url;
+    }
+    // Build absolute URL if needed + final fallback
+    final img = _absoluteUrl(rawUrl).isEmpty
+        ? _kPlaceholder
+        : _absoluteUrl(rawUrl);
+
+    return Auction(
+      id: d.id,
+      title: d.name,
+      imageUrl: img,
+      status: status,
+      startsAt: start,
+      endsAt: end,
+      firstBid: d.startingBid,
+      finalBid: d.startingBid,
+      currentPrice: d.startingBid,
+      viewers: 0,
+      interested: 0,
+    );
+  }
+
+  DateTime? _parseDateTime(String ddMMyyyy, String hhmm) {
+    try {
+      final ds = ddMMyyyy.split('-');
+      if (ds.length != 3) return null;
+      final d = int.parse(ds[0]);
+      final m = int.parse(ds[1]);
+      final y = int.parse(ds[2]);
+
+      var t = hhmm.trim().toUpperCase();
+      final hasAmPm = t.endsWith('AM') || t.endsWith('PM');
+      t = t.replaceAll('AM', '').replaceAll('PM', '').trim();
+      final ts = t.split(':');
+      final hRaw = int.parse(ts[0]);
+      final min = ts.length > 1 ? int.parse(ts[1]) : 0;
+      var hour = hRaw;
+
+      if (hasAmPm && hhmm.toUpperCase().contains('PM') && hour < 12) hour += 12;
+      if (hasAmPm && hhmm.toUpperCase().contains('AM') && hour == 12) hour = 0;
+
+      return DateTime(y, m, d, hour, min);
+    } catch (_) {
+      return null;
+    }
+  }
 }
 
-/// -------------------- CARDS / TILES --------------------
+// ===== Cards / Tiles (unchanged visuals; now robust image widget) =====
 
 class LiveAuctionCard extends StatelessWidget {
   const LiveAuctionCard({super.key, required this.a});
@@ -492,13 +458,9 @@ class LiveAuctionCard extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
 
     return InkWell(
-      onTap: () {
-
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const AuctionDetailScreen()),
-        );
-
-      },
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => AuctionDetailScreen(auctionId: a.id)),
+      ),
       borderRadius: BorderRadius.circular(14),
       child: Ink(
         decoration: BoxDecoration(
@@ -517,7 +479,7 @@ class LiveAuctionCard extends StatelessWidget {
                   ),
                   child: AspectRatio(
                     aspectRatio: 16 / 9,
-                    child: Image.network(a.imageUrl, fit: BoxFit.cover),
+                    child: _NetImage(a.imageUrl), // <-- robust image
                   ),
                 ),
                 Positioned(
@@ -530,11 +492,9 @@ class LiveAuctionCard extends StatelessWidget {
                       color: Colors.redAccent,
                       borderRadius: BorderRadius.circular(18),
                     ),
-                    child: const Text(
-                      'LIVE',
-                      style:
-                      TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
-                    ),
+                    child: const Text('LIVE',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w800, fontSize: 12)),
                   ),
                 ),
                 Positioned(
@@ -546,15 +506,14 @@ class LiveAuctionCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: const Color(0x66000000),
                       borderRadius: BorderRadius.circular(18),
-                      border:
-                      Border.all(color: const Color(0x55FFFFFF), width: 1),
+                      border: Border.all(color: const Color(0x55FFFFFF), width: 1),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.visibility, size: 14),
-                        const SizedBox(width: 4),
-                        Text('${a.viewers}'),
+                      children: const [
+                        Icon(Icons.visibility, size: 14),
+                        SizedBox(width: 4),
+                        Text('0'),
                       ],
                     ),
                   ),
@@ -595,11 +554,9 @@ class UpcomingAuctionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return InkWell(
-      onTap: () {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const AuctionDetailScreen()),
-        );
-      },
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => AuctionDetailScreen(auctionId: a.id)),
+      ),
       borderRadius: BorderRadius.circular(14),
       child: Ink(
         decoration: BoxDecoration(
@@ -616,13 +573,12 @@ class UpcomingAuctionTile extends StatelessWidget {
               child: SizedBox(
                 height: 80,
                 width: 110,
-                child: Image.network(a.imageUrl, fit: BoxFit.cover),
+                child: _NetImage(a.imageUrl), // <-- robust image
               ),
             ),
             Expanded(
               child: Padding(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -639,7 +595,9 @@ class UpcomingAuctionTile extends StatelessWidget {
                         const Icon(Icons.event, size: 16, color: Colors.white70),
                         const SizedBox(width: 6),
                         Text(
-                          'Starts ${_friendlyDate(a.startsAt!)}',
+                          a.startsAt == null
+                              ? 'TBA'
+                              : 'Starts ${_friendlyDate(a.startsAt!)}',
                           style: const TextStyle(color: Colors.white70),
                         ),
                         const Spacer(),
@@ -648,8 +606,8 @@ class UpcomingAuctionTile extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 4),
-                    Text('${a.interested} interested',
-                        style: const TextStyle(color: Colors.white70)),
+                    const Text('0 interested',
+                        style: TextStyle(color: Colors.white70)),
                   ],
                 ),
               ),
@@ -661,8 +619,6 @@ class UpcomingAuctionTile extends StatelessWidget {
   }
 }
 
-
-
 class EndedAuctionTile extends StatelessWidget {
   const EndedAuctionTile({super.key, required this.a});
   final Auction a;
@@ -671,11 +627,9 @@ class EndedAuctionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return InkWell(
-      onTap: () {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const AuctionDetailScreen()),
-        );
-      },
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => AuctionDetailScreen(auctionId: a.id)),
+      ),
       borderRadius: BorderRadius.circular(14),
       child: Ink(
         decoration: BoxDecoration(
@@ -692,7 +646,7 @@ class EndedAuctionTile extends StatelessWidget {
               child: SizedBox(
                 height: 80,
                 width: 110,
-                child: Image.network(a.imageUrl, fit: BoxFit.cover),
+                child: _NetImage(a.imageUrl), // <-- robust image
               ),
             ),
             Expanded(
@@ -711,7 +665,8 @@ class EndedAuctionTile extends StatelessWidget {
                         const Text('First Bid: ',
                             style: TextStyle(color: Colors.white70)),
                         Text('\$${a.firstBid}',
-                            style: const TextStyle(fontWeight: FontWeight.w800)),
+                            style:
+                            const TextStyle(fontWeight: FontWeight.w800)),
                         const SizedBox(width: 10),
                         const Text('Final Bid: ',
                             style: TextStyle(color: Colors.white70)),
@@ -727,7 +682,10 @@ class EndedAuctionTile extends StatelessWidget {
                         const Icon(Icons.lock_clock_rounded,
                             size: 16, color: Colors.white70),
                         const SizedBox(width: 6),
-                        Text('Ended ${_friendlyDate(a.endsAt!)}',
+                        Text(
+                            a.endsAt == null
+                                ? 'Ended'
+                                : 'Ended ${_friendlyDate(a.endsAt!)}',
                             style: const TextStyle(color: Colors.white70)),
                         const SizedBox(width: 8),
                         const Icon(Icons.check_circle_rounded,
@@ -745,11 +703,8 @@ class EndedAuctionTile extends StatelessWidget {
   }
 }
 
-/// -------------------- LOADERS --------------------
-
 class _GridLoader extends StatelessWidget {
   const _GridLoader();
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -764,7 +719,6 @@ class _GridLoader extends StatelessWidget {
 
 class _ListLoader extends StatelessWidget {
   const _ListLoader();
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -778,7 +732,23 @@ class _ListLoader extends StatelessWidget {
   }
 }
 
-/// -------------------- UTILS --------------------
+// ===== helpers =====
+
+const String _kPlaceholder =
+    'https://via.placeholder.com/640x360.png?text=Auction';
+
+String _absoluteUrl(String url) {
+  final u = (url).trim();
+  if (u.isEmpty) return '';
+  if (u.startsWith('http://') || u.startsWith('https://')) return u;
+
+  // Build absolute from backend base if the server returns relative paths
+  final base = AppEnv.baseUrl; // or AppEnv.fileBaseUrl if you have one
+  if (base.isEmpty) return u;
+  if (base.endsWith('/') && u.startsWith('/')) return '$base${u.substring(1)}';
+  if (!base.endsWith('/') && !u.startsWith('/')) return '$base/$u';
+  return '$base$u';
+}
 
 String _friendlyDate(DateTime d) {
   final now = DateTime.now();
@@ -789,13 +759,12 @@ String _friendlyDate(DateTime d) {
   } else if (dayDiff == 0) {
     return 'Today, ${_timeOf(d)}';
   } else {
-    // past
     final ended = DateTime(now.year, now.month, now.day)
         .difference(DateTime(d.year, d.month, d.day))
         .inDays;
     if (ended == 0) return 'today';
     if (ended == 1) return 'yesterday';
-    return 'Jun ${d.day}';
+    return '${d.month}/${d.day}';
   }
 }
 
@@ -809,4 +778,36 @@ String _timeOf(DateTime d) {
   final m = d.minute.toString().padLeft(2, '0');
   final ampm = d.hour >= 12 ? 'PM' : 'AM';
   return '$h:$m $ampm';
+}
+
+/// Small image widget that won’t break layout if URL is bad/relative.
+class _NetImage extends StatelessWidget {
+  final String url;
+  const _NetImage(this.url);
+
+  @override
+  Widget build(BuildContext context) {
+    final u = url.isEmpty ? _kPlaceholder : url;
+    return Image.network(
+      u,
+      fit: BoxFit.cover,
+      // Subtle loader without design changes
+      loadingBuilder: (ctx, child, progress) {
+        if (progress == null) return child;
+        return Container(
+          color: const Color(0x11000000),
+          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+        );
+      },
+      // Fallback if the URL 404s or is invalid
+      errorBuilder: (ctx, _, __) {
+        return Container(
+          color: const Color(0x11000000),
+          alignment: Alignment.center,
+          child: const Icon(Icons.image_not_supported_outlined,
+              size: 28, color: Colors.white70),
+        );
+      },
+    );
+  }
 }

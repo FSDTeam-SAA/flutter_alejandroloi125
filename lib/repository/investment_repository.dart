@@ -1,7 +1,8 @@
-// lib/feature/investment/repository/investment_repository.dart
+import 'dart:io';
 import 'package:dio/dio.dart';
 
 import '../feature/models/investment.dart';
+import '../feature/service/models/investment_page.dart';
 import '../services/investment_service.dart';
 
 class InvestmentRepository {
@@ -16,19 +17,6 @@ class InvestmentRepository {
     return Exception(msg);
   }
 
-  Map<String, dynamic> _asMap(dynamic v) =>
-      v is Map ? Map<String, dynamic>.from(v) : <String, dynamic>{};
-
-  List<Map<String, dynamic>> _asListOfMap(dynamic v) {
-    if (v is List) {
-      return v
-          .whereType<Map>()
-          .map((e) => Map<String, dynamic>.from(e))
-          .toList();
-    }
-    return const <Map<String, dynamic>>[];
-  }
-
   Future<Investment> create({
     required String name,
     required String description,
@@ -37,7 +25,7 @@ class InvestmentRepository {
     required String fundingDuration,
     required String location,
     required String investmentTerms,
-    dynamic imageFile, // File/XFile/null
+    required File imageFile,
   }) async {
     try {
       final r = await service.create(
@@ -48,109 +36,118 @@ class InvestmentRepository {
         fundingDuration: fundingDuration,
         location: location,
         investmentTerms: investmentTerms,
-        image: imageFile,
+        imageFile: imageFile,
       );
-      if (r is Map && r['success'] != true) {
+
+      if (r['success'] != true) {
         throw Exception(r['message'] ?? 'Create failed');
       }
-      // Accept {data:{investment:{...}}} or {data:{...}} or flat {...}
-      final data = _asMap(r?['data']?['investment']) //
-          .isNotEmpty
-          ? _asMap(r['data']['investment'])
-          : (_asMap(r?['data']).isNotEmpty ? _asMap(r['data']) : _asMap(r));
+
+      Map<String, dynamic> asMap(dynamic v) =>
+          v is Map ? Map<String, dynamic>.from(v) : <String, dynamic>{};
+
+      final data = asMap(r['data']?['investment']).isNotEmpty
+          ? asMap(r['data']['investment'])
+          : (asMap(r['data']).isNotEmpty ? asMap(r['data']) : asMap(r));
+
       return Investment.fromJson(data);
     } on DioException catch (e) {
       throw _wrap(e);
     }
   }
 
-  Future<List<Investment>> getAll({int page = 1, int limit = 10}) async {
+  /// GET /investment/all-investment => returns:
+  /// { success, data: { meta: {total,page,limit,pages}, investments: [...] } }
+  Future<InvestmentPage> getAll({int page = 1, int limit = 10}) async {
     try {
       final r = await service.getAll(page: page, limit: limit);
-      if (r is Map && r['success'] != true) {
+      if (r['success'] != true) {
         throw Exception(r['message'] ?? 'Fetch failed');
       }
-      // Postman shows: { data: { investments: [...] } }
-      final list = _asListOfMap(r?['data']?['investments']) //
-          .isNotEmpty
-          ? _asListOfMap(r['data']['investments'])
-          : _asListOfMap(r?['data']);
-      return list.map(Investment.fromJson).toList();
-    } on DioException catch (e) {
-      throw _wrap(e);
-    }
-  }
 
-  Future<List<Investment>> getMine(
-      String userId, {
-        int page = 1,
-        int limit = 10,
-      }) async {
-    try {
-      final r = await service.getMine(userId, page: page, limit: limit);
-      if (r is Map && r['success'] != true) {
-        throw Exception(r['message'] ?? 'Fetch failed');
-      }
-      final list = _asListOfMap(r?['data']?['investments']) //
-          .isNotEmpty
-          ? _asListOfMap(r['data']['investments'])
-          : _asListOfMap(r?['data']);
-      return list.map(Investment.fromJson).toList();
-    } on DioException catch (e) {
-      throw _wrap(e);
-    }
-  }
+      final data = (r['data'] is Map) ? Map<String, dynamic>.from(r['data']) : <String, dynamic>{};
+      final meta = (data['meta'] is Map) ? Map<String, dynamic>.from(data['meta']) : <String, dynamic>{};
+      final list = (data['investments'] is List) ? List.from(data['investments']) : const <dynamic>[];
 
-  Future<Investment> getById(String id) async {
-    try {
-      final r = await service.getById(id);
-      if (r is Map && r['success'] != true) {
-        throw Exception(r['message'] ?? 'Fetch failed');
-      }
-      final data = _asMap(r?['data']?['investment']) //
-          .isNotEmpty
-          ? _asMap(r['data']['investment'])
-          : (_asMap(r?['data']).isNotEmpty ? _asMap(r['data']) : _asMap(r));
-      return Investment.fromJson(data);
-    } on DioException catch (e) {
-      throw _wrap(e);
-    }
-  }
+      final items = list
+          .whereType<Map>()
+          .map((m) => Investment.fromJson(Map<String, dynamic>.from(m)))
+          .toList();
 
-  Future<Investment> update(String id, Map<String, dynamic> body) async {
-    try {
-      final r = await service.update(
-        id,
-        name: body['name'],
-        description: body['description'],
-        category: body['category'],
-        fundingGoal: body['funding_goal'],
-        fundingDuration: body['funding_duration'],
-        location: body['location'],
-        investmentTerms: body['investment_terms'],
+      return InvestmentPage(
+        total: (meta['total'] as num?)?.toInt() ?? items.length,
+        page: (meta['page'] as num?)?.toInt() ?? page,
+        limit: (meta['limit'] as num?)?.toInt() ?? limit,
+        pages: (meta['pages'] as num?)?.toInt() ?? 1,
+        items: items,
       );
-      if (r is Map && r['success'] != true) {
-        throw Exception(r['message'] ?? 'Update failed');
-      }
-      final data = _asMap(r?['data']?['investment']) //
-          .isNotEmpty
-          ? _asMap(r['data']['investment'])
-          : (_asMap(r?['data']).isNotEmpty ? _asMap(r['data']) : _asMap(r));
-      return Investment.fromJson(data);
     } on DioException catch (e) {
       throw _wrap(e);
     }
   }
-  //
-  // Future<void> delete(String id) async {
-  //   try {
-  //     final r = await service.delete(id); // may be 204 (null body) or a Map
-  //     if (r is Map && r['success'] == false) {
-  //       throw Exception(r['message'] ?? 'Delete failed');
-  //     }
-  //     // if r is null/empty and no error thrown → treat as success
-  //   } on DioException catch (e) {
-  //     throw _wrap(e);
-  //   }
-  // }
+
+  Future<InvestmentPage> getAllByUser({
+    required String userId,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    try {
+      final r = await service.getAllByUser(userId: userId, page: page, limit: limit);
+      return _toPage(r, page, limit);
+    } on DioException catch (e) {
+      throw _wrap(e);
+    }
+  }
+
+  Future<Investment> getOne(String id) async {
+    try {
+      final r = await service.getOne(id);
+      if (r['success'] != true) {
+        throw Exception(r['message'] ?? 'Fetch failed');
+      }
+      final data = (r['data'] is Map) ? Map<String, dynamic>.from(r['data']) : <String, dynamic>{};
+      final item = (data['investment'] is Map)
+          ? Map<String, dynamic>.from(data['investment'])
+          : data;
+      return Investment.fromJson(item);
+    } on DioException catch (e) {
+      throw _wrap(e);
+    }
+  }
+
+
+  /// DELETE /investment/{id}
+  Future<void> delete(String id) async {
+    try {
+      final r = await service.delete(id);
+      if (r['success'] != true) {
+        throw Exception(r['message'] ?? 'Delete failed');
+      }
+    } on DioException catch (e) {
+      throw _wrap(e);
+    }
+  }
+}
+
+// ---- helpers ----
+InvestmentPage _toPage(Map<String, dynamic> raw, int page, int limit) {
+  if (raw['success'] != true) {
+    throw Exception(raw['message'] ?? 'Fetch failed');
+  }
+  final data = (raw['data'] is Map) ? Map<String, dynamic>.from(raw['data']) : <String, dynamic>{};
+  final meta = (data['meta'] is Map) ? Map<String, dynamic>.from(data['meta']) : <String, dynamic>{};
+  final list = (data['investments'] is List) ? List.from(data['investments']) : const [];
+
+  final items = list
+      .whereType<Map>()
+      .map((m) => Investment.fromJson(Map<String, dynamic>.from(m)))
+      .toList();
+
+  return InvestmentPage(
+    total: (meta['total'] as num?)?.toInt() ?? items.length,
+    page: (meta['page'] as num?)?.toInt() ?? page,
+    limit: (meta['limit'] as num?)?.toInt() ?? limit,
+    pages: (meta['pages'] as num?)?.toInt() ?? 1,
+    items: items,
+  );
 }

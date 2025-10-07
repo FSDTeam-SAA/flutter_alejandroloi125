@@ -1,19 +1,13 @@
-// lib/feature/auction/view/my_auction_details.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
-/// Local-only detail screen (no Provider/API).
-/// Keep your existing route calls working: pass the id you have,
-/// and optionally pass a fully-populated [detail] to render real data.
 class MyAuctionDetailScreen extends StatelessWidget {
   final String auctionId;
-  final AuctionDetail? detail;
 
   const MyAuctionDetailScreen({
     super.key,
     required this.auctionId,
-    this.detail,
   });
 
   @override
@@ -23,26 +17,13 @@ class MyAuctionDetailScreen extends StatelessWidget {
     const border = Color(0xFF242931);
     const accent = Color(0xFFFF8A34);
 
-    // Fallback demo content if no detail provided.
-    final a = detail ??
-        AuctionDetail(
-          name: 'Auction #$auctionId',
-          description:
-          'No description provided. (This is placeholder content shown because no data was passed in.)',
-          startingBid: null,
-          scheduleDate: '',
-          scheduleTime: '',
-          durationMinutes: null,
-          heroImageAsset: 'assets/images/earpod.jpg',
-        );
-
-    final title = a.name ?? 'Auction';
-    final desc = (a.description ?? '').trim().isEmpty
-        ? 'No description provided.'
-        : a.description!.trim();
-    final start =
-    a.startingBid != null ? '\$${_comma(a.startingBid!)}' : '-';
-    final schedule = _schedule(a.scheduleDate, a.scheduleTime);
+    // Placeholder demo content (replace with real data when you have it)
+    final title = 'Gaming Console';
+    final desc =
+        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum metus eu egestas pharetra. Fusce bibendum odio et venenatis efficitur.';
+    const currentBid = '\$1,200';
+    const scheduleText = '25-08-2025 8:25 AM';
+    const durationText = '1 hour';
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value:
@@ -72,23 +53,15 @@ class MyAuctionDetailScreen extends StatelessWidget {
                     Stack(
                       children: [
                         ClipRRect(
-                          borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(14)),
+                          borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(14)),
                           child: AspectRatio(
                             aspectRatio: 16 / 9,
-                            child: a.heroImageAsset != null
-                                ? Image.asset(
-                              a.heroImageAsset!,
+                            child: Image.asset(
+                              'assets/images/earpod.jpg',
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => _broken(),
-                            )
-                                : (a.heroImageUrl != null
-                                ? Image.network(
-                              a.heroImageUrl!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => _broken(),
-                            )
-                                : _broken()),
+                            ),
                           ),
                         ),
 
@@ -251,7 +224,7 @@ class MyAuctionDetailScreen extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                start,
+                                currentBid,
                                 style: const TextStyle(
                                   color: accent,
                                   fontWeight: FontWeight.w900,
@@ -271,11 +244,9 @@ class MyAuctionDetailScreen extends StatelessWidget {
                       padding: const EdgeInsets.fromLTRB(14, 12, 14, 2),
                       child: Row(
                         children: [
-                          _InfoPill(icon: Icons.event, text: schedule),
+                          _InfoPill(icon: Icons.event, text: scheduleText),
                           const SizedBox(width: 12),
-                          _InfoPill(
-                              icon: Icons.schedule,
-                              text: _duration(a.durationMinutes)),
+                          _InfoPill(icon: Icons.schedule, text: durationText),
                         ],
                       ),
                     ),
@@ -289,7 +260,7 @@ class MyAuctionDetailScreen extends StatelessWidget {
                       text: 'Live Chat',
                     ),
 
-                    // static sample chat list (kept for layout)
+                    // static sample chat list (for layout only)
                     const Padding(
                       padding: EdgeInsets.fromLTRB(14, 0, 14, 14),
                       child: Column(
@@ -335,61 +306,11 @@ class MyAuctionDetailScreen extends StatelessWidget {
     );
   }
 
-  // ===== helpers =====
-  static String _comma(int n) {
-    final s = n.toString();
-    final b = StringBuffer();
-    for (int i = 0; i < s.length; i++) {
-      b.write(s[i]);
-      final left = s.length - i - 1;
-      if (left % 3 == 0 && left != 0) b.write(',');
-    }
-    return b.toString();
-  }
-
-  static String _schedule(String? d, String? t) {
-    final dd = (d ?? '').trim(), tt = (t ?? '').trim();
-    if (dd.isEmpty && tt.isEmpty) return '-';
-    return '$dd ${tt.isEmpty ? '' : tt}';
-  }
-
-  static String _duration(int? m) {
-    if (m == null) return '-';
-    if (m >= 60) {
-      final h = m ~/ 60;
-      return '$h hour${h > 1 ? 's' : ''}';
-    }
-    return '$m minutes';
-  }
-
   Widget _broken() => Container(
     color: Colors.black26,
     alignment: Alignment.center,
     child: const Icon(Icons.broken_image_outlined),
   );
-}
-
-/// Lightweight local model for this screen (no API/provider).
-class AuctionDetail {
-  final String? name;
-  final String? description;
-  final int? startingBid; // USD
-  final String? scheduleDate; // e.g. "2025-10-10"
-  final String? scheduleTime; // e.g. "15:30"
-  final int? durationMinutes; // e.g. 120
-  final String? heroImageAsset; // use asset OR:
-  final String? heroImageUrl; // ...a network image
-
-  const AuctionDetail({
-    this.name,
-    this.description,
-    this.startingBid,
-    this.scheduleDate,
-    this.scheduleTime,
-    this.durationMinutes,
-    this.heroImageAsset,
-    this.heroImageUrl,
-  });
 }
 
 // ===== atoms & small widgets =====
@@ -577,15 +498,16 @@ class _ChatItem extends StatelessWidget {
                     ),
                     Text(
                       timeAgo,
-                      style:
-                      TextStyle(color: Colors.white.withOpacity(.7), fontSize: 12),
+                      style: TextStyle(
+                          color: Colors.white.withOpacity(.7), fontSize: 12),
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
                 Text(
                   message,
-                  style: const TextStyle(color: Colors.white, height: 1.35),
+                  style:
+                  const TextStyle(color: Colors.white, height: 1.35),
                 ),
               ],
             ),

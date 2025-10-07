@@ -9,33 +9,42 @@ import 'package:flutter/material.dart';
 import 'create_service/view/create_services_view.dart';
 
 class AppGround extends StatefulWidget {
-  const AppGround({super.key});
+  const AppGround({
+    super.key,
+    this.initialIndex = 0,      // 0=Home, 1=Services, 2=Create, 3=Event, 4=Profile
+    this.servicesInitialTab = 0, // 0=Investments, 1=Project, 2=Auctions
+  });
+
+  final int initialIndex;
+  final int servicesInitialTab;
 
   @override
   State<AppGround> createState() => _AppGroundState();
 }
 
 class _AppGroundState extends State<AppGround> {
-  int _selectedIndex = 0;
-
-  late final List<Widget> _pages;
+  late int _selectedIndex;
+  late List<Widget> _pages;
 
   @override
   void initState() {
     super.initState();
-    _pages = [
-      HomeScreenView(),
-      ServiceView(),
-      CreateServicesView(),
-      EventView(),
-      ProfileScreenView()
+
+    // Clamp just in case a bad index is passed
+    _selectedIndex = widget.initialIndex.clamp(0, 4);
+
+    _pages = <Widget>[
+      const HomeScreenView(),
+      ServiceView(initialIndex: widget.servicesInitialTab),
+
+      const CreateServicesView(),
+      const EventView(),
+      const ProfileScreenView(),
     ];
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    setState(() => _selectedIndex = index.clamp(0, _pages.length - 1));
   }
 
   @override
@@ -44,7 +53,7 @@ class _AppGroundState extends State<AppGround> {
       backgroundColor: Colors.black,
       body: _pages[_selectedIndex],
       floatingActionButton: GestureDetector(
-        onTap: () => _onItemTapped(2),
+        onTap: () => _onItemTapped(2), // center FAB opens Create Services
         child: Container(
           height: 50,
           width: 50,
@@ -64,11 +73,11 @@ class _AppGroundState extends State<AppGround> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildNavItem(Images.nv1, "Home", 0),
-            _buildNavItem(Images.nv2, "Services", 1),
-            const SizedBox(width: 40),
-            _buildNavItem(Images.nb3, "Event", 3),
-            _buildNavItem(Images.personIcon, "Profile", 4),
+            _buildNavItem(Images.nv1, 'Home', 0),
+            _buildNavItem(Images.nv2, 'Services', 1),
+            const SizedBox(width: 40), // space for FAB
+            _buildNavItem(Images.nb3, 'Event', 3),
+            _buildNavItem(Images.personIcon, 'Profile', 4),
           ],
         ),
       ),
@@ -86,9 +95,9 @@ class _AppGroundState extends State<AppGround> {
           children: [
             Image.asset(
               iconPath,
-              color: isSelected ? Colors.orange : Colors.white,
               height: 24,
               width: 24,
+              color: isSelected ? Colors.orange : Colors.white,
             ),
             Text(
               label,

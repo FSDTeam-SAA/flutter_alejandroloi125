@@ -1,184 +1,223 @@
 // lib/feature/auction/view/my_auction_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import 'my_auction_details.dart';
 
-/// Local-only version (no Provider/API).
-/// Pass pre-fetched [auctions], and optionally toggle [loading]/[error].
 class MyAuctionScreen extends StatefulWidget {
-  const MyAuctionScreen({
-    super.key,
-    this.auctions = const <AuctionItem>[],
-    this.loading = false,
-    this.error,
-    this.onDelete, // optional callback if you still want to hook into something external
-  });
-
-  final List<AuctionItem> auctions;
-  final bool loading;
-  final String? error;
-
-  /// Optional: will be invoked after a local delete succeeds.
-  final Future<void> Function(String id)? onDelete;
-
+  const MyAuctionScreen({super.key});
   @override
   State<MyAuctionScreen> createState() => _MyAuctionScreenState();
 }
 
 class _MyAuctionScreenState extends State<MyAuctionScreen> {
-  late List<AuctionItem> _items;
-  final Set<String> _deleting = {};
+  final _scroll = ScrollController();
+
+  // local-only state (no API / provider)
+  bool _loading = true;
+  bool _paging = false;
+  String? _error;
+
+  int _page = 1;
+  int _pages = 3; // total pages in this local demo
+  final int _limit = 10;
+
+  final List<_Auction> _items = [];
 
   @override
   void initState() {
     super.initState();
-    _items = List<AuctionItem>.from(widget.auctions);
+    // initial load
+    _fetch(page: 1, limit: _limit);
+
+    // infinite scroll
+    _scroll.addListener(() {
+      if (_paging || _loading) return;
+      final nearBottom = _scroll.position.pixels >=
+          _scroll.position.maxScrollExtent - 120;
+      if (nearBottom && _page < _pages) {
+        _paging = true;
+        _fetch(page: _page + 1, limit: _limit).whenComplete(() {
+          _paging = false;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  // local "fetch" that generates mock data
+  Future<void> _fetch({required int page, required int limit}) async {
+    try {
+      if (page == 1) setState(() => _loading = true);
+      await Future.delayed(const Duration(milliseconds: 350)); // simulate work
+
+      final newItems = _makeFakePage(page, limit);
+      setState(() {
+        if (page == 1) _items.clear();
+        _items.addAll(newItems);
+        _page = page;
+        _loading = false;
+        _error = null;
+      });
+    } catch (e) {
+      setState(() {
+        _loading = false;
+        _error = 'Failed to load auctions';
+      });
+    }
+  }
+
+  // local delete
+  Future<void> _delete(String id) async {
+    setState(() => _items.removeWhere((a) => a.id == id));
+    Get.snackbar('Deleted', 'Auction removed',
+        snackPosition: SnackPosition.TOP);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.loading && _items.isEmpty) {
-      return const Scaffold(
-        backgroundColor: Color(0xFF0D0F12),
-        body: SafeArea(child: Center(child: CircularProgressIndicator())),
-      );
-    }
-
-    if (widget.error != null && _items.isEmpty) {
-      return Scaffold(
-        backgroundColor: const Color(0xFF0D0F12),
-        body: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(widget.error!, style: const TextStyle(color: Colors.white70)),
-                  const SizedBox(height: 8),
-                  const Text('No auctions to show', style: TextStyle(color: Colors.white54)),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    if (_items.isEmpty) {
-      return const Scaffold(
-        backgroundColor: Color(0xFF0D0F12),
-        body: SafeArea(
-          child: Center(
-            child: Text('No auctions found', style: TextStyle(color: Colors.white70)),
-          ),
-        ),
-      );
-    }
+    final items = _items;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D0F12),
       body: SafeArea(
-        child: ListView.separated(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          itemCount: _items.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 14),
-          itemBuilder: (context, i) {
-            final a = _items[i];
-            final priceLabel = a.startingBid != null ? '\$${_comma(a.startingBid!)}' : '-';
-            final timeLabel = _timeLabel(a);
-            const status = 'In Progress';
-            const statusColor = Color(0xFFFF8A34);
-
-            return _AuctionCard.dynamic(
-              imageUrl: a.imageUrl ?? 'assets/images/watch.jpg',
-              title: a.name ?? 'Auction',
-              priceLabel: priceLabel,
-              timeLabel: timeLabel,
-              status: status,
-              statusColor: statusColor,
-              completed: false,
-              deleting: a.id != null && _deleting.contains(a.id),
-              onView: (a.id == null || a.id!.isEmpty)
-                  ? null
-                  : () {
-                Get.to(
-                      () => MyAuctionDetailScreen(auctionId: a.id!),
-                  transition: Transition.rightToLeft,
-                  duration: const Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
-                );
-              },
-              onDelete: (a.id == null)
-                  ? null
-                  : () async {
-                final ok = await showDialog<bool>(
-                  context: context,
-                  builder: (_) => AlertDialog(
-                    title: const Text('Delete auction?'),
-                    content: const Text('This action cannot be undone.'),
-                    actions: [
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel'),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Delete'),
-                      ),
-                    ],
-                  ),
-                ) ??
-                    false;
-                if (!ok) return;
-
-                setState(() => _deleting.add(a.id!));
-                // Local-only delete
-                await Future.delayed(const Duration(milliseconds: 350));
-                setState(() {
-                  _items.removeWhere((e) => e.id == a.id);
-                  _deleting.remove(a.id);
-                });
-
-                // Optionally notify upstream
-                if (widget.onDelete != null) {
-                  await widget.onDelete!(a.id!);
-                }
-
-                Get.snackbar('Deleted', 'Auction removed',
-                    snackPosition: SnackPosition.TOP);
-              },
+        child: Builder(builder: (_) {
+          if (_loading && items.isEmpty) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if ((_error ?? '').isNotEmpty && items.isEmpty) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(_error!, style: const TextStyle(color: Colors.white70)),
+              ),
             );
-          },
-        ),
+          }
+          if (items.isEmpty) {
+            return const Center(
+              child: Text('No auctions found',
+                  style: TextStyle(color: Colors.white70)),
+            );
+          }
+
+          return ListView.separated(
+            controller: _scroll,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            itemCount: items.length + (_page < _pages ? 1 : 0),
+            separatorBuilder: (_, __) => const SizedBox(height: 14),
+            itemBuilder: (context, i) {
+              if (i >= items.length) {
+                // paging loader
+                return const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Center(
+                    child: SizedBox(
+                      height: 22,
+                      width: 22,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                );
+              }
+
+              final a = items[i];
+              final price = (a.startingBid == null)
+                  ? '-'
+                  : '\$${_comma(a.startingBid!)}';
+              final time = _timeLabel(a.scheduleDate, a.scheduleTime, a.fundingDuration);
+
+              return _AuctionCard.dynamic(
+                imageUrl: a.cover ?? 'assets/images/watch.jpg',
+                title: a.name,
+                priceLabel: price,
+                timeLabel: time,
+                status: 'In Progress',
+                statusColor: const Color(0xFFFF8A34),
+                completed: false,
+                onView: () {
+                  Get.to(
+                        () => MyAuctionDetailScreen(auctionId: a.id),
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 300),
+                  );
+                },
+                onDelete: () async {
+                  final ok = await showDialog<bool>(
+                    context: context,
+                    builder: (_) => AlertDialog(
+                      title: const Text('Delete auction?'),
+                      content: const Text('This action cannot be undone.'),
+                      actions: [
+                        TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancel')),
+                        TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text('Delete')),
+                      ],
+                    ),
+                  ) ??
+                      false;
+                  if (!ok) return;
+                  await _delete(a.id);
+                },
+              );
+            },
+          );
+        }),
       ),
     );
   }
+
+  // ---- mock data helpers ----
+  List<_Auction> _makeFakePage(int page, int limit) {
+    return List.generate(limit, (i) {
+      final num = (page - 1) * limit + i + 1;
+      return _Auction(
+        id: 'auction_$num',
+        name: 'Auction #$num',
+        startingBid: (num % 3 == 0) ? null : 1000 + num * 25,
+        fundingDuration: (num % 4 == 0)
+            ? '1h'
+            : (num % 3 == 0)
+            ? '30m'
+            : (num % 2 == 0)
+            ? '20m'
+            : '10m',
+        scheduleDate: (num % 5 == 0) ? null : '25-08-2025',
+        scheduleTime: (num % 2 == 0) ? '8:25' : '3:00 PM',
+        cover: null, // uses default asset
+      );
+    });
+  }
 }
 
-/// Local, minimal auction model for this screen (no API/provider).
-class AuctionItem {
-  final String? id;
-  final String? name;
-  final int? startingBid; // in USD
-  final String? scheduleDate; // e.g., "2025-10-10"
-  final String? scheduleTime; // e.g., "15:30"
-  final int? duration; // minutes
-  final String? imageUrl; // optional override for card image
+// ==== simple local model (only fields used by the UI) ====
+class _Auction {
+  final String id;
+  final String name;
+  final int? startingBid;
+  final String fundingDuration;
+  final String? scheduleDate;
+  final String? scheduleTime;
+  final String? cover;
 
-  const AuctionItem({
-    this.id,
-    this.name,
-    this.startingBid,
-    this.scheduleDate,
-    this.scheduleTime,
-    this.duration,
-    this.imageUrl,
+  _Auction({
+    required this.id,
+    required this.name,
+    required this.startingBid,
+    required this.fundingDuration,
+    required this.scheduleDate,
+    required this.scheduleTime,
+    required this.cover,
   });
 }
 
-// ---------- helpers ----------
+// ==== helpers + card (same visuals you already had) ====
 String _comma(int n) {
   final s = n.toString();
   final b = StringBuffer();
@@ -190,35 +229,18 @@ String _comma(int n) {
   return b.toString();
 }
 
-String _timeLabel(AuctionItem a) {
-  final date = (a.scheduleDate ?? '').trim();
-  final time = (a.scheduleTime ?? '').trim();
-  if (date.isEmpty && time.isEmpty) {
-    final dur = a.duration;
-    if (dur is int) {
-      if (dur >= 60) {
-        final h = dur ~/ 60;
-        return '${h}h auction';
-      }
-      return '${dur}m auction';
-    }
-    return 'No schedule';
-  }
-  return '$date ${time.isEmpty ? '' : time}';
+String _timeLabel(String? d, String? t, String duration) {
+  final dd = (d ?? '').trim();
+  final tt = (t ?? '').trim();
+  if (dd.isEmpty && tt.isEmpty) return duration.isEmpty ? '-' : duration;
+  return '$dd ${tt.isEmpty ? '' : tt}';
 }
 
-// ---- card (kept design) ----
 class _AuctionCard extends StatelessWidget {
-  final String imageUrl;
-  final String title;
-  final String priceLabel;
-  final String timeLabel;
-  final String status;
+  final String imageUrl, title, priceLabel, timeLabel, status;
   final Color statusColor;
   final bool completed;
-  final VoidCallback? onView;
-  final VoidCallback? onDelete;
-  final bool deleting;
+  final VoidCallback? onView, onDelete;
 
   const _AuctionCard.dynamic({
     super.key,
@@ -231,7 +253,6 @@ class _AuctionCard extends StatelessWidget {
     required this.completed,
     this.onView,
     this.onDelete,
-    this.deleting = false,
   });
 
   @override
@@ -246,7 +267,7 @@ class _AuctionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: border),
         boxShadow: const [
-          BoxShadow(color: Colors.black54, blurRadius: 12, offset: Offset(0, 6)),
+          BoxShadow(color: Colors.black54, blurRadius: 12, offset: Offset(0, 6))
         ],
       ),
       child: Column(
@@ -259,16 +280,12 @@ class _AuctionCard extends StatelessWidget {
               child: AspectRatio(
                 aspectRatio: 16 / 9,
                 child: imageUrl.startsWith('http')
-                    ? Image.network(
-                  imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _broken(),
-                )
-                    : Image.asset(
-                  imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _broken(),
-                ),
+                    ? Image.network(imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _broken())
+                    : Image.asset(imageUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _broken()),
               ),
             ),
           ),
@@ -277,94 +294,72 @@ class _AuctionCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Column(
+                Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Expanded(
+                    child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 16.5,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
+                          Text(title,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16.5,
+                                  fontWeight: FontWeight.w700)),
                           const SizedBox(height: 4),
-                          Text(
-                            priceLabel,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 14.5,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
+                          Text(priceLabel,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14.5,
+                                  fontWeight: FontWeight.w600)),
+                        ]),
+                  ),
+                  Container(
+                    padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: statusColor.withOpacity(0.14),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: statusColor.withOpacity(0.7)),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.14),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: statusColor.withOpacity(0.7)),
-                      ),
-                      child: Text(
-                        status,
+                    child: Text(status,
                         style: TextStyle(
-                          color: statusColor,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                            color: statusColor,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600)),
+                  ),
+                ]),
                 const SizedBox(height: 10),
                 _InfoBar(icon: Icons.access_time, label: timeLabel),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: Colors.white.withOpacity(0.15)),
-                          foregroundColor: Colors.white.withOpacity(0.9),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        onPressed: deleting ? null : onDelete,
-                        child: deleting
-                            ? const SizedBox(
-                          height: 18,
-                          width: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                            : const Text('Delete'),
+                Row(children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Colors.white.withOpacity(0.15)),
+                        foregroundColor: Colors.white.withOpacity(0.9),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
+                      onPressed: onDelete,
+                      child: const Text('Delete'),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: accent,
-                          foregroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          elevation: 0,
-                        ),
-                        onPressed: onView,
-                        child: const Text('View Details'),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: accent,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        elevation: 0,
                       ),
+                      onPressed: onView,
+                      child: const Text('View Details'),
                     ),
-                  ],
-                ),
+                  ),
+                ]),
               ],
             ),
           ),
@@ -374,10 +369,9 @@ class _AuctionCard extends StatelessWidget {
   }
 
   Widget _broken() => Container(
-    color: Colors.black26,
-    alignment: Alignment.center,
-    child: const Icon(Icons.broken_image_outlined),
-  );
+      color: Colors.black26,
+      alignment: Alignment.center,
+      child: const Icon(Icons.broken_image_outlined));
 }
 
 class _InfoBar extends StatelessWidget {
@@ -394,23 +388,18 @@ class _InfoBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFF2A313A)),
       ),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: Colors.white.withOpacity(0.85)),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              label,
+      child: Row(children: [
+        Icon(icon, size: 16, color: Colors.white.withOpacity(0.85)),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(label,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                color: Colors.white.withOpacity(0.85),
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
+                  color: Colors.white.withOpacity(0.85),
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600)),
+        ),
+      ]),
     );
   }
 }

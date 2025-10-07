@@ -1,7 +1,13 @@
 // main.dart
+import 'package:alejandroloi/providers/auction_provider.dart';
 import 'package:alejandroloi/providers/investment_provider.dart';
+import 'package:alejandroloi/providers/project_provider.dart';
+import 'package:alejandroloi/repository/auction_repository.dart';
 import 'package:alejandroloi/repository/investment_repository.dart';
+import 'package:alejandroloi/repository/project_repository.dart';
+import 'package:alejandroloi/services/auction_service.dart';
 import 'package:alejandroloi/services/investment_service.dart';
+import 'package:alejandroloi/services/project_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
@@ -21,6 +27,8 @@ import 'feature/splash/view/splash_view.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+
+
 
   runApp(
     MultiProvider(
@@ -53,7 +61,7 @@ void main() {
           create: (ctx) => ProfileProvider(ctx.read<ProfileRepository>()),
         ),
 
-        // ---- investment stack (uses THE SAME ApiClient) ----
+        // Investment stack
         ProxyProvider<ApiClient, InvestmentService>(
           update: (_, client, __) => InvestmentService(client),
         ),
@@ -63,6 +71,37 @@ void main() {
         ChangeNotifierProvider(
           create: (ctx) => InvestmentProvider(ctx.read<InvestmentRepository>()),
         ),
+
+
+
+        // ========= PROJECT STACK (mirror of Investment) =========
+        ProxyProvider<ApiClient, ProjectService>(
+          update: (_, client, __) => ProjectService(client),
+        ),
+        ProxyProvider<ProjectService, ProjectRepository>(
+          update: (_, svc, __) => ProjectRepository(svc),
+        ),
+        ChangeNotifierProvider<ProjectProvider>(
+          create: (ctx) => ProjectProvider(ctx.read<ProjectRepository>()),
+        ),
+
+        //auction
+        ProxyProvider<ApiClient, AuctionService>(
+          update: (_, client, __) => AuctionService(client),
+        ),
+        ProxyProvider<AuctionService, AuctionRepository>(
+          update: (_, svc, __) => AuctionRepository(svc),
+        ),
+        ChangeNotifierProvider<AuctionProvider>(
+          create: (ctx) => AuctionProvider(ctx.read<AuctionRepository>()),
+        ),
+
+
+
+
+
+
+
 
       ],
       child: const MyApp(),
@@ -82,44 +121,3 @@ class MyApp extends StatelessWidget {
 }
 
 
-// import 'package:alejandroloi/feature/splash/view/splash_view.dart';
-// import 'package:flutter/material.dart';
-// import 'package:provider/provider.dart';
-// import 'package:get/get.dart';
-//
-// import 'package:alejandroloi/core/network/api_service/api_client.dart';
-// import 'package:alejandroloi/core/network/api_service/token_store.dart';
-// import 'package:alejandroloi/feature/auth/repository/auth_repository.dart';
-// import 'package:alejandroloi/feature/auth/providers/auth_provider.dart';
-//
-// import 'feature/auth/services/auth_service.dart';
-//
-// void main() {
-//   WidgetsFlutterBinding.ensureInitialized();
-//
-//   final tokenStore   = TokenStore();
-//   final apiClient    = ApiClient(tokenStore);
-//   final authService  = AuthService(apiClient);
-//   final authRepo     = AuthRepository(service: authService, tokenStore: tokenStore);
-//
-//   runApp(
-//     MultiProvider(
-//       providers: [
-//
-//         ChangeNotifierProvider(create: (_) => AuthProvider(authRepo)),
-//       ],
-//       child: const MyApp(),
-//     ),
-//   );
-// }
-//
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key});
-//   @override
-//   Widget build(BuildContext context) {
-//     return GetMaterialApp(
-//       debugShowCheckedModeBanner: false,
-//       home: const SplashScreen(),
-//     );
-//   }
-// }

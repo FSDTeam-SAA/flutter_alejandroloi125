@@ -1,55 +1,108 @@
 // lib/feature/service/view/my_projects/my_project_screen.dart
-import 'package:alejandroloi/feature/service/view/my_projects/my_project_details.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
+
+import '../../../../providers/project_provider.dart';
+import '../../../models/project.dart';
+import 'my_project_details.dart';
 
 class MyProjectScreen extends StatefulWidget {
-  const MyProjectScreen({super.key, this.items});
-
-  /// Optional: inject your own items. If null, demo data is used.
-  final List<MyProjectItem>? items;
+  const MyProjectScreen({super.key});
 
   @override
   State<MyProjectScreen> createState() => _MyProjectScreenState();
 }
 
 class _MyProjectScreenState extends State<MyProjectScreen> {
-  late List<MyProjectItem> _items;
-  bool _refreshing = false;
+  final _scroll = ScrollController();
+  bool _paging = false;
 
   @override
   void initState() {
     super.initState();
-    _items = widget.items ?? _sampleProjects();
+
+    // initial load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProjectProvider>().fetch(page: 1, limit: 10);
+    });
+
+    // infinite scroll
+    _scroll.addListener(() {
+      final prov = context.read<ProjectProvider>();
+      if (_paging || prov.loading) return;
+
+      final nearBottom =
+          _scroll.position.pixels >= _scroll.position.maxScrollExtent - 120;
+
+      if (nearBottom && prov.page < prov.pages) {
+        _paging = true;
+        prov.fetch(page: prov.page + 1, limit: 10).whenComplete(() {
+          if (mounted) _paging = false;
+        });
+      }
+    });
   }
 
-  Future<void> _refresh() async {
-    setState(() => _refreshing = true);
-    await Future.delayed(const Duration(milliseconds: 600));
-    if (!mounted) return;
-    _items = List.of(_items)..shuffle();
-    setState(() => _refreshing = false);
+  Future<void> _refresh() =>
+      context.read<ProjectProvider>().fetch(page: 1, limit: 10);
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final prov = context.watch<ProjectProvider>();
+    final items = prov.items;
+
     return Scaffold(
       backgroundColor: const Color(0xFF0D0F12),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _refresh,
+          color: const Color(0xFFFF8A34),
           child: Builder(
             builder: (_) {
-              if (_refreshing && _items.isEmpty) {
+              // first load
+              if (prov.loading && items.isEmpty) {
                 return const Center(child: CircularProgressIndicator());
               }
 
-              if (_items.isEmpty) {
+              // first load error
+              if ((prov.error ?? '').isNotEmpty && items.isEmpty) {
+                return ListView(
+                  padding: const EdgeInsets.all(24),
+                  children: [
+                    const SizedBox(height: 40),
+                    const Icon(Icons.error_outline,
+                        color: Colors.white54, size: 48),
+                    const SizedBox(height: 12),
+                    Text(
+                      prov.error!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          color: Colors.white70, fontSize: 16),
+                    ),
+                    const SizedBox(height: 12),
+                    OutlinedButton(
+                      onPressed: _refresh,
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                );
+              }
+
+              // empty
+              if (items.isEmpty) {
                 return ListView(
                   padding: const EdgeInsets.all(24),
                   children: const [
                     SizedBox(height: 40),
-                    Icon(Icons.inbox_outlined, color: Colors.white54, size: 48),
+                    Icon(Icons.inbox_outlined,
+                        color: Colors.white54, size: 48),
                     SizedBox(height: 12),
                     Text(
                       'No projects yet',
@@ -61,73 +114,98 @@ class _MyProjectScreenState extends State<MyProjectScreen> {
               }
 
               return ListView.separated(
+                controller: _scroll,
                 padding:
                 const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                itemCount: _items.length,
+                itemCount: items.length + (prov.page < prov.pages ? 1 : 0),
                 separatorBuilder: (_, __) => const SizedBox(height: 14),
-                itemBuilder: (context, i) {
-                  final item = _items[i];
+                itemBuilder: (context, index) {
+                  // paging loader row
+                  if (index >= items.length) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Center(
+                        child: SizedBox(
+                          height: 22,
+                          width: 22,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    );
+                  }
 
-                  final status = item.status ??
-                      ((item.durationDays != null &&
-                          (item.durationDays ?? 0) <= 0)
-                          ? 'Completed'
-                          : 'In Progress');
+                  final p = items[index];
 
-                  final statusColor = status.toLowerCase().contains('complete')
+                  // FIX 1: Don’t infer completed from days; only from API status
+                  final apiStatus = (p.status ?? '').trim();
+                  final completed =
+                  apiStatus.toLowerCase().contains('complete');
+                  final status =
+                  apiStatus.isEmpty ? (completed ? 'Completed' : 'In Progress') : apiStatus;
+
+                  // FIX 2: Days text is '-' if API doesn't send it
+                  final int d = p.deadlineDays;
+                  final daysText = d > 0 ? '$d Days' : '-';
+
+                  final statusColor = completed
                       ? const Color(0xFF58D38C)
                       : const Color(0xFFFF8A34);
+
+                  final proposalsText = '8 Proposals'; // placeholder
 
                   return _ProjectCard(
                     status: status,
                     statusColor: statusColor,
-                    category: item.category ?? '',
-                    title: item.title ?? 'Untitled',
-                    description: item.description ?? '—',
-                    budgetRange:
-                    _fmtBudget(item.budgetMin, item.budgetMax),
-                    days: item.durationDays != null
-                        ? '${item.durationDays} Days'
-                        : '-',
-                    location: item.location ?? '—',
-                    proposals: '${item.proposalsCount ?? 0} Proposals',
-                    completed:
-                    status.toLowerCase().contains('complete'),
+                    category: p.category,
+                    title: p.title.isEmpty ? 'Untitled' : p.title,
+                    description: p.description.isEmpty ? '—' : p.description,
+                    budgetRange: _fmtBudget(p.minBudget, p.maxBudget),
+                    days: daysText,
+                    location: p.location.isEmpty ? '—' : p.location,
+                    proposals: proposalsText,
+                    completed: completed,
                     onDelete: () async {
                       final ok = await showDialog<bool>(
                         context: context,
-                        builder: (_) => AlertDialog(
+                        builder: (ctx) => AlertDialog(
                           title: const Text('Delete project?'),
-                          content: const Text(
-                              'This action cannot be undone.'),
+                          content:
+                          const Text('This action cannot be undone.'),
                           actions: [
                             TextButton(
-                                onPressed: () =>
-                                    Navigator.pop(context, false),
-                                child: const Text('Cancel')),
+                              onPressed: () =>
+                                  Navigator.pop(ctx, false),
+                              child: const Text('Cancel'),
+                            ),
                             TextButton(
-                                onPressed: () =>
-                                    Navigator.pop(context, true),
-                                child: const Text('Delete')),
+                              onPressed: () =>
+                                  Navigator.pop(ctx, true),
+                              child: const Text('Delete'),
+                            ),
                           ],
                         ),
                       ) ??
                           false;
                       if (!ok) return;
-                      setState(() {
-                        _items.removeAt(i);
-                      });
-                      Get.snackbar('Deleted', 'Project removed',
-                          snackPosition: SnackPosition.BOTTOM);
+
+                      await context.read<ProjectProvider>().delete(p.id);
+                      final err = context.read<ProjectProvider>().error;
+                      if (err == null) {
+                        Get.snackbar('Deleted', 'Project removed',
+                            snackPosition: SnackPosition.BOTTOM);
+                      } else {
+                        Get.snackbar('Error', err,
+                            snackPosition: SnackPosition.BOTTOM);
+                      }
                     },
                     onView: () {
-                      // Keep existing details screen route. If your
-                      // details screen still fetches from API, consider
-                      // updating it to accept a data object too.
                       Get.to(
-                            () => MyProjectDetailScreen(projectId: item.id),
+                            () => MyProjectDetailScreen(
+                          projectId: p.id,
+                          project: _toMyProjectData(p),
+                        ),
                         transition: Transition.rightToLeft,
-                        duration: const Duration(milliseconds: 300),
+                        duration: const Duration(milliseconds: 280),
                         curve: Curves.easeInOut,
                       );
                     },
@@ -141,24 +219,42 @@ class _MyProjectScreenState extends State<MyProjectScreen> {
     );
   }
 
-  String _fmtBudget(int? min, int? max) {
-    if (min == null && max == null) return '-';
-    if (min != null && max != null) return '\$ ${_sep(min)} - ${_sep(max)}';
-    if (min != null) return '\$ ${_sep(min)}+';
-    return '\$ ${_sep(max!)}';
-  }
+  // ---------- mapping & helpers ----------
 
-  String _sep(int n) {
-    final s = n.toString();
-    final buf = StringBuffer();
-    for (int i = 0; i < s.length; i++) {
-      buf.write(s[i]);
-      final left = s.length - i - 1;
-      if (left % 3 == 0 && left != 0) buf.write(',');
+  MyProjectData _toMyProjectData(Project p) => MyProjectData(
+    id: p.id,
+    category: p.category,
+    title: p.title,
+    description: p.description,
+    budgetMin: p.minBudget,
+    budgetMax: p.maxBudget,
+    durationDays: p.deadlineDays,
+    location: p.location,
+    proposalsCount: 8,
+    createdAt: DateTime.now(),
+    skills: p.skills,
+  );
+
+  String _fmtBudget(int min, int max) {
+    String sep(int n) {
+      final s = n.toString();
+      final b = StringBuffer();
+      for (int i = 0; i < s.length; i++) {
+        b.write(s[i]);
+        final left = s.length - i - 1;
+        if (left % 3 == 0 && left != 0) b.write(',');
+      }
+      return b.toString();
     }
-    return buf.toString();
+
+    if (min == 0 && max == 0) return '-';
+    if (min > 0 && max > 0) return '\$ ${sep(min)} - ${sep(max)}';
+    if (min > 0) return '\$ ${sep(min)}+';
+    return '\$ ${sep(max)}';
   }
 }
+
+// ======= Card (visuals aligned to your mock) =======
 
 class _ProjectCard extends StatelessWidget {
   final String status;
@@ -209,11 +305,11 @@ class _ProjectCard extends StatelessWidget {
       child: Stack(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
+            padding: const EdgeInsets.fromLTRB(14, 18, 14, 14),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 28),
+                const SizedBox(height: 26),
                 Text(
                   category,
                   style: TextStyle(
@@ -224,6 +320,8 @@ class _ProjectCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 16.5,
@@ -266,13 +364,15 @@ class _ProjectCard extends StatelessWidget {
                         child: OutlinedButton(
                           style: OutlinedButton.styleFrom(
                             side: BorderSide(
-                                color: Colors.white.withOpacity(0.15)),
+                              color: Colors.white.withOpacity(0.15),
+                            ),
                             foregroundColor:
                             Colors.white.withOpacity(0.9),
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding:
+                            const EdgeInsets.symmetric(vertical: 12),
                           ),
                           onPressed: onDelete,
                           child: const Text('Delete'),
@@ -285,9 +385,10 @@ class _ProjectCard extends StatelessWidget {
                             backgroundColor: accent,
                             foregroundColor: Colors.black,
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 12),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding:
+                            const EdgeInsets.symmetric(vertical: 12),
                             elevation: 0,
                           ),
                           onPressed: onView,
@@ -304,9 +405,9 @@ class _ProjectCard extends StatelessWidget {
                         backgroundColor: accent,
                         foregroundColor: Colors.black,
                         shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        padding:
-                        const EdgeInsets.symmetric(vertical: 12),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                         elevation: 0,
                       ),
                       onPressed: onView,
@@ -316,6 +417,8 @@ class _ProjectCard extends StatelessWidget {
               ],
             ),
           ),
+
+          // top-right status chip
           Positioned(
             top: 12,
             right: 12,
@@ -324,13 +427,12 @@ class _ProjectCard extends StatelessWidget {
               children: [
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 6),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: statusColor.withOpacity(0.7)),
+                    border: Border.all(color: statusColor.withOpacity(0.7)),
                   ),
                   child: Text(
                     status,
@@ -389,72 +491,3 @@ class _InfoPill extends StatelessWidget {
     );
   }
 }
-
-// ---------- Local-only model + sample data ----------
-class MyProjectItem {
-  final String id;
-  final String? category;
-  final String? title;
-  final String? description;
-  final int? budgetMin;
-  final int? budgetMax;
-  final int? durationDays;
-  final String? location;
-  final int? proposalsCount;
-  final String? status;
-
-  const MyProjectItem({
-    required this.id,
-    this.category,
-    this.title,
-    this.description,
-    this.budgetMin,
-    this.budgetMax,
-    this.durationDays,
-    this.location,
-    this.proposalsCount,
-    this.status,
-  });
-}
-
-List<MyProjectItem> _sampleProjects() => const [
-  MyProjectItem(
-    id: 'prj_001',
-    category: 'Design',
-    title: 'E-commerce UI Overhaul',
-    description:
-    'Redesign storefront, cart, and checkout for higher conversion.',
-    budgetMin: 2000,
-    budgetMax: 4500,
-    durationDays: 14,
-    location: 'Remote',
-    proposalsCount: 6,
-    status: 'In Progress',
-  ),
-  MyProjectItem(
-    id: 'prj_002',
-    category: 'Mobile',
-    title: 'Flutter MVP for Food Delivery',
-    description:
-    'Simple customer app with browse, cart, and order tracking.',
-    budgetMin: 5000,
-    budgetMax: 9000,
-    durationDays: 30,
-    location: 'Austin, TX',
-    proposalsCount: 12,
-    status: 'In Progress',
-  ),
-  MyProjectItem(
-    id: 'prj_003',
-    category: 'Web',
-    title: 'Marketing Site Revamp',
-    description:
-    'Landing page, blog, and CMS integration. SEO friendly.',
-    budgetMin: 1500,
-    budgetMax: 3000,
-    durationDays: 0,
-    location: 'Remote',
-    proposalsCount: 8,
-    status: 'Completed',
-  ),
-];

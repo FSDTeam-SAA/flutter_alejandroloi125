@@ -1,40 +1,43 @@
+// lib/feature/auction/view/create_auctions_view.dart
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
 import 'package:alejandroloi/core/common/widgets/custom_image.dart';
 import 'package:alejandroloi/core/common/widgets/custom_text_field.dart';
 import 'package:alejandroloi/core/common/widgets/save_botton.dart';
 import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/styles.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
-import '../../service/view/service_view.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+
+import '../../../providers/auction_provider.dart';
+import '../../app_ground.dart';
+import '../../models/auction.dart';
 
 class CreateAuctionsView extends StatefulWidget {
-  CreateAuctionsView({super.key});
+  const CreateAuctionsView({super.key});
 
   @override
   State<CreateAuctionsView> createState() => _CreateAuctionsViewState();
 }
 
 class _CreateAuctionsViewState extends State<CreateAuctionsView> {
-  // Removed: Get.put(CreateAuctionsController());
-  // Removed: Provider/AuctionProvider usage
+  final _formKey = GlobalKey<FormState>();
+  AutovalidateMode _auto = AutovalidateMode.disabled;
 
-  int selectedValue = 0; // 1 = Public, 2 = Schedule
-  int? _auctionMinutes;  // 10, 20, 30, 60
-  bool _submitting = false; // local-only, no API
+  int? _auctionMinutes; // 10, 20, 30, 60
+  bool _submitting = false;
 
-  // controllers
+  File? _image;
   final _titleCtrl = TextEditingController();
   final _categoryCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
   final _startingBidCtrl = TextEditingController();
-  final _shippingCtrl = TextEditingController();
+  final _locationCtrl = TextEditingController();
   final _dateCtrl = TextEditingController();
   final _timeCtrl = TextEditingController();
-
-  // simple local state mirrors (optional, used only if you want immediate reads)
-  String? _title, _category, _desc, _startingBid, _shipping;
-  String? _dateStr, _timeStr;
 
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
@@ -45,7 +48,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
     _categoryCtrl.dispose();
     _descCtrl.dispose();
     _startingBidCtrl.dispose();
-    _shippingCtrl.dispose();
+    _locationCtrl.dispose();
     _dateCtrl.dispose();
     _timeCtrl.dispose();
     super.dispose();
@@ -60,89 +63,137 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
     return "$h:$m $suffix";
   }
 
-  Future<void> _pickDate(BuildContext context) async {
+  Future<void> _pickDate() async {
     final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate ?? now,
-      firstDate: DateTime(now.year - 50),
+      firstDate: DateTime(now.year - 1),
       lastDate: DateTime(now.year + 5),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: AppColors.bottomColor1,
-              surface: AppColors.fieldColor,
-              onSurface: Colors.white,
-            ),
-            dialogBackgroundColor: Colors.black,
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.dark(
+            primary: AppColors.bottomColor1,
+            surface: AppColors.fieldColor,
+            onSurface: Colors.white,
           ),
-          child: child!,
-        );
-      },
+          dialogBackgroundColor: Colors.black,
+        ),
+        child: child!,
+      ),
     );
     if (picked != null) {
       setState(() {
         _selectedDate = picked;
         _dateCtrl.text = _fmtDate(picked);
-        _dateStr = _dateCtrl.text.trim();
       });
     }
   }
 
-  Future<void> _pickTime(BuildContext context) async {
+  Future<void> _pickTime() async {
     final picked = await showTimePicker(
       context: context,
       initialTime: _selectedTime ?? TimeOfDay.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: AppColors.bottomColor1,
-              surface: AppColors.fieldColor,
-              onSurface: Colors.white,
-            ),
-            dialogBackgroundColor: Colors.black,
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.dark(
+            primary: AppColors.bottomColor1,
+            surface: AppColors.fieldColor,
+            onSurface: Colors.white,
           ),
-          child: child!,
-        );
-      },
+          dialogBackgroundColor: Colors.black,
+        ),
+        child: child!,
+      ),
     );
     if (picked != null) {
       setState(() {
         _selectedTime = picked;
         _timeCtrl.text = _fmtTime(picked);
-        _timeStr = _timeCtrl.text.trim();
       });
     }
   }
 
-  void _toast(String title, String msg) {
-    Get.snackbar(title, msg, backgroundColor: Colors.black87, colorText: Colors.white);
+  String _durationLabel() {
+    switch (_auctionMinutes) {
+      case 10:
+        return '10m';
+      case 20:
+        return '20m';
+      case 30:
+        return '30m';
+      case 60:
+        return '1h';
+    }
+    return '';
   }
 
-  Future<void> _onCreateTap() async {
-    if (_submitting) return;
-
-    // Require date & time ALWAYS (same behavior as before)
-    if (_dateCtrl.text.trim().isEmpty || _timeCtrl.text.trim().isEmpty) {
-      _toast('Missing info', 'Please select fields.');
+  Future<void> _submit() async {
+    final ok = _formKey.currentState?.validate() ?? false;
+    if (!ok) {
+      setState(() => _auto = AutovalidateMode.onUserInteraction);
+      Get.snackbar('Fix errors', 'Please correct the highlighted fields',
+          snackPosition: SnackPosition.TOP);
+      return;
+    }
+    if (_image == null) {
+      Get.snackbar('Image required', 'Please add a photo',
+          snackPosition: SnackPosition.TOP);
+      return;
+    }
+    if (_auctionMinutes == null) {
+      Get.snackbar('Duration required', 'Please choose a duration',
+          snackPosition: SnackPosition.TOP);
       return;
     }
 
-    // (Optional) Local validations you may want:
-    // if (_titleCtrl.text.trim().isEmpty) { _toast('Title required', 'Please enter a title.'); return; }
-    // if (_auctionMinutes == null) { _toast('Duration required', 'Please choose a duration.'); return; }
+    // Split comma-separated categories into a list
+    final categories = _categoryCtrl.text
+        .split(',')
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .toList();
+    if (categories.isEmpty) categories.add('general');
 
-    // No API call — just show success and navigate
-    _toast('Success', 'Auction created locally (no API).');
-
-    Get.to(
-          () => const ServiceView(initialIndex: 2),
-      transition: Transition.rightToLeft,
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeInOut,
+    final req = AuctionCreateRequest(
+      name: _titleCtrl.text.trim(),
+      description: _descCtrl.text.trim(),
+      category: categories,
+      startingBid: int.parse(_startingBidCtrl.text.trim()),
+      duration: _auctionMinutes!, // minutes (Number)
+      location: _locationCtrl.text.trim(),
+      date: _dateCtrl.text.trim(),
+      time: _timeCtrl.text.trim(),
+      imagePath: _image!.path, // required
     );
+
+    setState(() => _submitting = true);
+    try {
+      final prov = context.read<AuctionProvider>();
+      final res = await prov.createAuction(req);
+
+      Get.offAll(
+            () => const AppGround(initialIndex: 1, servicesInitialTab: 2),
+        transition: Transition.rightToLeft,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+      );
+      Get.snackbar('Success', res.message, snackPosition: SnackPosition.TOP);
+    } catch (e) {
+      Get.snackbar('Failed', e.toString(), snackPosition: SnackPosition.TOP);
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  String? _req(String? v, String name) =>
+      (v == null || v.trim().isEmpty) ? '$name is required' : null;
+
+  String? _numReq(String? v, String name) {
+    if (v == null || v.trim().isEmpty) return '$name is required';
+    final n = int.tryParse(v);
+    if (n == null || n <= 0) return '$name must be > 0';
+    return null;
   }
 
   @override
@@ -151,237 +202,178 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
       backgroundColor: Colors.black,
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Images", style: bodyText1),
-                  const Row(children: [ImagePickerSlot(), SizedBox(width: 15), ImagePickerSlot()]),
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            autovalidateMode: _auto,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("Images", style: bodyText1),
+                Row(
+                  children: [
+                    ImagePickerSlot(
+                      onSelected: (val) {
+                        if (val == null) return;
+                        setState(() => _image = val);
+                                            },
+                    ),
+                    const SizedBox(width: 15),
+                    const ImagePickerSlot(),
+                  ],
+                ),
 
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    child: CustomTextField(
-                      controller: _titleCtrl,
-                      hintText: "Enter your Auction title",
-                      onChanged: (v) => setState(() => _title = v),
+                const SizedBox(height: 15),
+                CustomTextField(
+                  controller: _titleCtrl,
+                  hintText: "Enter your Auction title",
+                  validator: (v) => _req(v, 'Title'),
+                ),
+
+                const SizedBox(height: 10),
+                Text("Category", style: bodyText1),
+                CustomTextField(
+                  controller: _categoryCtrl,
+                  hintText: 'Enter your Category Name (comma separated for multiple)',
+                  validator: (v) => _req(v, 'Category'),
+                ),
+
+                const SizedBox(height: 8),
+                Text("Description", style: bodyText1),
+                Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.fieldColor,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: TextFormField(
+                      controller: _descCtrl,
+                      maxLines: 5,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        hintText: "Describe your Auction in detail",
+                        border: InputBorder.none,
+                        hintStyle: TextStyle(
+                          color: Color(0xFFBFBFBF),
+                          fontWeight: FontWeight.w400,
+                          fontSize: 16,
+                        ),
+                      ),
+                      validator: (v) => _req(v, 'Description'),
                     ),
                   ),
+                ),
 
-                  Text("Category", style: bodyText1),
-                  CustomTextField(
-                    controller: _categoryCtrl,
-                    hintText: 'Enter your Category Name',
-                    onChanged: (v) => setState(() => _category = v),
-                  ),
+                const SizedBox(height: 8),
+                Text("Starting Bid", style: bodyText1),
+                CustomTextField(
+                  controller: _startingBidCtrl,
+                  hintText: "Enter amount",
+                  prefixIcon: Icons.attach_money,
+                  keyboardType: TextInputType.number,
+                  validator: (v) => _numReq(v, 'Starting bid'),
+                ),
 
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Text("Description", style: bodyText1),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.fieldColor,
-                      borderRadius: BorderRadius.circular(6),
+                const SizedBox(height: 8),
+                Text("Auction Duration", style: bodyText1),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _DurationPill(
+                        label: '10 minutes',
+                        minutes: 10,
+                        selectedMinutes: _auctionMinutes,
+                        onTap: () => setState(() => _auctionMinutes = 10),
+                      ),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: TextField(
-                        controller: _descCtrl,
-                        textAlignVertical: TextAlignVertical.top,
-                        keyboardType: TextInputType.multiline,
-                        style: const TextStyle(color: Colors.white),
-                        maxLines: 5,
-                        onChanged: (v) => setState(() => _desc = v),
-                        decoration: const InputDecoration(
-                          hintText: "Describe your Auction in detail",
-                          border: InputBorder.none,
-                          hintStyle: TextStyle(
-                            color: Color(0xFFBFBFBF),
-                            fontWeight: FontWeight.w400,
-                            fontSize: 16,
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _DurationPill(
+                        label: '20 minutes',
+                        minutes: 20,
+                        selectedMinutes: _auctionMinutes,
+                        onTap: () => setState(() => _auctionMinutes = 20),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 15),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _DurationPill(
+                        label: '30 minutes',
+                        minutes: 30,
+                        selectedMinutes: _auctionMinutes,
+                        onTap: () => setState(() => _auctionMinutes = 30),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _DurationPill(
+                        label: '1 hour',
+                        minutes: 60,
+                        selectedMinutes: _auctionMinutes,
+                        onTap: () => setState(() => _auctionMinutes = 60),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+                Text("Location", style: bodyText1),
+                CustomTextField(
+                  controller: _locationCtrl,
+                  hintText: "Enter location",
+                  prefixIcon: Icons.location_on_outlined,
+                  validator: (v) => _req(v, 'Location'),
+                ),
+
+                const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _pickDate,
+                        child: AbsorbPointer(
+                          child: CustomTextField(
+                            controller: _dateCtrl,
+                            hintText: "Date",
+                            prefixIcon: Icons.calendar_today_outlined,
+                            showBorder: true,
+                            validator: (v) => _req(v, 'Date'),
                           ),
                         ),
                       ),
                     ),
-                  ),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Text("Starting Bid", style: bodyText1),
-                  ),
-                  CustomTextField(
-                    controller: _startingBidCtrl,
-                    hintText: "Enter amount",
-                    prefixIcon: Icons.attach_money,
-                    keyboardType: TextInputType.number,
-                    onChanged: (v) => setState(() => _startingBid = v),
-                  ),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Text("Action Duration", style: bodyText1),
-                  ),
-
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _DurationPill(
-                          label: '10 minutes',
-                          minutes: 10,
-                          selectedMinutes: _auctionMinutes,
-                          onTap: () => setState(() => _auctionMinutes = 10),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _DurationPill(
-                          label: '20 minutes',
-                          minutes: 20,
-                          selectedMinutes: _auctionMinutes,
-                          onTap: () => setState(() => _auctionMinutes = 20),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 15),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _DurationPill(
-                          label: '30 minutes',
-                          minutes: 30,
-                          selectedMinutes: _auctionMinutes,
-                          onTap: () => setState(() => _auctionMinutes = 30),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _DurationPill(
-                          label: '1 hour',
-                          minutes: 60,
-                          selectedMinutes: _auctionMinutes,
-                          onTap: () => setState(() => _auctionMinutes = 60),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    child: Text("Shipping Details", style: bodyText1),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: AppColors.fieldColor,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: TextField(
-                        controller: _shippingCtrl,
-                        maxLines: 10,
-                        textAlignVertical: TextAlignVertical.top,
-                        keyboardType: TextInputType.multiline,
-                        style: const TextStyle(color: Colors.white),
-                        onChanged: (v) => setState(() => _shipping = v),
-                        decoration: const InputDecoration(
-                          hintText: "Describe shipping options, costs, and estimated delivery times",
-                          hintStyle: TextStyle(
-                              color: Color(0xFFBFBFBF),
-                              fontWeight: FontWeight.w400,
-                              fontSize: 16),
-                          border: InputBorder.none,
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _pickTime,
+                        child: AbsorbPointer(
+                          child: CustomTextField(
+                            controller: _timeCtrl,
+                            hintText: "Time",
+                            prefixIcon: Icons.watch_later_outlined,
+                            showBorder: true,
+                            validator: (v) => _req(v, 'Time'),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                  ],
+                ),
 
-                  const SizedBox(height: 15),
-
-                  Column(
-                    children: [
-                      Row(
-                        children: [
-                          Theme(
-                            data: Theme.of(context).copyWith(unselectedWidgetColor: Colors.white),
-                            child: Radio<int>(
-                              value: 1,
-                              groupValue: selectedValue,
-                              onChanged: (value) => setState(() => selectedValue = value!),
-                              activeColor: AppColors.bottomColor1,
-                            ),
-                          ),
-                          const Text("Public", style: bodyText1),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Theme(
-                            data: Theme.of(context).copyWith(unselectedWidgetColor: Colors.white),
-                            child: Radio<int>(
-                              value: 2,
-                              groupValue: selectedValue,
-                              onChanged: (value) => setState(() => selectedValue = value!),
-                              activeColor: AppColors.bottomColor1,
-                            ),
-                          ),
-                          const Text("Schedule", style: bodyText1),
-                        ],
-                      ),
-                    ],
-                  ),
-
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => _pickDate(context),
-                          child: AbsorbPointer(
-                            child: CustomTextField(
-                              controller: _dateCtrl,
-                              hintText: "Date",
-                              prefixIcon: Icons.calendar_today_outlined,
-                              showBorder: true,
-                              onChanged: (_) => setState(() => _dateStr = _dateCtrl.text.trim()),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: GestureDetector(
-                          onTap: () => _pickTime(context),
-                          child: AbsorbPointer(
-                            child: CustomTextField(
-                              controller: _timeCtrl,
-                              hintText: "Time",
-                              prefixIcon: Icons.watch_later_outlined,
-                              showBorder: true,
-                              onChanged: (_) => setState(() => _timeStr = _timeCtrl.text.trim()),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 15),
-                    child: bottomWidget(
-                      text: _submitting ? "Creating..." : "Create Auctions",
-                      onTap: _onCreateTap,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                ],
-              ),
+                const SizedBox(height: 15),
+                bottomWidget(
+                  text: _submitting ? "Creating..." : "Create Auctions",
+                  onTap: _submitting ? null : _submit,
+                ),
+                const SizedBox(height: 10),
+              ],
             ),
-
-            // Removed: Provider-based submitting overlay/spinner
-          ],
+          ),
         ),
       ),
     );
@@ -403,10 +395,11 @@ class _DurationPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool selected = selectedMinutes == minutes;
-    final Color border = selected ? const Color(0xFFFF8A34) : Colors.white24;
-    final Color fill = selected ? const Color(0xFFFF8A34).withOpacity(0.12) : Colors.transparent;
-    final Color text = selected ? const Color(0xFFFF8A34) : Colors.white70;
+    final selected = selectedMinutes == minutes;
+    final border = selected ? const Color(0xFFFF8A34) : Colors.white24;
+    final fill =
+    selected ? const Color(0xFFFF8A34).withOpacity(0.12) : Colors.transparent;
+    final text = selected ? const Color(0xFFFF8A34) : Colors.white70;
 
     return InkWell(
       onTap: onTap,
@@ -423,7 +416,10 @@ class _DurationPill extends StatelessWidget {
           children: [
             Icon(Icons.watch_later_outlined, size: 18, color: text),
             const SizedBox(width: 8),
-            Text(label, style: TextStyle(color: text, fontWeight: FontWeight.w600)),
+            Text(
+              label,
+              style: TextStyle(color: text, fontWeight: FontWeight.w600),
+            ),
           ],
         ),
       ),

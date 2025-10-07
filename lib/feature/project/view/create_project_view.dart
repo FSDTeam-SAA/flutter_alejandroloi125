@@ -6,6 +6,11 @@ import 'package:alejandroloi/core/util/styles.dart';
 import 'package:alejandroloi/feature/service/view/service_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart';
+import 'package:provider/provider.dart';
+
+import '../../../providers/project_provider.dart';
+import '../../app_ground.dart';
 
 class CreateProjectView extends StatefulWidget {
   const CreateProjectView({super.key});
@@ -53,35 +58,57 @@ class _CreateProjectViewState extends State<CreateProjectView> {
     return null;
   }
 
-  void _submit() {
+  // inside _CreateProjectViewState
+  bool _submitting = false;
+
+  Future<void> _submit() async {
     FocusScope.of(context).unfocus();
+
     final valid = _formKey.currentState?.validate() ?? false;
+    if (!valid) {
+      setState(() => _auto = AutovalidateMode.onUserInteraction);
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   const SnackBar(content: Text('Please fix the errors above')),
+      // );
 
-    // Additional cross-field check: min ≤ max
-    if (valid) {
-      final minB = int.tryParse(_minBudgetCtl.text.trim()) ?? 0;
-      final maxB = int.tryParse(_maxBudgetCtl.text.trim()) ?? 0;
-      if (maxB > 0 && minB > maxB) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Max budget must be greater than or equal to Min budget')),
-        );
-        return;
-      }
+      Get.snackbar('Success', 'Please fix the errors above',
+          snackPosition: SnackPosition.TOP);
+      return;
+    }
 
-      Get.snackbar('Success', 'Project created (local only)',
+    if (_submitting) return;
+    setState(() => _submitting = true);
+
+    final prov = context.read<ProjectProvider>();
+    final ok = await prov.create(
+      title: _titleCtl.text,
+      description: _descCtl.text,
+      category: _categoryCtl.text,
+      minBudgetStr: _minBudgetCtl.text,
+      maxBudgetStr: _maxBudgetCtl.text,
+      deadlineDaysStr: _durationCtl.text,
+      location: _locationCtl.text,
+      skillsCsv: _skillsCtl.text, // comma-separated from UI
+    );
+
+    setState(() => _submitting = false);
+
+    if (!mounted) return;
+
+    if (ok) {
+      Get.snackbar('Success', 'Project created successfully',
           snackPosition: SnackPosition.TOP);
 
-      Get.off(
-            () => const ServiceView(initialIndex: 1),
+      // Go to bottom-tab "Services" and the inner "Project" tab selected
+      Get.offAll(
+            () => const AppGround(initialIndex: 1, servicesInitialTab: 1),
         transition: Transition.rightToLeft,
         duration: const Duration(milliseconds: 350),
         curve: Curves.easeInOut,
       );
     } else {
-      setState(() => _auto = AutovalidateMode.onUserInteraction);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fix the errors above')),
-      );
+      final err = prov.error ?? 'Create failed';
+      Get.snackbar('Error', err, snackPosition: SnackPosition.TOP);
     }
   }
 
@@ -212,9 +239,10 @@ class _CreateProjectViewState extends State<CreateProjectView> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   child: bottomWidget(
-                    text: "Create Project Post",
-                    onTap: _submit,
+                    text: _submitting ? "Creating..." : "Create Project Post",
+                    onTap: _submitting ? null : _submit,
                   ),
+
                 ),
                 const SizedBox(height: 10),
               ],

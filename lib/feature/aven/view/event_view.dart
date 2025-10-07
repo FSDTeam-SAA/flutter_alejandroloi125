@@ -38,8 +38,12 @@ class _EventViewState extends State<EventView>
     super.dispose();
   }
 
+  
+
   @override
   Widget build(BuildContext context) {
+
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
@@ -62,6 +66,7 @@ class _EventViewState extends State<EventView>
             tabNames: const ['Investments', 'Project', 'Auctions'],
           ),
           Expanded(
+
             child: TabBarView(
               controller: _tabController,
               children: const [

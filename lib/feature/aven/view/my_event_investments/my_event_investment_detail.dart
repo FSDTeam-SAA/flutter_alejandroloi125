@@ -1,9 +1,7 @@
-// lib/feature/aven/view/my_event_investments/my_event_investment_detail.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../models/investment.dart';
-
 
 class MyEventInvestmentDetail extends StatelessWidget {
   final Investment investment;
@@ -16,7 +14,7 @@ class MyEventInvestmentDetail extends StatelessWidget {
     const border = Color(0xFF242931);
     const accent = Color(0xFFFF8A34);
 
-    // hero image
+    // hero
     final heroUrl = investment.primaryImageUrl;
     final hero = (heroUrl != null && heroUrl.startsWith('http'))
         ? Image.network(
@@ -29,13 +27,18 @@ class MyEventInvestmentDetail extends StatelessWidget {
 
     final category =
     investment.category.isNotEmpty ? investment.category.first : 'General';
-    final title = investment.name.isEmpty ? '—' : investment.name;
+    final title = (investment.name).isEmpty ? '—' : investment.name;
     final desc =
     investment.description.isEmpty ? '—' : investment.description.trim();
 
-    final progress = (investment.progressPct / 100).clamp(0, 1).toDouble();
+    // progress + meta
+    final progress = (investment.progressPct / 100)
+        .clamp(0, 1)
+        .toDouble(); // from your model (0 when unknown)
     final goalText = _comma(investment.fundingGoal ?? 0);
-    final daysLeft = investment.daysLeft ?? 0;
+    final daysLeft = _parseDaysLeft(investment.fundingDuration); // from "10 day"
+    final location =
+    investment.location.trim().isEmpty ? '—' : investment.location.trim();
 
     final terms = investment.investmentTerms.trim();
     final galleryUrls = investment.images.map((e) => e.url).toList();
@@ -76,8 +79,9 @@ class MyEventInvestmentDetail extends StatelessWidget {
                           child: Row(
                             children: [
                               _CircleIconButton(
-                                  icon: Icons.arrow_back_ios_new,
-                                  onTap: () => Navigator.pop(context)),
+                                icon: Icons.arrow_back_ios_new,
+                                onTap: () => Navigator.pop(context),
+                              ),
                               const Spacer(),
                               _CircleIconButton(
                                   icon: Icons.favorite_border, onTap: () {}),
@@ -87,8 +91,7 @@ class MyEventInvestmentDetail extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const Positioned(
-                            left: 12, bottom: 10, child: _AuthorChip()),
+                        const Positioned(left: 12, bottom: 10, child: _AuthorChip()),
                       ],
                     ),
 
@@ -108,10 +111,12 @@ class MyEventInvestmentDetail extends StatelessWidget {
                           const SizedBox(height: 8),
                           _Para(desc),
                           const SizedBox(height: 12),
-                          const _InfoBar(
-                              icon: Icons.location_on_outlined, label: '—'),
+
+                          // location chip
+                          _InfoBar(icon: Icons.location_on_outlined, label: location),
                           const SizedBox(height: 16),
 
+                          // progress & metrics
                           _ProgressBar(
                               value: progress,
                               background: const Color(0xFF1E232A),
@@ -129,9 +134,12 @@ class MyEventInvestmentDetail extends StatelessWidget {
                           ),
 
                           const SizedBox(height: 18),
-                          const _SectionTitle('Investment Terms'),
+                          const _SectionTitle('About This Project'),
                           const SizedBox(height: 6),
-                          _Para(terms.isEmpty ? '—' : terms),
+                          _Para(desc),
+                          const SizedBox(height: 10),
+                          _Para(
+                              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur sapien nulla, ultrices a ligula interdum, tempus rutrum libero.'),
 
                           const SizedBox(height: 16),
                           const _SectionTitle('Gallery'),
@@ -139,7 +147,12 @@ class MyEventInvestmentDetail extends StatelessWidget {
                           _GalleryRow(urls: galleryUrls),
 
                           const SizedBox(height: 16),
-                          const _SectionTitle('Recent Investors'),
+                          const _SectionTitle('Investment Terms'),
+                          const SizedBox(height: 6),
+                          _Para(terms.isEmpty ? '—' : terms),
+
+                          const SizedBox(height: 16),
+                          const _SectionTitle('Investor'),
                           const SizedBox(height: 8),
                           const InvestorTile(
                             name: 'Eleanor Pena',
@@ -147,10 +160,11 @@ class MyEventInvestmentDetail extends StatelessWidget {
                             amount: '\$1000',
                             avatar: 'https://picsum.photos/200',
                           ),
+                          const SizedBox(height: 10),
                           const InvestorTile(
-                            name: 'Jane Cooper',
-                            subtitle: '5 Investments',
-                            amount: '\$250',
+                            name: 'Eleanor Pena',
+                            subtitle: '3 Investments',
+                            amount: '\$1000',
                             avatar: 'https://picsum.photos/210',
                           ),
                         ],
@@ -168,7 +182,6 @@ class MyEventInvestmentDetail extends StatelessWidget {
 }
 
 // ===== UI bits =====
-
 class _CircleIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
@@ -184,7 +197,7 @@ class _CircleIconButton extends StatelessWidget {
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(8),
-          child: Icon(icon, size: 18, color: Colors.white),
+          child: Icon(icon, size: 18, color: Colors.white), // <-- use passed icon
         ),
       ),
     );
@@ -193,7 +206,6 @@ class _CircleIconButton extends StatelessWidget {
 
 class _AuthorChip extends StatelessWidget {
   const _AuthorChip();
-
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -212,8 +224,8 @@ class _AuthorChip extends StatelessWidget {
                     color: Colors.white.withOpacity(0.95),
                     fontWeight: FontWeight.w600)),
             Text('@eleanorp',
-                style: TextStyle(
-                    color: Colors.white.withOpacity(0.7), fontSize: 12)),
+                style:
+                TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
           ],
         ),
         const SizedBox(width: 8),
@@ -248,7 +260,6 @@ class _Badge extends StatelessWidget {
   final String text;
   final Color color;
   const _Badge({required this.text, required this.color});
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -309,8 +320,8 @@ class _ProgressBar extends StatelessWidget {
       final filled = (width * value).clamp(0.0, width);
       return Container(
         height: 8,
-        decoration: BoxDecoration(
-            color: background, borderRadius: BorderRadius.circular(8)),
+        decoration:
+        BoxDecoration(color: background, borderRadius: BorderRadius.circular(8)),
         child: Align(
           alignment: Alignment.centerLeft,
           child: Container(
@@ -332,12 +343,12 @@ class _Metric extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(top,
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.w800)),
+            style:
+            const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
         const SizedBox(height: 2),
         Text(bottom,
-            style: TextStyle(
-                color: Colors.white.withOpacity(0.7), fontSize: 12)),
+            style:
+            TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
       ],
     );
   }
@@ -360,8 +371,7 @@ class _Para extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Text(text,
-        style:
-        TextStyle(color: Colors.white.withOpacity(0.78), height: 1.45));
+        style: TextStyle(color: Colors.white.withOpacity(0.78), height: 1.45));
   }
 }
 
@@ -371,7 +381,6 @@ class _GalleryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // choose up to two images; fallbacks if missing
     final a = urls.isNotEmpty
         ? urls[0]
         : 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6';
@@ -397,7 +406,14 @@ class _RoundedImage extends StatelessWidget {
       borderRadius: BorderRadius.circular(10),
       child: AspectRatio(
         aspectRatio: 16 / 9,
-        child: Image.network(url, fit: BoxFit.cover),
+        child: Image.network(
+          url,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => const ColoredBox(
+            color: Colors.black26,
+            child: Center(child: Icon(Icons.broken_image_outlined)),
+          ),
+        ),
       ),
     );
   }
@@ -446,8 +462,7 @@ class InvestorTile extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(subtitle,
                           style: TextStyle(
-                              color: Colors.white.withOpacity(0.7),
-                              fontSize: 12)),
+                              color: Colors.white.withOpacity(0.7), fontSize: 12)),
                     ]),
               ),
             ],
@@ -475,6 +490,7 @@ class InvestorTile extends StatelessWidget {
 // --- helpers ---
 String _comma(int n) {
   final s = n.toString();
+  if (s.length <= 3) return s;
   final b = StringBuffer();
   for (int i = 0; i < s.length; i++) {
     b.write(s[i]);
@@ -482,4 +498,10 @@ String _comma(int n) {
     if (left % 3 == 0 && left != 0) b.write(',');
   }
   return b.toString();
+}
+
+int _parseDaysLeft(String? duration) {
+  if (duration == null || duration.trim().isEmpty) return 0;
+  final m = RegExp(r'(\d+)').firstMatch(duration);
+  return m == null ? 0 : int.tryParse(m.group(1)!) ?? 0;
 }

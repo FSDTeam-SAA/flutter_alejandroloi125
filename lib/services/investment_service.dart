@@ -1,8 +1,7 @@
-// lib/feature/investment/services/investment_service.dart
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:alejandroloi/constants/api_paths.dart';
 import 'package:alejandroloi/core/network/api_service/api_client.dart';
-import 'dart:io';
 
 class InvestmentService {
   final Dio _dio;
@@ -16,11 +15,9 @@ class InvestmentService {
     required String fundingDuration,
     required String location,
     required String investmentTerms,
-    File? image, // optional
+    required File imageFile,
   }) async {
-    final hasImage = image != null;
-    final data = hasImage
-        ? FormData.fromMap({
+    final form = FormData.fromMap({
       'name': name,
       'description': description,
       'category': category,
@@ -28,75 +25,45 @@ class InvestmentService {
       'funding_duration': fundingDuration,
       'location': location,
       'investment_terms': investmentTerms,
-      'image': await MultipartFile.fromFile(image!.path),
-    })
-        : {
-      'name': name,
-      'description': description,
-      'category': category,
-      'funding_goal': fundingGoal,
-      'funding_duration': fundingDuration,
-      'location': location,
-      'investment_terms': investmentTerms,
-    };
+      'imageLink': await MultipartFile.fromFile(imageFile.path),
+    });
 
-    final r = await _dio.post(
+    final res = await _dio.post(
       ApiPaths.createInvestment,
-      data: data,
-      options: Options(contentType: hasImage ? 'multipart/form-data' : 'application/json'),
+      data: form,
+      options: Options(contentType: 'multipart/form-data'),
     );
-    return Map<String, dynamic>.from(r.data ?? const {});
+    return Map<String, dynamic>.from(res.data ?? const {});
   }
 
   Future<Map<String, dynamic>> getAll({int page = 1, int limit = 10}) async {
-    final r = await _dio.get(ApiPaths.allInvestment, queryParameters: {
-      'page': page,
-      'limit': limit,
-    });
-    return Map<String, dynamic>.from(r.data ?? const {});
-  }
-
-  Future<Map<String, dynamic>> getMine(String userId,
-      {int page = 1, int limit = 10}) async {
-    final r = await _dio.get(
-      ApiPaths.allInvestmentByUser(userId),
+    final res = await _dio.get(
+      ApiPaths.allInvestment,
       queryParameters: {'page': page, 'limit': limit},
     );
-    return Map<String, dynamic>.from(r.data ?? const {});
+    return Map<String, dynamic>.from(res.data ?? const {});
   }
 
-  Future<Map<String, dynamic>> getById(String id) async {
-    final r = await _dio.get(ApiPaths.getInvestmentById(id));
-    return Map<String, dynamic>.from(r.data ?? const {});
+  /// GET /investment/all-investment?userid=<id>&page=&limit=
+  Future<Map<String, dynamic>> getAllByUser({
+    required String userId,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    final url = ApiPaths.allInvestmentByUser(userId);
+    final res = await _dio.get(url, queryParameters: {'page': page, 'limit': limit});
+    // return _map(res.data);
+    return Map<String, dynamic>.from(res.data ?? const {});
   }
 
-  Future<Map<String, dynamic>> update(
-      String id, {
-        String? name,
-        String? description,
-        String? category,
-        int? fundingGoal,
-        String? fundingDuration,
-        String? location,
-        String? investmentTerms,
-      }) async {
-    final body = <String, dynamic>{};
-    if (name != null) body['name'] = name;
-    if (description != null) body['description'] = description;
-    if (category != null) body['category'] = category;
-    if (fundingGoal != null) body['funding_goal'] = fundingGoal;
-    if (fundingDuration != null) body['funding_duration'] = fundingDuration;
-    if (location != null) body['location'] = location;
-    if (investmentTerms != null) body['investment_terms'] = investmentTerms;
-
-    final r = await _dio.patch(
-      ApiPaths.updateInvestment(id),
-      data: body, // Postman shows JSON body for update
-    );
-    return Map<String, dynamic>.from(r.data ?? const {});
+  Future<Map<String, dynamic>> getOne(String id) async {
+    final res = await _dio.get(ApiPaths.getInvestmentById(id));
+    // return _map(res.data);
+    return Map<String, dynamic>.from(res.data ?? const {});
   }
 
-  Future<void> delete(String id) async {
-    await _dio.delete(ApiPaths.deleteInvestment(id));
+  Future<Map<String, dynamic>> delete(String id) async {
+    final res = await _dio.delete(ApiPaths.deleteInvestment(id));
+    return Map<String, dynamic>.from(res.data ?? const {});
   }
 }
