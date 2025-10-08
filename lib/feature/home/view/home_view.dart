@@ -33,10 +33,7 @@ class HomeScreenView extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "Profile",
-                      style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),
-                    ),
+                    Text("Profile", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),),
                     Text("Location", style: TextStyle(color: Colors.white70)),
                   ],
                 ),
@@ -51,12 +48,10 @@ class HomeScreenView extends StatelessWidget {
         child: Column(
           children: [
             BottomCard(
-              imagePath: Images.currency,
-              title: "Investments",
+              imagePath: Images.currency, title: "Investments",
               subtitle: "Develop Investment Strategy and Engage with Potential Funders.",
               onTap: () {
-                Get.to(
-                      () => const InvestmentsScreen(),
+                Get.to(() => const InvestmentsScreen(),
                   transition: Transition.rightToLeft,
                   duration: const Duration(milliseconds: 300),
                 );
@@ -68,8 +63,7 @@ class HomeScreenView extends StatelessWidget {
               title: "Project",
               subtitle: "Post a need or offer to complete someone else's project",
               onTap: () {
-                Get.to(
-                      () => const ProjectScreen(),
+                Get.to(() => const ProjectScreen(),
                   transition: Transition.rightToLeft,
                   duration: const Duration(milliseconds: 300),
                 );
