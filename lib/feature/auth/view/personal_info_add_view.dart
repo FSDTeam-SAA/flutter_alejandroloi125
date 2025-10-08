@@ -1,4 +1,4 @@
-// lib/feature/profile/view/personal_info_add_view.dart
+// lib/feature/auth/view/personal_info_add_view.dart
 import 'dart:io';
 import 'package:alejandroloi/core/common/widgets/custom_text_field.dart';
 import 'package:alejandroloi/core/common/widgets/save_botton.dart';
@@ -26,7 +26,7 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
   final _age = TextEditingController();
   final _phone = TextEditingController();
   final _address = TextEditingController();
-  final _countryCtrl = TextEditingController(); // <-- keep a controller
+  final _countryCtrl = TextEditingController();
 
   final List<String> _genders = const [
     'Male', 'Female', 'Non-binary', 'Prefer not to say', 'Other',
@@ -35,28 +35,30 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
   Country? _country;
   File? _avatar;
 
+  /// prevents multiple controller hydrations
+  bool _hydrated = false;
+
   @override
   void initState() {
     super.initState();
 
-    // Prefill from API (safe to use context.read in initState)
-    final uid = context.read<AuthProvider>().user?.id;
-    if (uid != null) {
-      context.read<ProfileProvider>().fetch(uid).then((_) {
-        final me = context.read<ProfileProvider>().me;
-        if (!mounted || me == null) return;
+    // Ensure we have profile data; if not, fetch it first.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final auth = context.read<AuthProvider>();
+      String? uid = auth.user?.id ?? await auth.repo.tokenStore.readUserId();
 
-        // Fill what your User model actually has
-        _name.text   = me.name ?? '';
-        _phone.text  = me.phone ?? '';
-        // If your model contains these fields, uncomment:
-        // _address.text = me.address ?? '';
-        // _gender       = me.gender;
-        // if (me.age != null) _age.text = '${me.age}';
-        // if ((me.nationality ?? '').isNotEmpty) _countryCtrl.text = me.nationality!;
-        setState(() {}); // refresh dropdown etc.
-      });
-    }
+      final pp = context.read<ProfileProvider>();
+      if (pp.me == null && uid != null) {
+        await pp.fetch(uid); // this will notifyListeners()
+      }
+
+      // If data is already present, hydrate now.
+      if (pp.me != null && !_hydrated) {
+        _fillFromUser();
+        _hydrated = true;
+        if (mounted) setState(() {});
+      }
+    });
   }
 
   @override
@@ -69,6 +71,31 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
     super.dispose();
   }
 
+  // ---------- PREFILL (called when provider.me becomes available) ----------
+  void _fillFromUser() {
+    final me = context.read<ProfileProvider>().me;
+    if (me == null) return;
+
+    _name.text    = (me.name ?? '').trim();
+    _phone.text   = (me.phone ?? '').trim();
+    _address.text = (me.address ?? '').trim();
+
+    final dynamicAge = me.age;
+    _age.text = (dynamicAge == null)
+        ? ''
+        : (dynamicAge is int ? '$dynamicAge' : dynamicAge.toString());
+
+    final g = (me.gender ?? '').trim();
+    _gender = g.isEmpty ? null : _capitalizeFirst(g);
+
+    final nat = (me.nationality ?? '').trim();
+    _countryCtrl.text = nat.isEmpty ? '' : nat;
+  }
+
+  String _capitalizeFirst(String s) =>
+      s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
+
+  // ---------- COUNTRY PICKER ----------
   void _pickCountry() {
     showCountryPicker(
       context: context,
@@ -136,7 +163,7 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
 
     final ok = await pp.update(
       name: _name.text.trim(),
-      age:  _age.text.trim().isEmpty ? null : int.tryParse(_age.text.trim()),
+      age: _age.text.trim().isEmpty ? null : int.tryParse(_age.text.trim()),
       gender: _gender,
       phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
       nationality: _country?.name.isNotEmpty == true
@@ -147,14 +174,16 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
     );
 
     if (!mounted) return;
+
     if (ok) {
-      // keep provider.me in sync with server
-      final uid = context.read<AuthProvider>().user?.id;
+      // Re-fetch so provider.me stays fresh, then pop with result=true
+      final auth = context.read<AuthProvider>();
+      final uid = auth.user?.id ?? await auth.repo.tokenStore.readUserId();
       if (uid != null) {
-        await context.read<ProfileProvider>().fetch(uid);
+        await pp.fetch(uid);
       }
       Get.back(result: true);
-      Get.snackbar('Success','Profile updated successfully',
+      Get.snackbar('Success', 'Profile updated successfully',
           snackPosition: SnackPosition.TOP);
     } else {
       Get.snackbar('Error', pp.error ?? 'Update failed',
@@ -164,8 +193,20 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
 
   @override
   Widget build(BuildContext context) {
+    // Watch provider so we can hydrate when data eventually arrives
     final pp = context.watch<ProfileProvider>();
     final loading = pp.loading;
+
+    // If not hydrated yet but data just arrived, hydrate once.
+    if (!_hydrated && pp.me != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_hydrated && mounted) {
+          _fillFromUser();
+          _hydrated = true;
+          if (mounted) setState(() {});
+        }
+      });
+    }
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -177,6 +218,14 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
         ),
         backgroundColor: Colors.transparent,
         title: const Text("Personal Information", style: TextStyle(color: Colors.white)),
+        actions: [
+          // Optional: avatar picker shortcut (doesn't change your UI layout)
+          IconButton(
+            onPressed: _pickAvatar,
+            icon: const Icon(Icons.photo_camera_outlined, color: Colors.white),
+            tooltip: 'Change Avatar',
+          ),
+        ],
       ),
       body: AbsorbPointer(
         absorbing: loading,
@@ -237,7 +286,7 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
                   child: AbsorbPointer(
                     child: TextFormField(
                       readOnly: true,
-                      controller: _countryCtrl,           // <-- persistent controller
+                      controller: _countryCtrl,
                       decoration: _decoration('Select country').copyWith(
                         suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.white70),
                       ),
@@ -264,7 +313,7 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 50),
         child: bottomWidget(
           text: loading ? "Updating..." : "Update",
-          onTap: loading ? null : _submit, // <-- call submit, don't navigate
+          onTap: loading ? null : _submit,
         ),
       ),
     );

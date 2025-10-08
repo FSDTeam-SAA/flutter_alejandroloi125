@@ -1,4 +1,3 @@
-// lib/feature/profile/view/profile_screen_view.dart
 import 'package:alejandroloi/core/util/images.dart';
 import 'package:alejandroloi/core/util/styles.dart';
 import 'package:alejandroloi/feature/profile/view/about_view.dart';
@@ -46,7 +45,7 @@ class ProfileScreenView extends StatelessWidget {
   final bool loading;
   final String? errorMessage;
 
-  /// Optional hooks you can wire up later
+  /// Optional hooks
   final Future<void> Function()? onRefresh;
   final Future<void> Function()? onLogout;
 
@@ -136,13 +135,15 @@ class ProfileScreenView extends StatelessWidget {
             profileBottom(
               imagePath: Images.credit,
               name: "Update Personal Information",
-              voidCallBack: () {
-                Get.to(() => const PersonalInfoAddView(),
+              voidCallBack: () async {
+                final changed = await Get.to<bool>(() => const PersonalInfoAddView(),
                     transition: Transition.rightToLeft,
                     duration: const Duration(milliseconds: 320),
                     curve: Curves.easeInOut);
-
-
+                // If the edit screen reported changes, refresh this page.
+                if (changed == true && onRefresh != null) {
+                  await onRefresh!();
+                }
               },
             ),
             profileBottom(
@@ -216,7 +217,7 @@ class ProfileScreenView extends StatelessWidget {
               },
             ),
 
-            // Logout (no provider; optional hook + navigation)
+            // Logout
             Container(
               decoration: const BoxDecoration(border: Border.symmetric()),
               child: Column(
@@ -232,11 +233,13 @@ class ProfileScreenView extends StatelessWidget {
                           content: const Text('You will need to sign in again.'),
                           actions: [
                             TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: const Text('Cancel')),
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
+                            ),
                             TextButton(
-                                onPressed: () => Navigator.pop(context, true),
-                                child: const Text('Log out')),
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Log out'),
+                            ),
                           ],
                         ),
                       ) ??
@@ -244,7 +247,9 @@ class ProfileScreenView extends StatelessWidget {
                       if (!ok) return;
 
                       if (onLogout != null) {
-                        try { await onLogout!(); } catch (_) {}
+                        try {
+                          await onLogout!();
+                        } catch (_) {}
                       }
 
                       Get.snackbar('Success', 'Logged Out Successfully',

@@ -17,8 +17,12 @@ class _ProfileScreenPageState extends State<ProfileScreenPage> {
   @override
   void initState() {
     super.initState();
+    // Fetch the profile once the widget is mounted.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final uid = context.read<AuthProvider>().user?.id;
+      final auth = context.read<AuthProvider>();
+      String? uid = auth.user?.id;
+      // Fallback to storage if needed
+      uid ??= await auth.repo.tokenStore.readUserId();
       if (uid != null) {
         await context.read<ProfileProvider>().fetch(uid);
       }
@@ -26,61 +30,49 @@ class _ProfileScreenPageState extends State<ProfileScreenPage> {
   }
 
   Future<void> _refresh() async {
-    final uid = context.read<AuthProvider>().user?.id;
+    final auth = context.read<AuthProvider>();
+    String? uid = auth.user?.id ?? await auth.repo.tokenStore.readUserId();
     if (uid != null) {
       await context.read<ProfileProvider>().fetch(uid);
     }
   }
 
-  // ---- helpers to read fields regardless of how your User model is shaped ----
-  String _readAvatar(dynamic me) {
-    if (me == null) return '';
+  /// Safely pull an avatar URL regardless of how your `User` model stores it.
+  String? _avatarUrl(dynamic user) {
     try {
-      // 1) typed object with `avatar.url`
-      final url = (me.avatar?.url) as String?;
-      if (url != null && url.isNotEmpty) return url;
-    } catch (_) {}
-    try {
-      // 2) map-shaped avatar: { url: "..." }
-      final url = (me.avatar is Map) ? (me.avatar['url'] as String?) : null;
-      if (url != null && url.isNotEmpty) return url;
-    } catch (_) {}
-    // 3) plain string avatar or other fallbacks your model might expose
-    final a = (me.avatar is String) ? me.avatar as String : null;
-    if (a != null && a.isNotEmpty) return a;
-
-    final au = (me.avatarUrl is String) ? me.avatarUrl as String : null;
-    if (au != null && au.isNotEmpty) return au;
-
-    final img = (me.imageUrl is String) ? me.imageUrl as String : null;
-    if (img != null && img.isNotEmpty) return img;
-
-    return '';
+      // Supports: user.avatarUrl, user.avatar.url, user.avatar['url']
+      final dyn = user as dynamic;
+      final a = dyn.avatarUrl ??
+          (dyn.avatar != null && dyn.avatar is Map
+              ? (dyn.avatar['url'] ?? dyn.avatar['image_url'])
+              : (dyn.avatar != null && dyn.avatar.url != null ? dyn.avatar.url : null));
+      if (a == null) return null;
+      final s = a.toString();
+      return s.isEmpty ? null : s;
+    } catch (_) {
+      return null;
+    }
   }
-
-  int _len(dynamic v) => v is List ? v.length : 0;
 
   @override
   Widget build(BuildContext context) {
     final p = context.watch<ProfileProvider>();
     final me = p.me;
 
-    // Basic display fields
-    final name    = (me?.name is String)  ? (me!.name as String)   : '';
-    final email   = (me?.email is String) ? (me!.email as String)  : '';
-    // final address = (me?.address is String) ? (me!.address as String) : '';
-    final avatarUrl = _readAvatar(me);
+    final name = me?.name ?? '';
+    final email = me?.email ?? '';
+    final address = me?.address ?? '';
+    final avatarUrl = _avatarUrl(me);
 
-    // Counters: accept both camelCase and snake_case lists
-    final dyn = me as dynamic;
-    final investCount  = _len(dyn?.favoriteInvest ?? dyn?.favorite_invest);
-    final projectCount = _len(dyn?.favoriteProject ?? dyn?.favorite_project);
-    final auctionCount = _len(dyn?.favoriteAuction ?? dyn?.favorite_auction);
+    // Optional counters (defaults to 0 if your model doesn't have these)
+    final investCount = (me?.favoriteInvest?.length ?? 0);
+    final projectCount = (me?.favoriteProject?.length ?? 0);
+    final auctionCount = (me?.favoriteAuction?.length ?? 0);
 
     return ProfileScreenView(
       name: name,
       email: email,
-      // address: address,
+      address: address,
       avatarUrl: avatarUrl,
       investCount: investCount,
       projectCount: projectCount,
@@ -90,6 +82,7 @@ class _ProfileScreenPageState extends State<ProfileScreenPage> {
       onRefresh: _refresh,
       onLogout: () async {
         await context.read<AuthProvider>().logout();
+        Get.back(); // or navigate to login if you don't already elsewhere
       },
     );
   }

@@ -6,6 +6,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+
+import '../../auth/providers/auth_provider.dart';
+import '../providers/profile_provider.dart';
 
 class UploadProfileView extends StatefulWidget {
   const UploadProfileView({
@@ -40,8 +44,18 @@ class _UploadProfileViewState extends State<UploadProfileView> {
   @override
   void initState() {
     super.initState();
+    // 1) Prefer explicitly provided URL
     if ((widget.initialAvatarUrl ?? '').isNotEmpty) {
       _avatar = NetworkImage(widget.initialAvatarUrl!);
+    } else {
+      // 2) Fallback to current user avatar from provider (if loaded)
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final me = context.read<ProfileProvider>().me;
+        final url = (me?.avatar ?? me?.imageUrl ?? '').toString();
+        if (url.isNotEmpty && mounted) {
+          setState(() => _avatar = NetworkImage(url));
+        }
+      });
     }
   }
 
@@ -68,24 +82,41 @@ class _UploadProfileViewState extends State<UploadProfileView> {
 
   Future<void> _submit() async {
     if (_selectedFile == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a photo first')),
-      );
+      Get.snackbar('Oops', 'Please select a photo first', snackPosition: SnackPosition.TOP);
       return;
     }
 
     setState(() => _submitting = true);
     try {
+      // If parent wants to handle the file, let it.
       if (widget.onSubmit != null) {
         await widget.onSubmit!(_selectedFile!);
+      } else {
+        // Otherwise, do API call here via Provider/Repository/Service (Dio)
+        final pp = context.read<ProfileProvider>();
+        final ok = await pp.update(avatar: _selectedFile);
+        if (!ok) throw Exception(pp.error ?? 'Upload failed');
+
+        // Re-fetch user so ProfileProvider.me has the fresh avatar URL
+        final auth = context.read<AuthProvider>();
+        final uid = auth.user?.id ?? await auth.repo.tokenStore.readUserId();
+        if (uid != null) await pp.fetch(uid);
       }
+
       if (!mounted) return;
 
-      Get.snackbar('Success', 'Photo selected',
-          colorText: Colors.white, backgroundColor: Colors.green.withOpacity(.7));
+      Get.snackbar('Success', 'Profile photo updated', snackPosition: SnackPosition.TOP);
 
-      // Return the selected file to the caller.
-      Navigator.pop(context, _selectedFile);
+      // Stay on page so buttons remain visible (no Navigator.pop here).
+    } catch (e) {
+      if (!mounted) return;
+      Get.snackbar(
+        'Error',
+        e.toString().replaceFirst('Exception: ', ''),
+        snackPosition: SnackPosition.TOP,
+        colorText: Colors.white,
+        backgroundColor: Colors.redAccent.withOpacity(.7),
+      );
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -157,51 +188,65 @@ class _UploadProfileViewState extends State<UploadProfileView> {
               ),
 
               const Spacer(),
-
-              // Bottom buttons
-              Row(
-                children: [
-                  // Skip -> back
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: accent,
-                        side: const BorderSide(color: accent, width: 1.6),
-                        backgroundColor: Colors.transparent,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      onPressed: loading ? null : () => Get.back(),
-                      child: const Text('Skip',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-
-                  // Continue -> return selected File (no API)
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: accent,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                      ),
-                      onPressed: loading ? null : _submit,
-                      child: loading
-                          ? const SizedBox(
-                        height: 20, width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                      )
-                          : const Text('Update',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                    ),
-                  ),
-                ],
-              ),
             ],
           ),
+        ),
+      ),
+
+      // ✅ Buttons stay visible. They are just disabled while uploading,
+      // and the Update button shows a spinner + "Updating..."
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 50),
+        child: Row(
+          children: [
+            // Skip -> back
+            Expanded(
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: accent,
+                  side: const BorderSide(color: accent, width: 1.6),
+                  backgroundColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                onPressed: loading ? null : () => Get.back(),
+                child: const Text('Skip',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // Update -> upload via API (provider) or callback
+            Expanded(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: accent,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                onPressed: loading ? null : _submit,
+                child: loading
+                    ? Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: const [
+                    SizedBox(
+                      height: 18,
+                      width: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    ),
+                    SizedBox(width: 10),
+                    Text('Updating...',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                  ],
+                )
+                    : const Text('Update',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              ),
+            ),
+          ],
         ),
       ),
     );

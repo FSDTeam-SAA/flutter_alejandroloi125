@@ -10,6 +10,23 @@ class User {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
+  // ✅ Add these so UI can compile:
+  final String? address;
+  final String? gender;
+  final String? nationality;
+
+  /// age can be int or string depending on backend
+  final dynamic age;
+
+  /// Avatar may come as a String or as { url: "..." }
+  final String? avatar;   // raw string if server returns string
+  final String? imageUrl; // normalized url (works if server returns a map)
+
+  // Optional arrays the API returns
+  final List<dynamic>? favoriteAuction;
+  final List<dynamic>? favoriteProject;
+  final List<dynamic>? favoriteInvest;
+
   const User({
     required this.id,
     this.name,
@@ -17,6 +34,16 @@ class User {
     this.username,
     this.phone,
     this.role,
+    this.address,
+    this.gender,
+    this.nationality,
+    this.age,
+    this.avatar,
+    this.imageUrl,
+    this.favoriteAuction,
+    this.favoriteProject,
+    this.favoriteInvest,
+
     this.verified,
     this.verificationToken,
     this.createdAt,
@@ -25,12 +52,33 @@ class User {
 
   factory User.fromJson(Map<String, dynamic> json) {
     final ver = (json['verificationInfo'] as Map?) ?? {};
+    // Normalize avatar
+    String? imgUrl;
+    final a = json['avatar'];
+    if (a is String) {
+      imgUrl = a;
+    } else if (a is Map && a['url'] != null) {
+      imgUrl = a['url'].toString();
+    }
     return User(
       id: (json['_id'] ?? '').toString(),
       name: json['name'] as String?,
       email: json['email'] as String?,
       username: json['username'] as String?,
       phone: json['phone']?.toString(),
+
+      // ✅ address/gender/nationality exist now
+      address: json['address']?.toString(),
+      gender: json['gender']?.toString(),
+      nationality: json['nationality']?.toString(),
+      age: json['age'],                // keep dynamic (int or string)
+      avatar: a is String ? a : null,  // preserve raw string if provided
+      imageUrl: imgUrl,                // normalized usable url
+
+      favoriteAuction: (json['favorite_auction'] as List?) ?? const [],
+      favoriteProject: (json['favorite_project'] as List?) ?? const [],
+      favoriteInvest: (json['favorite_invest'] as List?) ?? const [],
+
       role: json['role']?.toString(),
       verified: ver['verified'] as bool?,
       verificationToken: ver['token'] as String?,
@@ -46,6 +94,14 @@ class User {
       'email': email,
       'username': username,
       'phone': phone,
+      'address': address,
+      'gender': gender,
+      'nationality': nationality,
+      'age': age,
+      'avatar': avatar ?? imageUrl,
+      'favorite_auction': favoriteAuction,
+      'favorite_project': favoriteProject,
+      'favorite_invest': favoriteInvest,
       'role': role,
       'verificationInfo': {
         'token': verificationToken,
