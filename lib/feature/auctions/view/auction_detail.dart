@@ -119,21 +119,13 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(
-                    auctionImage,
-                 //  'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?q=80&w=1600&auto=format&fit=crop',
-                    fit: BoxFit.cover,
-                  ),
+                  Image.network(auctionImage, fit: BoxFit.cover,),
                   Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [
-                          Color(0x66000000),
-                          Color(0x33000000),
-                          Color(0x99000000),
-                        ],
+                        colors: [Color(0x66000000), Color(0x33000000), Color(0x99000000),],
                       ),
                     ),
                   ),
