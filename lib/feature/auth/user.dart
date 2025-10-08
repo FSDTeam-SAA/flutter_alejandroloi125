@@ -18,6 +18,9 @@ class User {
   /// age can be int or string depending on backend
   final dynamic age;
 
+  /// Direct URL to show in UI (extracted from "avatar" map or string)
+  final String? avatarUrl;
+
   /// Avatar may come as a String or as { url: "..." }
   final String? avatar;   // raw string if server returns string
   final String? imageUrl; // normalized url (works if server returns a map)
@@ -43,6 +46,7 @@ class User {
     this.favoriteAuction,
     this.favoriteProject,
     this.favoriteInvest,
+    this.avatarUrl,
 
     this.verified,
     this.verificationToken,
