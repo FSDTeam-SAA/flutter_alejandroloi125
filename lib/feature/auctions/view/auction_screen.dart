@@ -1,3 +1,99 @@
+// lib/feature/auctions/view/auction_screen.dart
+
+/*import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import '../../../core/network/api_service/token_store.dart';
+import '../../app_ground.dart';
+import '../controller/auction_controller.dart';
+import '../model/auction_model.dart';
+import '../repo/auction_repo.dart';
+
+import '../../../core/network/api_service/api_client.dart';
+import '../services/auctions_services.dart';
+
+class AuctionScreen extends StatelessWidget {
+  const AuctionScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // --- Initialize repository & controller ---
+    final tokenStore = TokenStore();
+    final apiClient = ApiClient(tokenStore); // তোমার ApiClient instance
+    final repository = AuctionRepository(AuctionService(apiClient));
+    final controller = Get.put(AuctionController(repository));
+
+    final dark = ThemeData.dark();
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: dark.copyWith(
+        useMaterial3: true,
+        scaffoldBackgroundColor: const Color(0xFF0F0F10),
+        cardColor: const Color(0xFF1A1B1E),
+        dividerColor: const Color(0xFF2B2C31),
+        colorScheme: dark.colorScheme.copyWith(
+          primary: const Color(0xFFFF8C3B),
+          secondary: const Color(0xFF2A2B30),
+        ),
+      ),
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('Auctions'),
+          leading: IconButton(
+            onPressed: () => Get.offAll(
+                  () => const AppGround(),
+              transition: Transition.rightToLeft,
+            ),
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          ),
+        ),
+        body: Obx(() {
+          if (controller.loading.value) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (controller.error.value.isNotEmpty) {
+            return Center(child: Text(controller.error.value));
+          } else if (controller.allAuctions.isEmpty) {
+            return const Center(child: Text('No auctions found'));
+          } else {
+            return ListView.builder(
+              itemCount: controller.allAuctions.length,
+              itemBuilder: (context, index) {
+                final item = controller.allAuctions[index];
+                return AuctionTile(item: item);
+              },
+            );
+          }
+        }),
+      ),
+    );
+  }
+}
+
+class AuctionTile extends StatelessWidget {
+  final AuctionItem item;
+  const AuctionTile({super.key, required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Theme.of(context).cardColor,
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: ListTile(
+        leading: item.image.isNotEmpty
+            ? Image.network(item.image[0].url, width: 60, fit: BoxFit.cover)
+            : const Icon(Icons.image_not_supported),
+        title: Text(item.name, style: const TextStyle(color: Colors.white)),
+        subtitle: Text(
+          item.description,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: Colors.white70),
+        ),
+        trailing: Text('\$${item.startingBid}', style: const TextStyle(color: Colors.orangeAccent)),
+      ),
+    );
+  }
+}*/
+
 import 'dart:async';
 import 'package:alejandroloi/feature/auctions/view/auction_detail.dart';
 import 'package:flutter/material.dart';
@@ -5,11 +101,14 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/routes/transitions_type.dart';
 
+import '../../../core/network/api_service/api_client.dart';
+import '../../../core/network/api_service/token_store.dart';
 import '../../app_ground.dart';
-
-
-
-
+import '../controller/auction_controller.dart';
+import '../repo/auction_repo.dart';
+import '../services/auctions_services.dart';
+import 'ended_auction.dart';
+import 'upcoming_auciton.dart';
 
 class AuctionScreen extends StatefulWidget {
   const AuctionScreen({super.key});
@@ -49,17 +148,16 @@ class _AuctionScreenState extends State<AuctionScreen> {
             borderSide: const BorderSide(color: Color(0xFFFF8C3B)),
             borderRadius: BorderRadius.circular(12),
           ),
-          contentPadding:
-          const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 12,
+          ),
         ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF0F0F10),
           elevation: 0,
           centerTitle: false,
-          titleTextStyle: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-          ),
+          titleTextStyle: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
         ),
       ),
       home: const AuctionsScreen(),
@@ -103,11 +201,11 @@ class Auction {
 
 class AuctionsRepository {
   static const _images = [
-    'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?q=80&w=1600&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1600&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1512446816042-444d641267d4?q=80&w=1600&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1600&auto=format&fit=crop',
-    'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1600&auto=format&fit=crop',
+    //'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?q=80&w=1600&auto=format&fit=crop',
+    //'https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=1600&auto=format&fit=crop',
+    // 'https://images.unsplash.com/photo-1512446816042-444d641267d4?q=80&w=1600&auto=format&fit=crop',
+    //  'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1600&auto=format&fit=crop',
+    // 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1600&auto=format&fit=crop',
     'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1600&auto=format&fit=crop',
   ];
 
@@ -156,11 +254,8 @@ class AuctionsRepository {
     });
 
     // Simple "search"
-    final filtered = query.isEmpty
-        ? base
-        : base
-        .where((a) => a.title.toLowerCase().contains(query.toLowerCase()))
-        .toList();
+    final filtered = query.isEmpty ? base : base.where((a) =>
+        a.title.toLowerCase().contains(query.toLowerCase())).toList();
 
     return filtered;
   }
@@ -180,11 +275,20 @@ class _AuctionsScreenState extends State<AuctionsScreen>
   late final TabController _tab;
   final _queryCtrl = TextEditingController();
   final _repo = AuctionsRepository();
+  late final AuctionController controller;
 
   @override
   void initState() {
     super.initState();
     _tab = TabController(length: 3, vsync: this);
+    // Controller initialize
+    final tokenStore = TokenStore();
+    final apiClient = ApiClient(tokenStore);
+    final repository = AuctionRepository(AuctionService(apiClient));
+    controller = Get.put(AuctionController(repository));
+
+
+    controller.loadAuctions();
   }
 
   @override
@@ -199,10 +303,10 @@ class _AuctionsScreenState extends State<AuctionsScreen>
     final cs = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(
-          title: const Text('Auctions'),
+        title: const Text('Auctions'),
         leading: IconButton(
           onPressed: () => Get.offAll(
-                () => const AppGround(),
+            () => const AppGround(),
             transition: Transition.rightToLeft,
             duration: const Duration(milliseconds: 350),
             curve: Curves.easeInOut,
@@ -238,7 +342,9 @@ class _AuctionsScreenState extends State<AuctionsScreen>
                     tooltip: 'Filter',
                     onPressed: () {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Hook up your filters here')),
+                        const SnackBar(
+                          content: Text('Hook up your filters here'),
+                        ),
                       );
                     },
                   ),
@@ -257,18 +363,13 @@ class _AuctionsScreenState extends State<AuctionsScreen>
                   repository: _repo,
                   query: _queryCtrl.text,
                 ),
-                AuctionListView(
-                  status: AuctionStatus.upcoming,
-                  repository: _repo,
-                  query: _queryCtrl.text,
-                ),
+                UpcomingAuctionTile(),
+                EndedAuctionView(),/*
                 AuctionListView(
                   status: AuctionStatus.ended,
                   repository: _repo,
                   query: _queryCtrl.text,
-                ),
-
-
+                ),*/
               ],
             ),
           ),
@@ -311,11 +412,14 @@ class _PillTabs extends StatelessWidget {
                   overlayColor: MaterialStateProperty.all(Colors.transparent),
                   labelPadding: EdgeInsets.zero,
                   labelStyle: const TextStyle(
-                      fontWeight: FontWeight.w800, fontSize: 14),
-                  unselectedLabelStyle:
-                  const TextStyle(fontWeight: FontWeight.w700),
-                  labelColor: Colors.black,            // selected text
-                  unselectedLabelColor: Colors.white,  // unselected text
+                    fontWeight: FontWeight.w800,
+                    fontSize: 14,
+                  ),
+                  unselectedLabelStyle: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                  ),
+                  labelColor: Colors.black, // selected text
+                  unselectedLabelColor: Colors.white, // unselected text
                   indicatorSize: TabBarIndicatorSize.tab,
                   indicator: ShapeDecoration(
                     color: cs.primary, // orange fill
@@ -355,6 +459,7 @@ class _PillTabs extends StatelessWidget {
 
 class AuctionListView extends StatefulWidget {
   const AuctionListView({
+
     super.key,
     required this.status,
     required this.repository,
@@ -469,9 +574,9 @@ class _AuctionListViewState extends State<AuctionListView> {
               itemBuilder: (_, i) {
                 if (i >= _items.length) return const _ListLoader();
                 final a = _items[i];
-                return widget.status == AuctionStatus.upcoming
-                    ? UpcomingAuctionTile(a: a)
-                    : EndedAuctionTile(a: a);
+                //return widget.status == AuctionStatus.upcoming
+                    //? UpcomingAuctionTile(a: a)
+//: EndedAuctionTile(a: a);
               },
             );
           }
@@ -493,11 +598,9 @@ class LiveAuctionCard extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const AuctionDetailScreen()),
-        );
-
+      /*  Navigator.of(context).pushReplacement(
+         // MaterialPageRoute(builder: (_) => const AuctionDetailScreen()),
+        );*/
       },
       borderRadius: BorderRadius.circular(14),
       child: Ink(
@@ -524,16 +627,20 @@ class LiveAuctionCard extends StatelessWidget {
                   top: 8,
                   left: 8,
                   child: Container(
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.redAccent,
                       borderRadius: BorderRadius.circular(18),
                     ),
                     child: const Text(
                       'LIVE',
-                      style:
-                      TextStyle(fontWeight: FontWeight.w800, fontSize: 12),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
                 ),
@@ -541,13 +648,17 @@ class LiveAuctionCard extends StatelessWidget {
                   top: 8,
                   right: 8,
                   child: Container(
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0x66000000),
                       borderRadius: BorderRadius.circular(18),
-                      border:
-                      Border.all(color: const Color(0x55FFFFFF), width: 1),
+                      border: Border.all(
+                        color: const Color(0x55FFFFFF),
+                        width: 1,
+                      ),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -566,17 +677,24 @@ class LiveAuctionCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(a.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w700, fontSize: 14)),
+                  Text(
+                    a.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
                   const SizedBox(height: 2),
-                  Text('\$${a.currentPrice}',
-                      style: TextStyle(
-                          color: cs.primary,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 13.5)),
+                  Text(
+                    '\$${a.currentPrice}',
+                    style: TextStyle(
+                      color: cs.primary,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 13.5,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -587,82 +705,6 @@ class LiveAuctionCard extends StatelessWidget {
   }
 }
 
-class UpcomingAuctionTile extends StatelessWidget {
-  const UpcomingAuctionTile({super.key, required this.a});
-  final Auction a;
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: () {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const AuctionDetailScreen()),
-        );
-      },
-      borderRadius: BorderRadius.circular(14),
-      child: Ink(
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(14),
-                bottomLeft: Radius.circular(14),
-              ),
-              child: SizedBox(
-                height: 80,
-                width: 110,
-                child: Image.network(a.imageUrl, fit: BoxFit.cover),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(a.title,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w800, fontSize: 14)),
-                    const SizedBox(height: 4),
-                    Text('\$${a.currentPrice}',
-                        style: TextStyle(
-                            color: cs.primary, fontWeight: FontWeight.w800)),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        const Icon(Icons.event, size: 16, color: Colors.white70),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Starts ${_friendlyDate(a.startsAt!)}',
-                          style: const TextStyle(color: Colors.white70),
-                        ),
-                        const Spacer(),
-                        const Icon(Icons.bookmark_outline_rounded,
-                            color: Colors.white70),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text('${a.interested} interested',
-                        style: const TextStyle(color: Colors.white70)),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-
-
 class EndedAuctionTile extends StatelessWidget {
   const EndedAuctionTile({super.key, required this.a});
   final Auction a;
@@ -672,9 +714,9 @@ class EndedAuctionTile extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return InkWell(
       onTap: () {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const AuctionDetailScreen()),
-        );
+      /*  Navigator.of(context).pushReplacement(
+         // MaterialPageRoute(builder: (_) => const AuctionDetailScreen()),
+        );*/
       },
       borderRadius: BorderRadius.circular(14),
       child: Ink(
@@ -697,41 +739,64 @@ class EndedAuctionTile extends StatelessWidget {
             ),
             Expanded(
               child: Padding(
-                padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(a.title,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w800, fontSize: 14)),
+                    Text(
+                      a.title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 14,
+                      ),
+                    ),
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        const Text('First Bid: ',
-                            style: TextStyle(color: Colors.white70)),
-                        Text('\$${a.firstBid}',
-                            style: const TextStyle(fontWeight: FontWeight.w800)),
+                        const Text(
+                          'First Bid: ',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                        Text(
+                          '\$${a.firstBid}',
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
                         const SizedBox(width: 10),
-                        const Text('Final Bid: ',
-                            style: TextStyle(color: Colors.white70)),
-                        Text('\$${a.finalBid}',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                color: cs.primary)),
+                        const Text(
+                          'Final Bid: ',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                        Text(
+                          '\$${a.finalBid}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: cs.primary,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 6),
                     Row(
                       children: [
-                        const Icon(Icons.lock_clock_rounded,
-                            size: 16, color: Colors.white70),
+                        const Icon(
+                          Icons.lock_clock_rounded,
+                          size: 16,
+                          color: Colors.white70,
+                        ),
                         const SizedBox(width: 6),
-                        Text('Ended ${_friendlyDate(a.endsAt!)}',
-                            style: const TextStyle(color: Colors.white70)),
+                        Text(
+                          'Ended ${_friendlyDate(a.endsAt!)}',
+                          style: const TextStyle(color: Colors.white70),
+                        ),
                         const SizedBox(width: 8),
-                        const Icon(Icons.check_circle_rounded,
-                            size: 16, color: Colors.greenAccent),
+                        const Icon(
+                          Icons.check_circle_rounded,
+                          size: 16,
+                          color: Colors.greenAccent,
+                        ),
                       ],
                     ),
                   ],
@@ -790,9 +855,11 @@ String _friendlyDate(DateTime d) {
     return 'Today, ${_timeOf(d)}';
   } else {
     // past
-    final ended = DateTime(now.year, now.month, now.day)
-        .difference(DateTime(d.year, d.month, d.day))
-        .inDays;
+    final ended = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).difference(DateTime(d.year, d.month, d.day)).inDays;
     if (ended == 0) return 'today';
     if (ended == 1) return 'yesterday';
     return 'Jun ${d.day}';

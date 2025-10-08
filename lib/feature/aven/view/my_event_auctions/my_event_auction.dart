@@ -14,28 +14,28 @@ class MyEventAuction extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
       children: const [
-        AuctionItem(
+        AuctionItemWidget(
           imageUrl: 'assets/images/diamond.jpg',
           title: 'Gaming Console',
           finalBid: '\$1,200',
           status: 'Won',
           date: 'Ended jun 10',
         ),
-        AuctionItem(
+        AuctionItemWidget(
           imageUrl: 'assets/images/watch.jpg',
           title: 'Gaming Console',
           finalBid: '\$1,200',
           status: 'Won',
           date: 'Ended jun 10',
         ),
-        AuctionItem(
+        AuctionItemWidget(
           imageUrl: 'assets/images/earpod.jpg',
           title: 'Gaming Console',
           finalBid: '\$1,200',
           status: 'Live',
           date: 'Ended jun 10',
         ),
-        AuctionItem(
+        AuctionItemWidget(
           imageUrl: 'assets/images/agriculture.jpg',
           title: 'Gaming Console',
           finalBid: '\$1,200',
@@ -47,14 +47,14 @@ class MyEventAuction extends StatelessWidget {
   }
 }
 
-class AuctionItem extends StatelessWidget {
+class AuctionItemWidget extends StatelessWidget {
   final String imageUrl;
   final String title;
   final String finalBid;
   final String status;
   final String date;
 
-  const AuctionItem({
+  const AuctionItemWidget ({
     super.key,
     required this.imageUrl,
     required this.title,
