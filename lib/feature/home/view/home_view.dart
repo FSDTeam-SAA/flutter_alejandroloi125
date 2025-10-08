@@ -73,7 +73,7 @@ class HomeScreenView extends StatelessWidget {
             const SizedBox(height: 15),
             BottomCard(
               imagePath: Images.key,
-              title: "Action",
+              title: "Auctions",
               subtitle: "Participate in the live product auction by placing your bid.",
               onTap: () {
                 Get.to(
@@ -84,7 +84,7 @@ class HomeScreenView extends StatelessWidget {
               },
             ),
             const SizedBox(height: 20),
-            rowText(leadingText: "Live Action", trailingText: "See all"),
+            rowText(leadingText: "Live Auctions", trailingText: "See all"),
             const SizedBox(height: 10),
             SizedBox(
               height: 200, // ListView height
