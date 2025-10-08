@@ -52,22 +52,57 @@ class AuthRepository {
     }
   }
 
+  // Future<User> login({required String email, required String password}) async {
+  //   try {
+  //     final res = await service.login(email: email, password: password);
+  //     final ok = res['success'] == true;
+  //     if (!ok) throw Exception(res['message'] ?? 'Login failed');
+  //
+  //     final Map<String, dynamic> data =
+  //         (res['data'] as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
+  //     final Map<String, dynamic> userJson =
+  //         (data['user'] as Map?)?.cast<String, dynamic>() ?? data;
+  //
+  //     final access = data['token'] ?? res['token'] ?? data['accessToken'];
+  //     final refresh = data['refreshToken'] ?? res['refreshToken'];
+  //     await tokenStore.saveTokens(access: access as String?, refresh: refresh as String?);
+  //
+  //
+  //
+  //     return User.fromJson(userJson);
+  //   } on DioException catch (e) {
+  //     final m = e.response?.data;
+  //     final msg = (m is Map && m['message'] is String)
+  //         ? m['message'] as String
+  //         : (e.message ?? 'Network error');
+  //     throw Exception(msg);
+  //   }
+  // }
+
+  // lib/core/network/api_service/auth_repository.dart
   Future<User> login({required String email, required String password}) async {
     try {
       final res = await service.login(email: email, password: password);
       final ok = res['success'] == true;
       if (!ok) throw Exception(res['message'] ?? 'Login failed');
 
+      // Safely unwrap the payload your backend returns
       final Map<String, dynamic> data =
           (res['data'] as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
+
+      // Some backends embed the user in `data.user`, others put everything in `data`
       final Map<String, dynamic> userJson =
           (data['user'] as Map?)?.cast<String, dynamic>() ?? data;
 
-      final access = data['token'] ?? res['token'] ?? data['accessToken'];
-      final refresh = data['refreshToken'] ?? res['refreshToken'];
-      await tokenStore.saveTokens(access: access as String?, refresh: refresh as String?);
+      // ----- tokens -----
+      final access  = (data['accessToken'] ?? res['token'] ?? data['token'])?.toString();
+      final refresh = (data['refreshToken'] ?? res['refreshToken'])?.toString();
+      await tokenStore.saveTokens(access: access, refresh: refresh);
 
-
+      // ----- user id / role (from your screenshot: at data root: "_id", "role") -----
+      final userId = (userJson['_id'] ?? userJson['id'] ?? data['_id'] ?? data['id'])?.toString();
+      final role   = (userJson['role'] ?? data['role'])?.toString();
+      await tokenStore.saveUser(id: userId, role: role);
 
       return User.fromJson(userJson);
     } on DioException catch (e) {
@@ -78,6 +113,7 @@ class AuthRepository {
       throw Exception(msg);
     }
   }
+
 
   Future<void> verifyEmail({required String email, required String code}) async {
     try {

@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../../../providers/auction_provider.dart';        // (change here)
+import '../../../models/auction.dart';                       // (change here)
 import 'my_event_auction_purchase.dart';
 
 /// Color palette tuned to the mock
@@ -7,33 +11,88 @@ const _card = Color(0xFF1E1F22);
 const _pillGreen = Color(0xFF2AA86F);
 const _accent = Color(0xFFFF7A00);
 
-class MyEventAutionDetailScreen extends StatelessWidget {
-  const MyEventAutionDetailScreen({super.key});
+class MyEventAutionDetailScreen extends StatefulWidget {
+  final String auctionId;                                   // (change here)
+  const MyEventAutionDetailScreen({
+    super.key,
+    required this.auctionId,                                // (change here)
+  });
+
+  @override
+  State<MyEventAutionDetailScreen> createState() => _MyEventAutionDetailScreenState();
+}
+
+class _MyEventAutionDetailScreenState extends State<MyEventAutionDetailScreen> {
+  AuctionDto? _auction;                                     // (change here)
+  bool _loading = true;                                     // (change here)
+  String? _error;                                           // (change here)
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async { // (change here)
+      try {
+        final a = await context.read<AuctionProvider>().one(widget.auctionId);
+        if (!mounted) return;
+        setState(() { _auction = a; _loading = false; });
+      } catch (e) {
+        if (!mounted) return;
+        setState(() { _error = e.toString(); _loading = false; });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    // loading & error states (keeps scaffold look)
+    if (_loading) {
+      return const Scaffold(backgroundColor: _bg, body: Center(child: CircularProgressIndicator()));
+    }
+    if (_error != null) {
+      return Scaffold(
+        backgroundColor: _bg,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(_error!, style: const TextStyle(color: Colors.white70)),
+          ),
+        ),
+      );
+    }
+    final a = _auction!;                                    // (change here)
+
+    // pick first image URL if present, else fall back to asset
+    final headerUrl = (a.image.isNotEmpty && a.image.first.url.isNotEmpty)
+        ? a.image.first.url
+        : null;                                             // (change here)
+
     return Scaffold(
       backgroundColor: _bg,
       body: SafeArea(
         top: false,
         child: CustomScrollView(
-          slivers: const [
-            SliverToBoxAdapter(child: _Header()),
-            SliverToBoxAdapter(child: SizedBox(height: 16)),
+          slivers: [
+            SliverToBoxAdapter(child: _Header(imageUrl: headerUrl)),    // (change here)
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
             SliverToBoxAdapter(
               child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: _DetailsCard(),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _DetailsCard(                                   // (change here)
+                  title: a.name,                                        // (change here)
+                  description: a.description,                           // (change here)
+                  finalBidText: _money(a.startingBid),                  // (change here)
+                  statusText: 'Won',                                    // keep your UI label
+                ),
               ),
             ),
-            SliverToBoxAdapter(child: SizedBox(height: 16)),
-            SliverToBoxAdapter(
+            const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: _LiveChatSection(),
               ),
             ),
-            SliverToBoxAdapter(child: SizedBox(height: 24)),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
           ],
         ),
       ),
@@ -42,7 +101,8 @@ class MyEventAutionDetailScreen extends StatelessWidget {
 }
 
 class _Header extends StatelessWidget {
-  const _Header();
+  final String? imageUrl;                                   // (change here)
+  const _Header({this.imageUrl});                           // (change here)
 
   @override
   Widget build(BuildContext context) {
@@ -53,16 +113,15 @@ class _Header extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // IMAGE
+          // IMAGE (network if available, else your asset)        // (change here)
           ClipRRect(
             borderRadius: const BorderRadius.only(
               bottomLeft: Radius.circular(16),
               bottomRight: Radius.circular(16),
             ),
-            child: Image.asset(
-              'assets/images/earpod.jpg',
-              fit: BoxFit.cover,
-            ),
+            child: imageUrl == null
+                ? Image.asset('assets/images/earpod.jpg', fit: BoxFit.cover)
+                : Image.network(imageUrl!, fit: BoxFit.cover),
           ),
 
           // GRADIENT
@@ -97,10 +156,6 @@ class _Header extends StatelessWidget {
                       onTap: () => Navigator.of(context, rootNavigator: true).pop(),
                     ),
                     const SizedBox(width: 8),
-                    // _RoundIconButton(
-                    //   icon: Icons.ios_share_outlined,
-                    //   onTap: () {}, // share
-                    // ),
                   ],
                 ),
                 _RoundIconButton(
@@ -122,7 +177,7 @@ class _Header extends StatelessWidget {
             ),
           ),
 
-          // CREATOR + STATS
+          // CREATOR + STATS (kept as in your UI)
           Positioned(
             left: 16,
             right: 16,
@@ -177,7 +232,18 @@ class _Header extends StatelessWidget {
 }
 
 class _DetailsCard extends StatelessWidget {
-  const _DetailsCard();
+  final String title;                                       // (change here)
+  final String description;                                 // (change here)
+  final String finalBidText;                                // (change here)
+  final String statusText;                                  // (change here)
+
+  const _DetailsCard({
+    super.key,
+    required this.title,                                    // (change here)
+    required this.description,                              // (change here)
+    required this.finalBidText,                             // (change here)
+    required this.statusText,                               // (change here)
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -194,10 +260,10 @@ class _DetailsCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Gaming Console',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                  title,                                     // (change here)
+                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
                 ),
               ),
               Container(
@@ -206,9 +272,9 @@ class _DetailsCard extends StatelessWidget {
                   color: _pillGreen,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text(
-                  'Won',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                child: Text(
+                  statusText,                                // (change here)
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                 ),
               ),
             ],
@@ -217,7 +283,7 @@ class _DetailsCard extends StatelessWidget {
           Opacity(
             opacity: 0.9,
             child: Text(
-              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum metus eu egestas pharetra. Fusce bibendum odio et venenatis efficitur.',
+              description,                                   // (change here)
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontSize: 13,
                 color: Colors.white,
@@ -229,29 +295,25 @@ class _DetailsCard extends StatelessWidget {
           // Final Bid + Purchase
           Row(
             children: [
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Opacity(
-                      opacity: 0.8,
-                      child: Text(
-                        'Final Bid:',
-                        style: TextStyle(fontSize: 12, color: Colors.white70),
-                      ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Opacity(
+                    opacity: 0.8,
+                    child: Text('Final Bid:', style: TextStyle(fontSize: 12, color: Colors.white70)),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    finalBidText,                             // (change here)
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: _accent,
                     ),
-                    SizedBox(height: 4),
-                    Text(
-                      '\$1,200',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: _accent,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+              const Spacer(),
               SizedBox(
                 height: 44,
                 child: ElevatedButton(
@@ -565,6 +627,14 @@ Route _slideRightToLeft(Widget page) {
   );
 }
 
-
-
-
+/// ------- helpers -------
+String _money(num n) {
+  final s = n.toStringAsFixed(0);
+  final b = StringBuffer();
+  for (int i = 0; i < s.length; i++) {
+    b.write(s[i]);
+    final left = s.length - i - 1;
+    if (left % 3 == 0 && left != 0) b.write(',');
+  }
+  return '\$$b';
+}

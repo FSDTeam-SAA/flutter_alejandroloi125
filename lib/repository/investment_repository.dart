@@ -99,6 +99,51 @@ class InvestmentRepository {
     }
   }
 
+
+
+  // Future<Investment> getById(String id) async {
+  //   final res = await service.getById(id);
+  //   if (res['success'] != true) {
+  //     throw Exception(res['message'] ?? 'Failed to load investment');
+  //   }
+  //   final data = (res['data'] as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
+  //   return Investment.fromJson(data);
+  // }
+
+  // lib/repository/investment_repository.dart
+// …imports & class unchanged…
+
+  // === CHANGE: tolerant details parsing ===
+  Future<Investment> getById(String id) async {
+    try {
+      final raw = await service.getById(id);
+
+      // Handle explicit failure envelopes
+      if (raw['success'] == false) {
+        throw Exception(raw['message'] ?? 'Failed to load investment');
+      }
+
+      // Normalize shapes: {data:{investment:{...}}} OR {data:{...}} OR {...}
+      Map<String, dynamic> _asMap(dynamic v) =>
+          v is Map ? Map<String, dynamic>.from(v) : <String, dynamic>{};
+
+      final data = _asMap(raw['data']);
+      final item = _asMap(data['investment']).isNotEmpty
+          ? _asMap(data['investment'])
+          : (data.isNotEmpty ? data : _asMap(raw));
+
+      if (item.isEmpty) throw Exception('Investment not found');
+      return Investment.fromJson(item);
+    } on DioException catch (e) {
+      // Map 404 to a friendly message
+      if (e.response?.statusCode == 404) {
+        throw Exception('Investment not found (404)');
+      }
+      rethrow;
+    }
+  }
+
+
   Future<Investment> getOne(String id) async {
     try {
       final r = await service.getOne(id);

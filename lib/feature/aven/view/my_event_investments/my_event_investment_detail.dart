@@ -1,496 +1,424 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:get/get.dart';
 
+import '../../../../providers/investment_provider.dart';
 import '../../../models/investment.dart';
 
-class MyEventInvestmentDetail extends StatelessWidget {
-  final Investment investment;
-  const MyEventInvestmentDetail({super.key, required this.investment});
+const _accent = Color(0xFFFF7A00);
+
+class InvestmentDetails extends StatefulWidget {
+  final String investmentId;
+  const InvestmentDetails({super.key, required this.investmentId});
 
   @override
-  Widget build(BuildContext context) {
-    const bg = Color(0xFF0D0F12);
-    const cardBg = Color(0xFF15181C);
-    const border = Color(0xFF242931);
-    const accent = Color(0xFFFF8A34);
-
-    // hero
-    final heroUrl = investment.primaryImageUrl;
-    final hero = (heroUrl != null && heroUrl.startsWith('http'))
-        ? Image.network(
-      heroUrl,
-      fit: BoxFit.cover,
-      errorBuilder: (_, __, ___) =>
-          Image.asset('assets/images/wind-mill.jpg', fit: BoxFit.cover),
-    )
-        : Image.asset('assets/images/wind-mill.jpg', fit: BoxFit.cover);
-
-    final category =
-    investment.category.isNotEmpty ? investment.category.first : 'General';
-    final title = (investment.name).isEmpty ? '—' : investment.name;
-    final desc =
-    investment.description.isEmpty ? '—' : investment.description.trim();
-
-    // progress + meta
-    final progress = (investment.progressPct / 100)
-        .clamp(0, 1)
-        .toDouble(); // from your model (0 when unknown)
-    final goalText = _comma(investment.fundingGoal ?? 0);
-    final daysLeft = _parseDaysLeft(investment.fundingDuration); // from "10 day"
-    final location =
-    investment.location.trim().isEmpty ? '—' : investment.location.trim();
-
-    final terms = investment.investmentTerms.trim();
-    final galleryUrls = investment.images.map((e) => e.url).toList();
-
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value:
-      SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
-      child: Scaffold(
-        backgroundColor: bg,
-        body: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: cardBg,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: border),
-                  boxShadow: const [
-                    BoxShadow(color: Colors.black54, blurRadius: 12, offset: Offset(0, 6))
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ===== Hero =====
-                    Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(14)),
-                          child: AspectRatio(aspectRatio: 16 / 9, child: hero),
-                        ),
-                        Positioned(
-                          top: 8,
-                          left: 8,
-                          right: 8,
-                          child: Row(
-                            children: [
-                              _CircleIconButton(
-                                icon: Icons.arrow_back_ios_new,
-                                onTap: () => Navigator.pop(context),
-                              ),
-                              const Spacer(),
-                              _CircleIconButton(
-                                  icon: Icons.favorite_border, onTap: () {}),
-                              const SizedBox(width: 8),
-                              _CircleIconButton(
-                                  icon: Icons.more_horiz, onTap: () {}),
-                            ],
-                          ),
-                        ),
-                        const Positioned(left: 12, bottom: 10, child: _AuthorChip()),
-                      ],
-                    ),
-
-                    // ===== Body =====
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _Badge(text: category, color: accent),
-                          const SizedBox(height: 8),
-                          Text(title,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800)),
-                          const SizedBox(height: 8),
-                          _Para(desc),
-                          const SizedBox(height: 12),
-
-                          // location chip
-                          _InfoBar(icon: Icons.location_on_outlined, label: location),
-                          const SizedBox(height: 16),
-
-                          // progress & metrics
-                          _ProgressBar(
-                              value: progress,
-                              background: const Color(0xFF1E232A),
-                              fill: accent),
-                          const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              _Metric(
-                                  top: '${(progress * 100).round()}%',
-                                  bottom: 'of \$$goalText'),
-                              const _Metric(top: '—', bottom: 'Backers'),
-                              _Metric(top: '$daysLeft', bottom: 'Days left'),
-                            ],
-                          ),
-
-                          const SizedBox(height: 18),
-                          const _SectionTitle('About This Project'),
-                          const SizedBox(height: 6),
-                          _Para(desc),
-                          const SizedBox(height: 10),
-                          _Para(
-                              'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Curabitur sapien nulla, ultrices a ligula interdum, tempus rutrum libero.'),
-
-                          const SizedBox(height: 16),
-                          const _SectionTitle('Gallery'),
-                          const SizedBox(height: 8),
-                          _GalleryRow(urls: galleryUrls),
-
-                          const SizedBox(height: 16),
-                          const _SectionTitle('Investment Terms'),
-                          const SizedBox(height: 6),
-                          _Para(terms.isEmpty ? '—' : terms),
-
-                          const SizedBox(height: 16),
-                          const _SectionTitle('Investor'),
-                          const SizedBox(height: 8),
-                          const InvestorTile(
-                            name: 'Eleanor Pena',
-                            subtitle: '3 Investments',
-                            amount: '\$1000',
-                            avatar: 'https://picsum.photos/200',
-                          ),
-                          const SizedBox(height: 10),
-                          const InvestorTile(
-                            name: 'Eleanor Pena',
-                            subtitle: '3 Investments',
-                            amount: '\$1000',
-                            avatar: 'https://picsum.photos/210',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  State<InvestmentDetails> createState() => _InvestmentDetailsState();
 }
 
-// ===== UI bits =====
-class _CircleIconButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-  const _CircleIconButton({required this.icon, required this.onTap});
+class _InvestmentDetailsState extends State<InvestmentDetails> {
+  Investment? _inv;
+  bool _loading = true;
+  String? _error;
 
   @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.black.withOpacity(0.35),
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Icon(icon, size: 18, color: Colors.white), // <-- use passed icon
-        ),
-      ),
-    );
-  }
-}
-
-class _AuthorChip extends StatelessWidget {
-  const _AuthorChip();
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const CircleAvatar(
-          radius: 14,
-          backgroundImage: NetworkImage(
-              'https://images.unsplash.com/photo-1544005313-94ddf0286df2'),
-        ),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Eleanor Pena',
-                style: TextStyle(
-                    color: Colors.white.withOpacity(0.95),
-                    fontWeight: FontWeight.w600)),
-            Text('@eleanorp',
-                style:
-                TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
-          ],
-        ),
-        const SizedBox(width: 8),
-        const _TinyPill(text: '4.8'),
-        const SizedBox(width: 6),
-        const _TinyPill(text: '21k'),
-      ],
-    );
-  }
-}
-
-class _TinyPill extends StatelessWidget {
-  final String text;
-  const _TinyPill({required this.text});
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.35),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white24),
-      ),
-      child: Text(text,
-          style: const TextStyle(
-              color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
-    );
-  }
-}
-
-class _Badge extends StatelessWidget {
-  final String text;
-  final Color color;
-  const _Badge({required this.text, required this.color});
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.14),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.7)),
-      ),
-      child: Text(text,
-          style: TextStyle(
-              color: color, fontWeight: FontWeight.w700, fontSize: 12)),
-    );
-  }
-}
-
-class _InfoBar extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  const _InfoBar({required this.icon, required this.label});
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 40,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A1F26),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF2A313A)),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: Colors.white.withOpacity(0.85)),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(label,
-                style: TextStyle(
-                    color: Colors.white.withOpacity(0.85),
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProgressBar extends StatelessWidget {
-  final double value;
-  final Color background;
-  final Color fill;
-  const _ProgressBar(
-      {required this.value, required this.background, required this.fill});
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, c) {
-      final width = c.maxWidth;
-      final filled = (width * value).clamp(0.0, width);
-      return Container(
-        height: 8,
-        decoration:
-        BoxDecoration(color: background, borderRadius: BorderRadius.circular(8)),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Container(
-              width: filled,
-              decoration: BoxDecoration(
-                  color: fill, borderRadius: BorderRadius.circular(8))),
-        ),
-      );
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      setState(() => _loading = true);
+      try {
+        final inv =
+        await context.read<InvestmentProvider>().getById(widget.investmentId);
+        if (!mounted) return;
+        setState(() {
+          _inv = inv;
+          _loading = false;
+        });
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
     });
   }
-}
-
-class _Metric extends StatelessWidget {
-  final String top, bottom;
-  const _Metric({required this.top, required this.bottom});
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(top,
-            style:
-            const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
-        const SizedBox(height: 2),
-        Text(bottom,
-            style:
-            TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
-      ],
-    );
-  }
-}
-
-class _SectionTitle extends StatelessWidget {
-  final String text;
-  const _SectionTitle(this.text);
-  @override
-  Widget build(BuildContext context) {
-    return Text(text,
-        style: const TextStyle(
-            color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16));
-  }
-}
-
-class _Para extends StatelessWidget {
-  final String text;
-  const _Para(this.text);
-  @override
-  Widget build(BuildContext context) {
-    return Text(text,
-        style: TextStyle(color: Colors.white.withOpacity(0.78), height: 1.45));
-  }
-}
-
-class _GalleryRow extends StatelessWidget {
-  final List<String> urls;
-  const _GalleryRow({required this.urls});
 
   @override
   Widget build(BuildContext context) {
-    final a = urls.isNotEmpty
-        ? urls[0]
-        : 'https://images.unsplash.com/photo-1501004318641-b39e6451bec6';
-    final b = urls.length > 1
-        ? urls[1]
-        : 'https://images.unsplash.com/photo-1509395176047-4a66953fd231';
-    return Row(
-      children: [
-        Expanded(child: _RoundedImage(a)),
-        const SizedBox(width: 10),
-        Expanded(child: _RoundedImage(b)),
-      ],
-    );
-  }
-}
-
-class _RoundedImage extends StatelessWidget {
-  final String url;
-  const _RoundedImage(this.url);
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(10),
-      child: AspectRatio(
-        aspectRatio: 16 / 9,
-        child: Image.network(
-          url,
-          fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => const ColoredBox(
-            color: Colors.black26,
-            child: Center(child: Icon(Icons.broken_image_outlined)),
+    if (_loading) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    if (_error != null) {
+      return Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(_error!, style: const TextStyle(color: Colors.white70)),
           ),
+        ),
+      );
+    }
+    if (_inv == null) {
+      return const Scaffold(
+        backgroundColor: Colors.black,
+        body: Center(
+          child: Text('Investment not found', style: TextStyle(color: Colors.white70)),
+        ),
+      );
+    }
+
+    final i = _inv!;
+    final pct = i.progressPct.clamp(0, 100);
+    final goalStr = i.fundingGoal == null ? '-' : '\$${_comma(i.fundingGoal!)}';
+    final daysLeft = i.daysLeft ?? _parseDays(i.fundingDuration);
+
+    // NEW: extract investors defensively (won’t crash if field doesn’t exist)
+    final investors = _extractInvestors(i);
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Get.back(),
+        ),
+        title: const Text('Investments Details', style: TextStyle(color: Colors.white)),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _CoverHeader(i.primaryImageUrl),
+
+            const SizedBox(height: 10),
+            const Text('Agriculture',
+                style: TextStyle(color: _accent, fontSize: 12, fontWeight: FontWeight.w700)),
+            const SizedBox(height: 6),
+
+            Text(i.name,
+                style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 6),
+            Text(i.description, style: const TextStyle(color: Colors.white70, fontSize: 13.5)),
+            const SizedBox(height: 10),
+
+            if (i.location.isNotEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(20)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  const Icon(Icons.place, color: Colors.white70, size: 14),
+                  const SizedBox(width: 6),
+                  Text(i.location, style: const TextStyle(color: Colors.white, fontSize: 12.5)),
+                ]),
+              ),
+
+            const SizedBox(height: 12),
+
+            Row(
+              children: [
+                _StatCell(title: '$pct%', subtitle: 'of $goalStr'),
+                _DividerDot(),
+                _StatCell(title: '—', subtitle: 'Backers'),
+                _DividerDot(),
+                _StatCell(title: daysLeft == null ? '-' : '$daysLeft', subtitle: 'Days left'),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: LinearProgressIndicator(
+                value: pct / 100.0,
+                minHeight: 6,
+                backgroundColor: Colors.white10,
+                valueColor: const AlwaysStoppedAnimation(_accent),
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            const Text('About This Project',
+                style: TextStyle(color: Colors.white, fontSize: 16.5, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 8),
+            Text(i.description,
+                style: const TextStyle(color: Colors.white70, fontSize: 13.5, height: 1.45)),
+            const SizedBox(height: 14),
+
+            if (i.images.isNotEmpty) ...[
+              const Text('Gallery',
+                  style: TextStyle(color: Colors.white, fontSize: 16.5, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 90,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: i.images.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 8),
+                  itemBuilder: (_, idx) {
+                    final img = i.images[idx].url;
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(img, width: 140, height: 90, fit: BoxFit.cover),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            const Text('Investment Terms',
+                style: TextStyle(color: Colors.white, fontSize: 16.5, fontWeight: FontWeight.w800)),
+            const SizedBox(height: 8),
+            Text(i.investmentTerms.isEmpty ? '—' : i.investmentTerms,
+                style: const TextStyle(color: Colors.white70, fontSize: 13.5, height: 1.45)),
+
+            // NEW: Investors list (red box in your mock)
+            if (investors.isNotEmpty) ...[
+              const SizedBox(height: 18),
+              const Text('Investor',
+                  style: TextStyle(color: Colors.white, fontSize: 16.5, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 8),
+              Column(
+                children: investors.map((iv) => _InvestorTile(iv)).toList(),
+              ),
+            ],
+          ],
         ),
       ),
     );
   }
 }
 
-class InvestorTile extends StatelessWidget {
-  final String name, subtitle, amount, avatar;
-  const InvestorTile(
-      {super.key,
-        required this.name,
-        required this.subtitle,
-        required this.amount,
-        required this.avatar});
+class _CoverHeader extends StatelessWidget {
+  final String? url;
+  const _CoverHeader(this.url);
+
   @override
   Widget build(BuildContext context) {
-    const cardBg = Color(0xFF1A1F26);
-    const border = Color(0xFF2A313A);
-    const accent = Color(0xFFFF6A00);
+    return Stack(
+      children: [
+        AspectRatio(
+          aspectRatio: 16 / 9,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: url == null || url!.isEmpty
+                ? Container(color: Colors.white10)
+                : Image.network(url!, fit: BoxFit.cover),
+          ),
+        ),
+        Positioned(
+          top: 8,
+          left: 8,
+          child: _round(ActionIcon.back, () => Get.back()),
+        ),
+        Positioned(
+          top: 8,
+          right: 8,
+          child: Row(children: [
+            _round(ActionIcon.share, () {}),
+            const SizedBox(width: 8),
+            _round(ActionIcon.heart, () {}),
+          ]),
+        ),
+      ],
+    );
+  }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: border),
-        boxShadow: const [
-          BoxShadow(color: Colors.black54, blurRadius: 10, offset: Offset(0, 6))
-        ],
+  Widget _round(ActionIcon icon, VoidCallback onTap) {
+    final data = {
+      ActionIcon.back: Icons.arrow_back,
+      ActionIcon.share: Icons.ios_share_outlined,
+      ActionIcon.heart: Icons.favorite_border,
+    }[icon]!;
+    return InkResponse(
+      onTap: onTap,
+      radius: 26,
+      child: Container(
+        height: 32,
+        width: 32,
+        decoration:
+        BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(16)),
+        child: Icon(data, color: Colors.white, size: 18),
       ),
-      padding: const EdgeInsets.all(14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    );
+  }
+}
+
+enum ActionIcon { back, share, heart }
+
+class _StatCell extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  const _StatCell({required this.title, required this.subtitle});
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(title,
+            style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 2),
+        Text(subtitle, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+      ]),
+    );
+  }
+}
+
+class _DividerDot extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => const SizedBox(width: 16);
+}
+
+// -----------------------------------------------------------------------------
+// NEW: Investor section (defensive extraction + tile UI)
+// -----------------------------------------------------------------------------
+
+class _Investor {
+  final String name;
+  final String avatarUrl;
+  final int amount;
+  final String? when;
+
+  _Investor({
+    required this.name,
+    required this.avatarUrl,
+    required this.amount,
+    this.when,
+  });
+
+  factory _Investor.fromMap(Map<String, dynamic> m) {
+    // nested user object (common)
+    final user = (m['user'] is Map) ? Map<String, dynamic>.from(m['user']) : <String, dynamic>{};
+
+    String _pickName(Map<String, dynamic> mm) =>
+        (mm['fullName'] ??
+            mm['name'] ??
+            mm['username'] ??
+            (user['fullName'] ?? user['name'] ?? user['username']) ??
+            '—')
+            .toString();
+
+    String _pickAvatar(Map<String, dynamic> mm) =>
+        (mm['avatar'] ??
+            mm['image'] ??
+            mm['photo'] ??
+            user['avatar'] ??
+            user['image'] ??
+            user['photo'] ??
+            '')
+            .toString();
+
+    int _pickAmount(Map<String, dynamic> mm) {
+      final keys = ['amount', 'investment_amount', 'value', 'investAmount', 'invested', 'price'];
+      for (final k in keys) {
+        final v = mm[k];
+        final n = _asInt(v);
+        if (n != null) return n;
+      }
+      return 0;
+    }
+
+    String? _pickWhen(Map<String, dynamic> mm) =>
+        (mm['createdAt'] ?? mm['date'] ?? mm['time'] ?? '').toString().trim().isEmpty
+            ? null
+            : (mm['createdAt'] ?? mm['date'] ?? mm['time']).toString();
+
+    return _Investor(
+      name: _pickName(m),
+      avatarUrl: _pickAvatar(m),
+      amount: _pickAmount(m),
+      when: _pickWhen(m),
+    );
+  }
+}
+
+class _InvestorTile extends StatelessWidget {
+  final _Investor data;
+  const _InvestorTile(this.data);
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = const Color(0xFF1F2023);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
+      child: Row(
         children: [
-          Row(
-            children: [
-              CircleAvatar(radius: 18, backgroundImage: NetworkImage(avatar)),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(name,
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                              fontSize: 16)),
-                      const SizedBox(height: 2),
-                      Text(subtitle,
-                          style: TextStyle(
-                              color: Colors.white.withOpacity(0.7), fontSize: 12)),
-                    ]),
+          _Avatar(url: data.avatarUrl, name: data.name),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(data.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13.5)),
+                  ),
+                  if (data.when != null)
+                    Text(data.when!,
+                        style: const TextStyle(color: Colors.white38, fontSize: 11)),
+                ],
               ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
+              const SizedBox(height: 4),
               const Text('Investment Amount:',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600)),
-              const Spacer(),
-              Text(amount,
-                  style: const TextStyle(
-                      color: accent, fontSize: 16, fontWeight: FontWeight.w800)),
-            ],
+                  style: TextStyle(color: Colors.white60, fontSize: 12)),
+            ]),
           ),
+          const SizedBox(width: 8),
+          Text('\$${_comma(data.amount)}',
+              style: const TextStyle(
+                  color: _accent, fontSize: 13.5, fontWeight: FontWeight.w700)),
         ],
       ),
     );
   }
 }
 
-// --- helpers ---
+class _Avatar extends StatelessWidget {
+  final String url;
+  final String name;
+  const _Avatar({required this.url, required this.name});
+
+  @override
+  Widget build(BuildContext context) {
+    if (url.isNotEmpty) {
+      return CircleAvatar(radius: 18, backgroundImage: NetworkImage(url));
+    }
+    final initial = name.isNotEmpty ? name.trim()[0].toUpperCase() : '?';
+    return CircleAvatar(
+      radius: 18,
+      backgroundColor: Colors.white12,
+      child: Text(initial, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+    );
+  }
+}
+
+// ---------- helpers ----------
+
+int? _parseDays(String? s) {
+  if (s == null) return null;
+  final m = RegExp(r'\d+').firstMatch(s);
+  return m == null ? null : int.tryParse(m.group(0)!);
+}
+
+int? _asInt(Object? v) {
+  if (v is int) return v;
+  if (v is num) return v.toInt();
+  if (v is String) return int.tryParse(v);
+  return null;
+}
+
 String _comma(int n) {
   final s = n.toString();
-  if (s.length <= 3) return s;
   final b = StringBuffer();
   for (int i = 0; i < s.length; i++) {
     b.write(s[i]);
@@ -500,8 +428,80 @@ String _comma(int n) {
   return b.toString();
 }
 
-int _parseDaysLeft(String? duration) {
-  if (duration == null || duration.trim().isEmpty) return 0;
-  final m = RegExp(r'(\d+)').firstMatch(duration);
-  return m == null ? 0 : int.tryParse(m.group(1)!) ?? 0;
+// ---------- robust investor extraction (NO crashes if field missing) ----------
+List<_Investor> _extractInvestors(Investment inv) {
+  final d = inv as dynamic;
+
+  // Safely try to read a list property by name
+  List? _tryProp(String name) {
+    try {
+      switch (name) {
+        case 'investors':
+          final v = d.investors;
+          return (v is List) ? v : null;
+        case 'backers':
+          final v = d.backers;
+          return (v is List) ? v : null;
+        case 'investments':
+          final v = d.investments;
+          return (v is List) ? v : null;
+        case 'funders':
+          final v = d.funders;
+          return (v is List) ? v : null;
+        case 'supporters':
+          final v = d.supporters;
+          return (v is List) ? v : null;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  // 1) Try common dynamic properties on the model instance
+  List? list = _tryProp('investors') ??
+      _tryProp('backers') ??
+      _tryProp('investments') ??
+      _tryProp('funders') ??
+      _tryProp('supporters');
+
+  // 2) If model exposes toJson(), read from that map
+  if (list == null) {
+    try {
+      final j = d.toJson();
+      if (j is Map) {
+        List? pick(String k) {
+          final v = j[k];
+          return (v is List) ? v : null;
+        }
+
+        list = pick('investors') ??
+            pick('backers') ??
+            pick('investments') ??
+            pick('funders') ??
+            pick('supporters');
+      }
+    } catch (_) {}
+  }
+
+  // 3) If the object itself is a Map (edge case)
+  if (list == null && d is Map) {
+    final m = Map<String, dynamic>.from(d);
+    List? pick(String k) {
+      final v = m[k];
+      return (v is List) ? v : null;
+    }
+    list = pick('investors') ??
+        pick('backers') ??
+        pick('investments') ??
+        pick('funders') ??
+        pick('supporters');
+  }
+
+  // Normalize list → _Investor
+  final safe = (list ?? const [])
+      .whereType<Map>()
+      .map<Map<String, dynamic>>((m) => Map<String, dynamic>.from(m))
+      .map(_Investor.fromMap)
+      .toList();
+
+  return safe;
 }

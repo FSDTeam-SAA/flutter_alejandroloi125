@@ -21,6 +21,11 @@ class ApiPaths {
   static String allInvestmentByUser(String userId) =>
       '$allInvestment?userid=${Uri.encodeQueryComponent(userId)}';
 
+  // Adjust to your backend route
+  static String investmentById(String id) => '/investment/getById/$id';
+
+
+
   static String getInvestmentById(String id) =>
       '/investment/get-investment/$id';
   static String updateInvestment(String id) =>
@@ -32,7 +37,9 @@ class ApiPaths {
   static const String createProject = '/project/create-project';
   static const String allProject    = '/project/all-project';
   static String getProjectById(String id) => '/project/get-project/$id';
-  static String allProjectByUser(String id) => '/project/all-project?$id';
+  // FIX: add proper query param name just like investments/auctions
+  static String allProjectByUser(String userId) =>
+      '$allProject?userid=${Uri.encodeQueryComponent(userId)}';
   static String updateProject(String id)  => '/project/update-project/$id';
   static String deleteProject(String id)  => '/project/$id';
 
@@ -40,9 +47,17 @@ class ApiPaths {
   static const String createAuction = '/auction/create-auction';
   static const String allAuction    = '/auction/all-auction';
   static String getAuctionById(String id)       => '/auction/get-auction/$id';
-  static String allAuctionByUser(String userId) => '${allAuction}?userid=$userId';
+
+  // If your backend expects ?userid= (as in your Postman), keep this.
+// If it expects ?userId= or something else, CHANGE the key below only.
+  static String allAuctionByUser(String userId) =>
+      '$allAuction?userid=${Uri.encodeQueryComponent(userId)}'; // (CHANGE HERE)
+
+
   static String updateAuction(String id)        => '/auction/update-auction/$id';
   static String deleteAuction(String id)        => '/auction/$id';
+
+  static String bidAuction(String id) => '/auction/bid/$id'; // NEW
 
 
 

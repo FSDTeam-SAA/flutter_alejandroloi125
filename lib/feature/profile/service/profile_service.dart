@@ -9,7 +9,8 @@ class ProfileService {
   ProfileService(ApiClient client) : _dio = client.dio;
 
   Future<Map<String, dynamic>> getUser(String userId) async {
-    final r = await _dio.get('${ApiPaths.userGetOne}/$userId');
+    // final r = await _dio.get('${ApiPaths.userGetOne}/$userId');
+    final r = await _dio.get(ApiPaths.userGetOne(userId)); // (CHANGE HERE)
     return Map<String, dynamic>.from(r.data ?? const {});
   }
 

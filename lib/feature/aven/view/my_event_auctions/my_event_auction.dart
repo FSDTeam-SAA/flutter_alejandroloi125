@@ -1,183 +1,208 @@
+// lib/feature/event/my_event_auction/my_event_auction.dart
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:provider/provider.dart';
+
+import '../../../../providers/auction_provider.dart';
+import '../../../models/auction.dart';
 import 'my_event_aution_details.dart';
 
-// ---- palette ----
-const _bg = Color(0xFF000000);
-const _card = Color(0xFF1E1F22);
+const _bg     = Color(0xFF0E0E10);
+const _card   = Color(0xFF1E1F22);
 const _accent = Color(0xFFFF7A00);
 
-class MyEventAuction extends StatelessWidget {
+class MyEventAuction extends StatefulWidget {
   const MyEventAuction({super.key});
 
   @override
+  State<MyEventAuction> createState() => _MyEventAuctionState();
+}
+
+class _MyEventAuctionState extends State<MyEventAuction> {
+  late Future<AuctionListResponse> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = context.read<AuctionProvider>().all(page: 1, limit: 20);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
-      children: const [
-        AuctionItem(
-          imageUrl: 'assets/images/diamond.jpg',
-          title: 'Gaming Console',
-          finalBid: '\$1,200',
-          status: 'Won',
-          date: 'Ended jun 10',
-        ),
-        AuctionItem(
-          imageUrl: 'assets/images/watch.jpg',
-          title: 'Gaming Console',
-          finalBid: '\$1,200',
-          status: 'Won',
-          date: 'Ended jun 10',
-        ),
-        AuctionItem(
-          imageUrl: 'assets/images/earpod.jpg',
-          title: 'Gaming Console',
-          finalBid: '\$1,200',
-          status: 'Live',
-          date: 'Ended jun 10',
-        ),
-        AuctionItem(
-          imageUrl: 'assets/images/agriculture.jpg',
-          title: 'Gaming Console',
-          finalBid: '\$1,200',
-          status: 'Loss',
-          date: 'Ended jun 10',
-        ),
-      ],
+    return Scaffold(
+      backgroundColor: _bg,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text('Auctions', style: TextStyle(color: Colors.white)),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: FutureBuilder<AuctionListResponse>(
+        future: _future,
+        builder: (context, snap) {
+          if (snap.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snap.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  '${snap.error}',
+                  style: const TextStyle(color: Colors.white70),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            );
+          }
+          final data = snap.data;
+          final items = data?.auctions ?? const <AuctionDto>[];
+          if (items.isEmpty) {
+            return const Center(
+              child: Text('No auctions found', style: TextStyle(color: Colors.white70)),
+            );
+          }
+
+          return ListView.separated(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
+            itemCount: items.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (_, i) {
+              final auc = items[i];
+              return _AuctionCard(
+                auc: auc,
+                onTap: () => Get.to(
+                      () => MyEventAutionDetailScreen(auctionId: auc.id),
+                  transition: Transition.rightToLeft,
+                  duration: const Duration(milliseconds: 320),
+                ),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }
 
-class AuctionItem extends StatelessWidget {
-  final String imageUrl;
-  final String title;
-  final String finalBid;
-  final String status;
-  final String date;
-
-  const AuctionItem({
-    super.key,
-    required this.imageUrl,
-    required this.title,
-    required this.finalBid,
-    required this.status,
-    required this.date,
-  });
+class _AuctionCard extends StatelessWidget {
+  final AuctionDto auc;
+  final VoidCallback? onTap;
+  const _AuctionCard({required this.auc, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final style = _statusStyle(status);
+    final thumb = (auc.image.isNotEmpty ? auc.image.first.url : '').trim();
+    final title = auc.name.trim().isEmpty ? '-' : auc.name.trim();
+    final finalBid = auc.startingBid;
+    final status = _statusOf(auc); // "Live" / "Ended" (you can wire real statuses if API provides)
+    final endedText = _endedText(auc.schedule.date); // "Ended jun 10"
+    final pill = _pillStyle(status);
 
     return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: () {
-        Navigator.of(context, rootNavigator: true).push(
-          _slideRightToLeft(const MyEventAutionDetailScreen()),
-        );
-      },
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
           color: _card,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           boxShadow: const [
             BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4)),
           ],
         ),
         padding: const EdgeInsets.all(10),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // ---------- FIXED, NON-DISTORTING THUMBNAIL ----------
-            SizedBox(
-              width: 110, // matches the mock proportions
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+            // ---- LEFT THUMB 1:1 ----
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: SizedBox(
+                width: 120,
+                height: 90,
                 child: AspectRatio(
-                  aspectRatio: 4 / 4, // force consistent crop
-                  child: Image.asset(
-                    imageUrl,
-                    fit: BoxFit.cover, // center-crop without stretching
-                    filterQuality: FilterQuality.high,
-                  ),
+                  aspectRatio: 1, // square
+                  child: thumb.isEmpty
+                      ? Container(color: Colors.white10)
+                      : Image.network(thumb, fit: BoxFit.cover),
                 ),
               ),
             ),
             const SizedBox(width: 12),
 
-            // ---------- TEXT AREA ----------
+            // ---- RIGHT CONTENT ----
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // title + status pill
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15.5,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: style.bg,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          status,
-                          style: TextStyle(
-                            color: style.fg,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-
-                  // Final Bid: $1,200 (orange amount)
-                  Text.rich(
-                    TextSpan(
+              child: SizedBox(
+                height: 90,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Title + status pill
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const TextSpan(
-                          text: 'Final Bid: ',
-                          style: TextStyle(color: Colors.white, fontSize: 13.5),
+                        Expanded(
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 16,
+                            ),
+                          ),
                         ),
-                        TextSpan(
-                          text: finalBid,
-                          style: const TextStyle(
-                            color: _accent,
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w800,
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: pill.bg,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            status,
+                            style: TextStyle(
+                              color: pill.fg,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 6),
+                    const SizedBox(height: 6),
 
-                  // Ended date row
-                  Row(
-                    children: const [
-                      Icon(Icons.access_time, size: 14, color: Colors.white70),
-                      SizedBox(width: 6),
-                    ],
-                  ),
-                  Text(
-                    date,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12.5),
-                  ),
-                ],
+                    // Final Bid row
+                    Text.rich(
+                      TextSpan(
+                        children: [
+                          const TextSpan(
+                            text: 'Final Bid: ',
+                            style: TextStyle(color: Colors.white, fontSize: 13.5),
+                          ),
+                          TextSpan(
+                            text: '\$${_comma(finalBid)}',
+                            style: const TextStyle(
+                              color: _accent,
+                              fontWeight: FontWeight.w800,
+                              fontSize: 13.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+
+                    // Ended row
+                    Row(
+                      children: [
+                        const Icon(Icons.access_time, size: 14, color: Colors.white70),
+                        const SizedBox(width: 6),
+                        Text(endedText, style: const TextStyle(color: Colors.white70, fontSize: 12.5)),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -187,45 +212,64 @@ class AuctionItem extends StatelessWidget {
   }
 }
 
+// -------- helpers --------
 
-
-class _StatusStyle {
+class _PillStyle {
   final Color bg;
   final Color fg;
-  const _StatusStyle(this.bg, this.fg);
+  const _PillStyle(this.bg, this.fg);
 }
 
-_StatusStyle _statusStyle(String status) {
+_PillStyle _pillStyle(String status) {
   switch (status.toLowerCase()) {
     case 'won':
-    // soft green pill with dark green text
-      return const _StatusStyle(Color(0x332AA86F), Color(0xFF2AA86F));
+      return const _PillStyle(Color(0x332AA86F), Color(0xFF2AA86F)); // soft green
     case 'live':
-    // solid red pill with white text
-      return const _StatusStyle(Color(0xFFE53935), Colors.white);
+      return const _PillStyle(Color(0xFFE53935), Colors.white); // red
     case 'loss':
-    // solid red pill with white text
-      return const _StatusStyle(Color(0xFFE53935), Colors.white);
+      return const _PillStyle(Color(0xFFE53935), Colors.white); // red
+    case 'ended':
     default:
-      return const _StatusStyle(Color(0x33424242), Colors.white70);
+      return const _PillStyle(Color(0x33424242), Colors.white70); // gray
   }
 }
 
-// ---- route helper (right -> left) ----
-Route _slideRightToLeft(Widget page) {
-  return PageRouteBuilder(
-    pageBuilder: (_, __, ___) => page,
-    transitionDuration: const Duration(milliseconds: 320),
-    reverseTransitionDuration: const Duration(milliseconds: 280),
-    transitionsBuilder: (_, animation, __, child) {
-      final tween = Tween(begin: const Offset(1, 0), end: Offset.zero)
-          .chain(CurveTween(curve: Curves.easeInOut));
-      return SlideTransition(position: animation.drive(tween), child: child);
-    },
-  );
+// Very simple status guesser (replace with real field if your API sends one)
+String _statusOf(AuctionDto a) {
+  // If you later add `a.status`, just return it here.
+  final dt = _parseDdMmYyyy(a.schedule.date);
+  if (dt == null) return 'Ended';
+  return DateTime.now().isBefore(dt.add(const Duration(hours: 24))) ? 'Live' : 'Ended';
 }
 
+String _endedText(String ddMmYyyy) {
+  final dt = _parseDdMmYyyy(ddMmYyyy);
+  if (dt == null) return 'Ended';
+  final m = _mon(dt.month).toLowerCase();
+  return 'Ended $m ${dt.day}';
+}
 
+DateTime? _parseDdMmYyyy(String s) {
+  // expects "dd-MM-yyyy"
+  final p = s.split('-');
+  if (p.length != 3) return null;
+  final d = int.tryParse(p[0]);
+  final m = int.tryParse(p[1]);
+  final y = int.tryParse(p[2]);
+  if (d == null || m == null || y == null) return null;
+  return DateTime(y, m, d);
+}
 
+String _mon(int m) =>
+    const ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][m - 1];
 
-
+String _comma(int n) {
+  final s = n.toString();
+  final b = StringBuffer();
+  for (int i = 0; i < s.length; i++) {
+    b.write(s[i]);
+    final left = s.length - i - 1;
+    if (left % 3 == 0 && left != 0) b.write(',');
+  }
+  return b.toString();
+}

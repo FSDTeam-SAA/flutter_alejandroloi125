@@ -1,73 +1,104 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:get/get.dart';
-import '../../../models/investment.dart' as detail;
-import 'my_event_investment_detail.dart' as detail;
 
-// ------- Theme -------
-const _card = Color(0xFF1E1F22);
+import '../../../../core/network/api_service/token_store.dart';
+import '../../../../providers/investment_provider.dart';
+import '../../../models/investment.dart';
+import 'my_event_investment_detail.dart';
+
+const _card   = Color(0xFF1E1F22);
 const _accent = Color(0xFFFF7A00);
-const _textDim = Colors.white70;
-const _barTrack = Color(0xFF3A3A3E);
-const _btnDark = Color(0xFF2A2B30);
 
-/// Pure UI screen — no API/Provider integration (unchanged).
-/// Pass a pre-fetched list of [detail.Investment]s from the caller.
-class MyEventInvestmentScreen extends StatelessWidget {
-  const MyEventInvestmentScreen({
-    super.key,
-    this.investments = const [],
-    this.onDelete, // optional: delete callback
-  });
+class MyEventInvestmentScreen extends StatefulWidget {
+  const MyEventInvestmentScreen({super.key});
+  @override
+  State<MyEventInvestmentScreen> createState() => _MyEventInvestmentScreenState();
+}
 
-  /// Provide pre-fetched investments (no API/provider here).
-  final List<detail.Investment> investments;
+class _MyEventInvestmentScreenState extends State<MyEventInvestmentScreen> {
+  final _scroll = ScrollController();
+  final _store  = TokenStore();
+  String? _userId;
+  bool _paging = false;
 
-  /// Optional delete action. If null, the Delete button will be disabled.
-  final void Function(detail.Investment it)? onDelete;
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      _userId = await _store.readUserId();
+      if (!mounted) return;
+
+      if ((_userId ?? '').isEmpty) {
+        Get.snackbar('Auth required', 'Please log in again');
+        return;
+      }
+
+      context.read<InvestmentProvider>()
+          .fetchByUser(userId: _userId!, page: 1, limit: 10);
+    });
+
+    _scroll.addListener(() {
+      final prov = context.read<InvestmentProvider>();
+      if (_paging || prov.loading || _userId == null) return;
+
+      final nearBottom =
+          _scroll.position.pixels >= _scroll.position.maxScrollExtent - 120;
+      if (nearBottom && prov.page < prov.pages) {
+        _paging = true;
+        prov.fetchMoreByUser(userId: _userId!, limit: 10)
+            .whenComplete(() => _paging = false);
+      }
+    });
+  }
+
+  @override
+  void dispose() { _scroll.dispose(); super.dispose(); }
 
   @override
   Widget build(BuildContext context) {
+    final prov  = context.watch<InvestmentProvider>();
+    final items = prov.items;
 
-
-    if (investments.isEmpty) {
-      // debugPrint(investments.isEmpty as String?);
+    if (prov.loading && items.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if ((prov.error ?? '').isNotEmpty && items.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(prov.error!, style: const TextStyle(color: Colors.white70)),
+        ),
+      );
+    }
+    if (items.isEmpty) {
       return const Center(
-        child: Text('No investments found',
-            style: TextStyle(color: Colors.white70)),
+        child: Text('No investments found', style: TextStyle(color: Colors.white70)),
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
-      itemCount: investments.length,
+    return ListView.separated(
+      controller: _scroll,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+      itemCount: items.length + (prov.page < prov.pages ? 1 : 0),
+      separatorBuilder: (_, __) => const SizedBox(height: 14),
       itemBuilder: (context, i) {
-        final it = investments[i];
-
-        final image = it.primaryImageUrl ?? 'assets/images/wind-mill.jpg';
-        final amountStr = _fmtMoney(it.fundingGoal ?? 0); // "$25,000"
-        final progressPct = (it.progressPct).clamp(0, 100); // 0..100
-        final progress = progressPct / 100.0;              // 0..1
-        final daysStr =
-        it.daysLeft == null ? '0 days left' : '${it.daysLeft} days left';
-        final statusText = progress >= 1 ? 'Completed' : 'In Progress';
-        final isCompleted = progress >= 1;
-
+        if (i >= items.length) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 12),
+            child: Center(
+              child: SizedBox(height: 22, width: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2)),
+            ),
+          );
+        }
+        final inv = items[i];
         return _InvestmentCard(
-          image: image,
-          status: statusText,
-          statusColor: isCompleted ? const Color(0xFF4CAF50) : _accent,
-          category:
-          it.category.isNotEmpty ? it.category.first : 'Agriculture',
-          title: it.name,
-          description: it.description,
-          progress: progress,
-          amount: amountStr,
-          daysLeft: daysStr,
-          onDelete: onDelete == null ? null : () => onDelete!(it),
-          onView: () => Get.to(
-                () => detail.MyEventInvestmentDetail(investment: it),
+          inv: inv,
+          onTap: () => Get.to(
+                () => InvestmentDetails(investmentId: inv.id),
             transition: Transition.rightToLeft,
-            duration: const Duration(milliseconds: 300),
+            duration: const Duration(milliseconds: 320),
           ),
         );
       },
@@ -76,232 +107,122 @@ class MyEventInvestmentScreen extends StatelessWidget {
 }
 
 class _InvestmentCard extends StatelessWidget {
-  final String image, category, title, description, amount, daysLeft;
-  final String? status; // "In Progress", "Completed", etc.
-  final Color? statusColor;
-  final double progress; // 0..1
-  final VoidCallback onView;
-  final VoidCallback? onDelete;
-
-  const _InvestmentCard({
-    required this.image,
-    required this.category,
-    required this.title,
-    required this.description,
-    required this.progress,
-    required this.amount,
-    required this.daysLeft,
-    required this.onView,
-    this.onDelete,
-    this.status,
-    this.statusColor,
-  });
+  final Investment inv;
+  final VoidCallback? onTap;
+  const _InvestmentCard({required this.inv, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    final pctText = '${(progress * 100).round()}% of $amount';
+    final cover   = inv.primaryImageUrl;
+    final title   = inv.name.trim().isEmpty ? '-' : inv.name.trim();
+    final summary = inv.description.trim().isEmpty ? '—' : inv.description.trim();
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: _card,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: const [
-          BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4))
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // image + badge
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(12),
-              topRight: Radius.circular(12),
-            ),
-            child: Stack(
-              children: [
-                _CardImage(image),
-                if (status != null && status!.isNotEmpty)
-                  Positioned(
-                    top: 8,
-                    left: 8,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: (statusColor ?? _accent),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        status!,
-                        style: const TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.w800,
-                          fontSize: 10.5,
-                        ),
-                      ),
+    final goal = inv.fundingGoal ?? 0;
+    final pct  = inv.progressPct.clamp(0, 100);
+    final days = inv.daysLeft ?? _parseDays(inv.fundingDuration);
+
+    return InkWell(
+      onTap: onTap,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: _card,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4))],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if ((cover ?? '').isNotEmpty)
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
+                child: Image.network(cover!, height: 160, width: double.infinity, fit: BoxFit.cover),
+              ),
+
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Agriculture',
+                      style: TextStyle(color: _accent, fontSize: 12, fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 6),
+
+                  Text(title,
+                      style: const TextStyle(color: Colors.white, fontSize: 16.5, fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 6),
+
+                  Text(summary,
+                      maxLines: 2, overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.white70, fontSize: 13.5)),
+                  const SizedBox(height: 10),
+
+                  // progress bar
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(6),
+                    child: LinearProgressIndicator(
+                      value: (pct / 100).toDouble(),
+                      minHeight: 6,
+                      backgroundColor: Colors.white10,
+                      valueColor: const AlwaysStoppedAnimation(_accent),
                     ),
                   ),
-              ],
-            ),
-          ),
+                  const SizedBox(height: 6),
 
-          // body
-          Padding(
-            padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(category,
-                    style: const TextStyle(
-                        color: _accent,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600)),
-                const SizedBox(height: 4),
-                Text(title,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16.5,
-                        fontWeight: FontWeight.w800,
-                        height: 1.1)),
-                const SizedBox(height: 6),
-                Text(
-                  description,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style:
-                  const TextStyle(color: _textDim, fontSize: 13.5, height: 1.25),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(child: _Label(text: pctText, strong: true)),
-                    Text(daysLeft,
-                        style:
-                        const TextStyle(color: Colors.white60, fontSize: 12)),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                LayoutBuilder(
-                  builder: (context, c) => Stack(
+                  // bottom row: "xx% of $goal" | "10 days left"
+                  Row(
                     children: [
-                      Container(
-                        height: 6,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                            color: _barTrack,
-                            borderRadius: BorderRadius.circular(6)),
+                      Expanded(
+                        child: Text(
+                          goal > 0 ? '$pct% of \$${_comma(goal)}' : '$pct%',
+                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                        ),
                       ),
-                      Container(
-                        height: 6,
-                        width: (c.maxWidth * progress).clamp(0.0, c.maxWidth),
-                        decoration: BoxDecoration(
-                            color: _accent,
-                            borderRadius: BorderRadius.circular(6)),
+                      Text(
+                        days == null ? '-' : '$days days left',
+                        style: const TextStyle(color: Colors.white70, fontSize: 12),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 12),
 
-                // buttons row: Delete + View Details
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: onDelete,
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: _btnDark,
-                          side: const BorderSide(color: _barTrack, width: 1.2),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                          minimumSize: const Size.fromHeight(42),
-                        ),
-                        child: const Text('Delete',
-                            style: TextStyle(fontWeight: FontWeight.w700)),
+                  const SizedBox(height: 10),
+
+                  // View details button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 38,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: _accent),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
+                      onPressed: onTap,
+                      child: const Text('View Details'),
                     ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: onView,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _accent,
-                          foregroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10)),
-                          minimumSize: const Size.fromHeight(42),
-                          elevation: 0,
-                        ),
-                        child: const Text('View Details',
-                            style: TextStyle(fontWeight: FontWeight.w700)),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CardImage extends StatelessWidget {
-  final String src;
-  const _CardImage(this.src);
-
-  @override
-  Widget build(BuildContext context) {
-    final isNet = src.startsWith('http');
-    return SizedBox(
-      height: 168,
-      width: double.infinity,
-      child: isNet
-          ? Image.network(
-        src,
-        fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => const ColoredBox(
-          color: Colors.black26,
-          child: Center(child: Icon(Icons.broken_image_outlined)),
+          ],
         ),
-      )
-          : Image.asset(src, fit: BoxFit.cover),
-    );
-  }
-}
-
-class _Label extends StatelessWidget {
-  final String text;
-  final bool strong;
-  const _Label({required this.text, this.strong = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: TextStyle(
-        color: strong ? Colors.white : _textDim,
-        fontSize: 12.5,
-        fontWeight: strong ? FontWeight.w700 : FontWeight.w500,
       ),
     );
   }
 }
 
-// ----- helpers -----
-String _fmtMoney(int v) {
-  // "$25,000" without intl
-  final s = v.toString();
+int? _parseDays(String? fundingDuration) {
+  if (fundingDuration == null) return null;
+  final m = RegExp(r'\d+').firstMatch(fundingDuration);
+  return m == null ? null : int.tryParse(m.group(0)!);
+}
+
+String _comma(int n) {
+  final s = n.toString();
   final b = StringBuffer();
   for (int i = 0; i < s.length; i++) {
-    final idxFromEnd = s.length - i;
     b.write(s[i]);
-    final isThousandBreak = (idxFromEnd > 1) && ((idxFromEnd - 1) % 3 == 0);
-    if (isThousandBreak) b.write(',');
+    final left = s.length - i - 1;
+    if (left % 3 == 0 && left != 0) b.write(',');
   }
-  return '\$${b.toString()}';
+  return b.toString();
 }

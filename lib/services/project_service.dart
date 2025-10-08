@@ -45,9 +45,11 @@ class ProjectService {
     return Map<String, dynamic>.from(res.data ?? const {});
   }
 
-  // LIST (by user)
-  Future<Map<String, dynamic>> getAllByUser(String userId,
-      {int page = 1, int limit = 10}) async {
+  Future<Map<String, dynamic>> getAllByUser(
+      String userId, {
+        int page = 1,
+        int limit = 10,
+      }) async {
     final res = await _dio.get(
       ApiPaths.allProjectByUser(userId),
       queryParameters: {'page': page, 'limit': limit},

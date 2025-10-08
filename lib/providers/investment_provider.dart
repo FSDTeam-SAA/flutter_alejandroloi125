@@ -38,6 +38,68 @@ class InvestmentProvider extends ChangeNotifier {
     return null;
   }
 
+  Future<Investment> getById(String id) async {
+    try {
+      final inv = await repo.getById(id);
+      return inv;
+    } catch (e) {
+      // optionally store error in provider
+      rethrow;
+    }
+  }
+
+  // ---- list (by user) ----
+  Future<void> fetchByUser({
+    required String userId,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    _set(loading: true, error: null);
+    try {
+      final InvestmentPage r =
+      await repo.getAllByUser(userId: userId, page: page, limit: limit);
+      _applyPage(r, append: page > 1);
+      _set(loading: false);
+    } catch (e) {
+      _set(loading: false, error: e.toString());
+    }
+  }
+
+  Future<void> fetchMoreByUser({
+    required String userId,
+    int limit = 10,
+  }) async {
+    if (_loading || _page >= _pages) return;
+    await fetchByUser(userId: userId, page: _page + 1, limit: limit);
+  }
+
+  // ---- helpers ----
+  void _applyPage(InvestmentPage r, {required bool append}) {
+    _page = r.page;
+    _pages = r.pages;
+
+    if (!append || _page == 1) {
+      _items
+        ..clear()
+        ..addAll(r.items);
+      return;
+    }
+
+    // de-dupe on id when appending
+    final map = {for (final it in _items) it.id: it};
+    for (final it in r.items) {
+      map[it.id] = it;
+    }
+    _items
+      ..clear()
+      ..addAll(map.values);
+  }
+
+
+
+
+
+
   String? vDays(String? v) {
     final err = vNumber(v, 'Funding duration (days)', min: 1);
     if (err != null) return err;
@@ -130,30 +192,7 @@ class InvestmentProvider extends ChangeNotifier {
   }
 
 
-  // ===== LIST: all by user =====
-  Future<void> fetchByUser({
-    required String userId,
-    int page = 1,
-    int limit = 10,
-  }) async {
-    _set(loading: true, error: null);
-    try {
-      final InvestmentPage r =
-      await repo.getAllByUser(userId: userId, page: page, limit: limit);
-      _page = r.page;
-      _pages = r.pages;
-      if (page == 1) _items.clear();
-      _items.addAll(r.items);
-      _set(loading: false);
-    } catch (e) {
-      _set(loading: false, error: e.toString());
-    }
-  }
 
-  Future<void> fetchMoreByUser({required String userId, int limit = 10}) async {
-    if (_loading || _page >= _pages) return;
-    await fetchByUser(userId: userId, page: _page + 1, limit: limit);
-  }
 
 
 

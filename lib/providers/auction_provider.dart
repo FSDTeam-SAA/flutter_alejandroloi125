@@ -48,4 +48,64 @@ class AuctionProvider extends ChangeNotifier {
       rethrow;
     }
   }
+
+
+
+// ---- ADD FIELDS (below your _loading/_error) ----
+  final List<AuctionDto> _items = [];
+  int _page = 1, _pages = 1;
+
+  List<AuctionDto> get items => List.unmodifiable(_items);
+  int get page => _page;
+  int get pages => _pages;
+
+// ---- ADD: fetch list by user (paged) ----
+  Future<void> fetchByUser({
+    required String userId,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    _set(loading: true, error: null);
+    try {
+      final AuctionListResponse r =
+      await repo.getByUser(userId, page: page, limit: limit);
+      _applyPage(r, append: page > 1);
+      _set(loading: false);
+    } catch (e) {
+      _set(loading: false, error: e.toString());
+    }
+  }
+
+// ---- ADD: fetch more ----
+  Future<void> fetchMoreByUser({
+    required String userId,
+    int limit = 10,
+  }) async {
+    if (_loading || _page >= _pages) return;
+    await fetchByUser(userId: userId, page: _page + 1, limit: limit);
+  }
+
+// ---- ADD: apply a page ----
+  void _applyPage(AuctionListResponse r, {required bool append}) {
+    _page = r.page;
+    _pages = r.pages;
+
+    if (!append || _page == 1) {
+      _items
+        ..clear()
+        ..addAll(r.auctions);
+      return;
+    }
+
+    final map = {for (final it in _items) it.id: it};
+    for (final it in r.auctions) {
+      map[it.id] = it;
+    }
+    _items
+      ..clear()
+      ..addAll(map.values);
+  }
+
+
+
 }

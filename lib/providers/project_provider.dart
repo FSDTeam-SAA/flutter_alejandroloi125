@@ -114,11 +114,13 @@ class ProjectProvider extends ChangeNotifier {
     }
   }
 
+
+
+  // LIST (by user)
   Future<void> fetchMine(String userId, {int page = 1, int limit = 10}) async {
     _set(loading: true, error: null);
     try {
-      final ProjectPage r =
-      await repo.getAllByUser(userId, page: page, limit: limit);
+      final ProjectPage r = await repo.getAllByUser(userId, page: page, limit: limit);
       _page = r.page;
       _pages = r.pages;
       if (page == 1) _items.clear();
@@ -127,6 +129,11 @@ class ProjectProvider extends ChangeNotifier {
     } catch (e) {
       _set(loading: false, error: e.toString());
     }
+  }
+
+  Future<void> fetchMoreMine(String userId, {int limit = 10}) async {
+    if (_loading || _page >= _pages) return;
+    await fetchMine(userId, page: _page + 1, limit: limit);
   }
 
   Future<void> refresh() => fetch(page: 1);

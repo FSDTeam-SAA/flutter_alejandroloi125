@@ -80,8 +80,12 @@ class ProjectRepository {
     }
   }
 
-  Future<ProjectPage> getAllByUser(String userId,
-      {int page = 1, int limit = 10}) async {
+
+  Future<ProjectPage> getAllByUser(
+      String userId, {
+        int page = 1,
+        int limit = 10,
+      }) async {
     try {
       final r = await service.getAllByUser(userId, page: page, limit: limit);
       if (r['success'] != true) throw Exception(r['message'] ?? 'Fetch failed');
