@@ -13,8 +13,8 @@ class ApiClient {
     dio = Dio(BaseOptions(
       baseUrl: AppEnv.baseUrl,
       contentType: 'application/json',
-      connectTimeout: const Duration(seconds: 25),
-      receiveTimeout: const Duration(seconds: 25),
+      connectTimeout: const Duration(seconds: 60),
+      receiveTimeout: const Duration(seconds: 60),
     ));
     dio.interceptors.add(PrettyDioLogger(requestBody: true, responseBody: true));
     dio.interceptors.add(_AuthInterceptor(_store));

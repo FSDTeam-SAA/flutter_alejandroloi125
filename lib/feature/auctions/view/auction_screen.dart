@@ -254,8 +254,11 @@ class AuctionsRepository {
     });
 
     // Simple "search"
-    final filtered = query.isEmpty ? base : base.where((a) =>
-        a.title.toLowerCase().contains(query.toLowerCase())).toList();
+    final filtered = query.isEmpty
+        ? base
+        : base
+              .where((a) => a.title.toLowerCase().contains(query.toLowerCase()))
+              .toList();
 
     return filtered;
   }
@@ -280,13 +283,14 @@ class _AuctionsScreenState extends State<AuctionsScreen>
   @override
   void initState() {
     super.initState();
+
+    print("Initializing Auction Screen");
     _tab = TabController(length: 3, vsync: this);
     // Controller initialize
     final tokenStore = TokenStore();
     final apiClient = ApiClient(tokenStore);
     final repository = AuctionRepository(AuctionService(apiClient));
     controller = Get.put(AuctionController(repository));
-
 
     controller.loadAuctions();
   }
@@ -364,12 +368,12 @@ class _AuctionsScreenState extends State<AuctionsScreen>
                   query: _queryCtrl.text,
                 ),
                 UpcomingAuctionTile(),
-                EndedAuctionView(),/*
+                EndedAuctionView() /*
                 AuctionListView(
                   status: AuctionStatus.ended,
                   repository: _repo,
                   query: _queryCtrl.text,
-                ),*/
+                ),*/,
               ],
             ),
           ),
@@ -459,7 +463,6 @@ class _PillTabs extends StatelessWidget {
 
 class AuctionListView extends StatefulWidget {
   const AuctionListView({
-
     super.key,
     required this.status,
     required this.repository,
@@ -575,8 +578,8 @@ class _AuctionListViewState extends State<AuctionListView> {
                 if (i >= _items.length) return const _ListLoader();
                 final a = _items[i];
                 //return widget.status == AuctionStatus.upcoming
-                    //? UpcomingAuctionTile(a: a)
-//: EndedAuctionTile(a: a);
+                //? UpcomingAuctionTile(a: a)
+                //: EndedAuctionTile(a: a);
               },
             );
           }
@@ -598,7 +601,7 @@ class LiveAuctionCard extends StatelessWidget {
 
     return InkWell(
       onTap: () {
-      /*  Navigator.of(context).pushReplacement(
+        /*  Navigator.of(context).pushReplacement(
          // MaterialPageRoute(builder: (_) => const AuctionDetailScreen()),
         );*/
       },
@@ -714,7 +717,7 @@ class EndedAuctionTile extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return InkWell(
       onTap: () {
-      /*  Navigator.of(context).pushReplacement(
+        /*  Navigator.of(context).pushReplacement(
          // MaterialPageRoute(builder: (_) => const AuctionDetailScreen()),
         );*/
       },

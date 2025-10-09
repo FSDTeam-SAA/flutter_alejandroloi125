@@ -3,6 +3,12 @@ import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/network/api_service/api_client.dart';
+import '../../../core/network/api_service/token_store.dart';
+import '../controller/auction_controller.dart';
+import '../repo/auction_repo.dart';
+import '../services/auctions_services.dart';
+
 class AuctionDetailPage extends StatefulWidget {
   const AuctionDetailPage({super.key});
 
@@ -19,16 +25,49 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
   final List<String> auctionMessages = [];
   final TextEditingController messageCtrl = TextEditingController();
 
-
-
   final List<ChatMessage> messages = [
-    ChatMessage(name: 'Ronald Richards', avatar: 'https://i.pravatar.cc/100?img=14', timeAgo: '2m ago', text: r'$500'),
-    ChatMessage(name: 'Arlene McCoy', avatar: 'https://i.pravatar.cc/100?img=36', timeAgo: '2m ago', text: r'$600'),
-    ChatMessage(name: 'Darrell Stewart', avatar: 'https://i.pravatar.cc/100?img=22', timeAgo: '2m ago', text: "What's the band material?"),
-    ChatMessage(name: 'Kathryn Murphy', avatar: 'https://i.pravatar.cc/100?img=57', timeAgo: '2m ago', text: r'$1000'),
-    ChatMessage(name: 'Devon Lane', avatar: 'https://i.pravatar.cc/100?img=47', timeAgo: '2m ago', text: 'Beautiful !'),
-    ChatMessage(name: 'Robert Fox', avatar: 'https://i.pravatar.cc/100?img=33', timeAgo: '2m ago', text: "I'll go \$1,200"),
-    ChatMessage(name: 'Darlene Robertson', avatar: 'https://i.pravatar.cc/100?img=4', timeAgo: '2m ago', text: r'$1250'),
+    ChatMessage(
+      name: 'Ronald Richards',
+      avatar: 'https://i.pravatar.cc/100?img=14',
+      timeAgo: '2m ago',
+      text: r'$500',
+    ),
+    ChatMessage(
+      name: 'Arlene McCoy',
+      avatar: 'https://i.pravatar.cc/100?img=36',
+      timeAgo: '2m ago',
+      text: r'$600',
+    ),
+    ChatMessage(
+      name: 'Darrell Stewart',
+      avatar: 'https://i.pravatar.cc/100?img=22',
+      timeAgo: '2m ago',
+      text: "What's the band material?",
+    ),
+    ChatMessage(
+      name: 'Kathryn Murphy',
+      avatar: 'https://i.pravatar.cc/100?img=57',
+      timeAgo: '2m ago',
+      text: r'$1000',
+    ),
+    ChatMessage(
+      name: 'Devon Lane',
+      avatar: 'https://i.pravatar.cc/100?img=47',
+      timeAgo: '2m ago',
+      text: 'Beautiful !',
+    ),
+    ChatMessage(
+      name: 'Robert Fox',
+      avatar: 'https://i.pravatar.cc/100?img=33',
+      timeAgo: '2m ago',
+      text: "I'll go \$1,200",
+    ),
+    ChatMessage(
+      name: 'Darlene Robertson',
+      avatar: 'https://i.pravatar.cc/100?img=4',
+      timeAgo: '2m ago',
+      text: r'$1250',
+    ),
   ];
 
   late String auctionName;
@@ -36,12 +75,15 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
   late String auctionImage;
   late String auctionPrice;
   late String auctionEndDate;
-
-
+  late final AuctionController controller;
   @override
   void initState() {
     super.initState();
 
+    final tokenStore = TokenStore();
+    final apiClient = ApiClient(tokenStore);
+    final repository = AuctionRepository(AuctionService(apiClient));
+    controller = Get.put(AuctionController(repository));
     // Countdown ~3 minutes from now
     endTime = DateTime.now().add(const Duration(minutes: 3));
     timer$ = Stream.periodic(const Duration(seconds: 1), (_) {
@@ -56,8 +98,9 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
     final args = Get.arguments as Map<String, dynamic>;
     auctionName = args['name'] ?? 'Auction';
     auctionDescription = args['description'] ?? '';
-    auctionImage = args['image']??'';
-   /// auctionImage = args['image'] ?? '';
+    auctionImage = args['image'] ?? '';
+
+    /// auctionImage = args['image'] ?? '';
     auctionPrice = args['price'] ?? '';
     //auctionEndDate = args['endDate'] ?? '';
     print("pric:$auctionPrice");
@@ -84,12 +127,14 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
     final text = msgCtrl.text.trim();
     if (text.isEmpty) return;
     setState(() {
-      messages.add(ChatMessage(
-        name: 'You',
-        avatar: 'https://i.pravatar.cc/100?img=1',
-        timeAgo: 'now',
-        text: text,
-      ));
+      messages.add(
+        ChatMessage(
+          name: 'You',
+          avatar: 'https://i.pravatar.cc/100?img=1',
+          timeAgo: 'now',
+          text: text,
+        ),
+      );
     });
     msgCtrl.clear();
   }
@@ -119,22 +164,35 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
               child: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.network(auctionImage, fit: BoxFit.cover,),
+                  Image.network(auctionImage, fit: BoxFit.cover),
                   Container(
                     decoration: const BoxDecoration(
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [Color(0x66000000), Color(0x33000000), Color(0x99000000),],
+                        colors: [
+                          Color(0x66000000),
+                          Color(0x33000000),
+                          Color(0x99000000),
+                        ],
                       ),
                     ),
                   ),
                   Positioned(
-                    top: 8, left: 8, right: 8,
+                    top: 8,
+                    left: 8,
+                    right: 8,
                     child: Row(
                       children: [
-                        _circleBtn(icon: Icons.arrow_back_ios_new_rounded, onTap: () => Get.back(),),
-                        const Spacer(), _circleBtn(icon: Icons.favorite_border_rounded, onTap: () {}),
+                        _circleBtn(
+                          icon: Icons.arrow_back_ios_new_rounded,
+                          onTap: () => Get.back(),
+                        ),
+                        const Spacer(),
+                        _circleBtn(
+                          icon: Icons.favorite_border_rounded,
+                          onTap: () {},
+                        ),
                       ],
                     ),
                   ),
@@ -142,7 +200,10 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
                     alignment: Alignment.topCenter,
                     child: Container(
                       margin: const EdgeInsets.only(top: 56),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.redAccent,
                         borderRadius: BorderRadius.circular(24),
@@ -152,18 +213,28 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
                         children: [
                           Icon(Icons.circle, size: 10, color: Colors.white),
                           SizedBox(width: 6),
-                          Text('LIVE', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 12)),
+                          Text(
+                            'LIVE',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                            ),
+                          ),
                         ],
                       ),
                     ),
                   ),
                   Positioned(
-                    bottom: 10, left: 12, right: 12,
+                    bottom: 10,
+                    left: 12,
+                    right: 12,
                     child: Row(
                       children: [
                         CircleAvatar(
                           radius: 16,
-                          backgroundImage: NetworkImage('https://i.pravatar.cc/100?img=12'),
+                          backgroundImage: NetworkImage(
+                            'https://i.pravatar.cc/100?img=12',
+                          ),
                         ),
                         const SizedBox(width: 8),
                         Column(
@@ -174,10 +245,20 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
                               child: Text(
                                 auctionName,
                                 overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14,color: Colors.white),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 14,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
-                            const Text('@eleanorpena', style: TextStyle(fontSize: 12, color: Colors.white)),
+                            const Text(
+                              '@eleanorpena',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white,
+                              ),
+                            ),
                           ],
                         ),
                         const Spacer(),
@@ -195,11 +276,15 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
                 children: [
-                  Text(auctionDescription, style: TextStyle(color: Colors.white.withOpacity(0.75))),
+                  Text(
+                    auctionDescription,
+                    style: TextStyle(color: Colors.white.withOpacity(0.75)),
+                  ),
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      Column(crossAxisAlignment: CrossAxisAlignment.start,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Current Bid',
@@ -210,17 +295,25 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
                             ),
                           ),
 
-
-                          auctionPrice.isEmpty? SizedBox(
-                              width: 100,
-                              child: Text("\$ 0",style: TextStyle(color: Colors.white),overflow: TextOverflow.ellipsis,)):
-                             Text(auctionPrice,style: TextStyle(color: Colors.white),overflow: TextOverflow.ellipsis,),
-
+                          auctionPrice.isEmpty
+                              ? SizedBox(
+                                  width: 100,
+                                  child: Text(
+                                    "\$ 0",
+                                    style: TextStyle(color: Colors.white),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                )
+                              : Text(
+                                  auctionPrice,
+                                  style: TextStyle(color: Colors.white),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
                         ],
                       ),
 
-                     // const SizedBox(width: 10),
-                    Spacer(),
+                      // const SizedBox(width: 10),
+                      Spacer(),
                       SizedBox(
                         width: 100,
                         child: TextField(
@@ -231,18 +324,29 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
                             filled: true,
                             fillColor: Colors.black, // TextField background
                             hintText: '1250+',
-                            hintStyle: const TextStyle(color: Colors.grey), // default hint color
-                            contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                            hintStyle: const TextStyle(
+                              color: Colors.grey,
+                            ), // default hint color
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 12,
+                            ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Colors.white), // unfocused border
+                              borderSide: const BorderSide(
+                                color: Colors.white,
+                              ), // unfocused border
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
-                              borderSide: const BorderSide(color: Colors.white), // focused border
+                              borderSide: const BorderSide(
+                                color: Colors.white,
+                              ), // focused border
                             ),
                           ),
-                          style: const TextStyle(color: Colors.white), // input text color
+                          style: const TextStyle(
+                            color: Colors.white,
+                          ), // input text color
                         ),
                       ),
 
@@ -253,10 +357,21 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.bottomColor1,
                           foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 14,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: const Text('Bid', style: TextStyle(fontWeight: FontWeight.w800,color: Colors.white)),
+                        child: const Text(
+                          'Bid',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -266,21 +381,30 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     child: Row(
                       children: [
-                        Icon(Icons.chat_bubble_outline_outlined,color: Colors.white,),
-                        SizedBox(width: 8,),
-                        Text("Live Chat",style: TextStyle(fontWeight: FontWeight.w700,color: Colors.white,fontSize: 16),),
+                        Icon(
+                          Icons.chat_bubble_outline_outlined,
+                          color: Colors.white,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          "Live Chat",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            fontSize: 16,
+                          ),
+                        ),
                       ],
                     ),
                   ),
+
+                  /*
                   Container(
                     decoration: BoxDecoration(
                     color: const Color(0xFF0F0F10),
                     //  color: cs.surface,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                          color: Colors.black
-                          //color: Theme.of(context).dividerColor
-                      ),
+                      border: Border.all(color: Colors.black),
                     ),
                     child: ListView.separated(
                       padding: const EdgeInsets.all(12),
@@ -302,7 +426,7 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
 
                                   Row(
                                     children: [
-                                      Expanded(child: Text(m.name, style: const TextStyle(fontWeight: FontWeight.w700,color: Colors.white))),
+                                      Expanded(child: Text(auctionController.auctionChat.value!.last.message, style: const TextStyle(fontWeight: FontWeight.w700,color: Colors.white))),
                                       Text(m.timeAgo, style: const TextStyle(color: Colors.white, fontSize: 12)),
                                     ],
                                   ),
@@ -316,6 +440,82 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
                       },
                     ),
                   ),
+                  */
+                  Obx(() {
+                    final chatData = controller.auctionChat.value?.data ?? [];
+                    if (controller.loading.value) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (controller.error.isNotEmpty) {
+                      return Center(child: Text(controller.error.value));
+                    }
+                    if (chatData.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'No messages yet',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      );
+                    }
+
+                    return ListView.separated(
+                      padding: const EdgeInsets.all(12),
+                      physics: const NeverScrollableScrollPhysics(),
+                      shrinkWrap: true,
+                      itemCount: chatData.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (_, i) {
+                        final m = chatData[i];
+
+                        print("new massage==================${m.message}");
+
+                        print("==================${m.message}");
+                        return Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            CircleAvatar(
+                              radius: 16,
+                              backgroundImage: NetworkImage(
+                                'https://i.pravatar.cc/100?img=${i + 1}',
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          m.message,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            color: Colors.white,
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        m.createdAt.toString().substring(
+                                          11,
+                                          16,
+                                        ), // show HH:mm
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }),
+
                   const SizedBox(height: 90),
                 ],
               ),
@@ -329,12 +529,15 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
           decoration: BoxDecoration(
             color: const Color(0xFF0F0F10),
-              //color: Theme.of(context).scaffoldBackgroundColor,
-              border: Border(top: BorderSide(color: Theme.of(context).dividerColor))),
+            //color: Theme.of(context).scaffoldBackgroundColor,
+            border: Border(
+              top: BorderSide(color: Theme.of(context).dividerColor),
+            ),
+          ),
           child: Row(
             children: [
               Expanded(
-              child:   TextField(
+                child: TextField(
                   controller: messageCtrl,
                   textInputAction: TextInputAction.send,
                   onSubmitted: (_) => _sendMessage(),
@@ -345,20 +548,26 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
                     hintStyle: const TextStyle(color: Colors.grey),
                     filled: true,
                     fillColor: const Color(0xFF0F0F10),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
 
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.white, width: 1.2),
+                      borderSide: const BorderSide(
+                        color: Colors.white,
+                        width: 1.2,
+                      ),
                     ),
-
 
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Colors.white, width: 1.5),
+                      borderSide: const BorderSide(
+                        color: Colors.white,
+                        width: 1.5,
+                      ),
                     ),
-
 
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -366,14 +575,12 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
                     ),
                   ),
                 ),
-
               ),
               const SizedBox(width: 10),
               SizedBox(
                 height: 48,
                 width: 56,
-                child:
-                ElevatedButton(
+                child: ElevatedButton(
                   onPressed: () {
                     if (messageCtrl.text.isNotEmpty) {
                       setState(() {
@@ -386,12 +593,13 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.bottomColor1,
                     foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     padding: EdgeInsets.zero,
                   ),
                   child: const Icon(Icons.send_rounded, color: Colors.white),
                 ),
-
 
                 /*    ElevatedButton(
                   onPressed: _sendMessage,
@@ -417,8 +625,12 @@ Widget _circleBtn({required IconData icon, required VoidCallback onTap}) {
     borderRadius: BorderRadius.circular(24),
     child: Container(
       padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(color: const Color(0x40000000), shape: BoxShape.circle, border: Border.all(color: const Color(0x55FFFFFF))),
-      child: Icon(icon, size: 20,color: Colors.white,),
+      decoration: BoxDecoration(
+        color: const Color(0x40000000),
+        shape: BoxShape.circle,
+        border: Border.all(color: const Color(0x55FFFFFF)),
+      ),
+      child: Icon(icon, size: 20, color: Colors.white),
     ),
   );
 }
@@ -426,13 +638,23 @@ Widget _circleBtn({required IconData icon, required VoidCallback onTap}) {
 Widget _metricChip(IconData icon, String text) {
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-    decoration: BoxDecoration(color: const Color(0x33000000), borderRadius: BorderRadius.circular(10), border: Border.all(color: const Color(0x55FFFFFF))),
+    decoration: BoxDecoration(
+      color: const Color(0x33000000),
+      borderRadius: BorderRadius.circular(10),
+      border: Border.all(color: const Color(0x55FFFFFF)),
+    ),
     child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 16,color: Colors.white,),
+        Icon(icon, size: 16, color: Colors.white),
         const SizedBox(width: 6),
-        Text(text, style: const TextStyle(fontWeight: FontWeight.w700,color: Colors.white)),
+        Text(
+          text,
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+          ),
+        ),
       ],
     ),
   );

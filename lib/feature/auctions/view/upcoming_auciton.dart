@@ -20,7 +20,29 @@ class UpcomingAuctionTile extends StatelessWidget {
         return Center(child: Text(controller.error.value));
       } else if (controller.upcomingAuctions.isEmpty) {
         return const Center(child: Text('No upcoming auctions'));
-      } else {
+
+      }   else if (controller.error.value.isNotEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                controller.error.value,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.red, fontSize: 16),
+              ),
+              const SizedBox(height: 12),
+              ElevatedButton(
+                onPressed: () {
+                  //controller.fetchUpcomingAuctions(); // 🔁 আবার API কল
+                },
+                child: const Text("Try Again"),
+              ),
+            ],
+          ),
+        );
+      }
+      else {
         return ListView.builder(
           itemCount: controller.upcomingAuctions.length,
           itemBuilder: (_, index) {
