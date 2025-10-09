@@ -15,6 +15,7 @@ import '../../auth/view/login_screen_view.dart';
 import '../../auth/view/personal_info_add_view.dart';
 
 class ProfileScreenView extends StatelessWidget {
+
   const ProfileScreenView({
     super.key,
     this.name,
@@ -126,7 +127,7 @@ class ProfileScreenView extends StatelessWidget {
                 children: [
                   topCard(imagePath: Images.currency, value: "$investCount",  type: "Investments"),
                   topCard(imagePath: Images.layout,   value: "$projectCount", type: "Project"),
-                  topCard(imagePath: Images.key,      value: "$auctionCount", type: "Action"),
+                  topCard(imagePath: Images.key,      value: "$auctionCount", type: "Auctions"),
                 ],
               ),
             ),
@@ -134,7 +135,7 @@ class ProfileScreenView extends StatelessWidget {
             // Actions
             profileBottom(
               imagePath: Images.credit,
-              name: "Update Personal Information",
+              name: "Personal Information",
               voidCallBack: () async {
                 final changed = await Get.to<bool>(() => const PersonalInfoAddView(),
                     transition: Transition.rightToLeft,
@@ -148,7 +149,7 @@ class ProfileScreenView extends StatelessWidget {
             ),
             profileBottom(
               imagePath: Images.terms,
-              name: "Upload Photos",
+              name: "Update Photos",
               voidCallBack: () {
                 Get.to(() => const UploadProfileView(),
                     transition: Transition.rightToLeft,
@@ -208,7 +209,7 @@ class ProfileScreenView extends StatelessWidget {
             ),
             profileBottom(
               imagePath: Images.terms,
-              name: "Terms & Conditons",
+              name: "Terms & Conditions",
               voidCallBack: () {
                 Get.to(() => const TermsConditionScreenView(),
                     transition: Transition.rightToLeft,

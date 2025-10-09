@@ -32,7 +32,7 @@ class UpcomingAuctionTile extends StatelessWidget {
 
                   // Navigate and pass the auction object
 
-                  Get.to(() => AuctionDetailPage(),
+                  Get.to(() => AuctionDetailPage(auctionId: '',),
                     arguments: {
                     "name": auction.name,
                       "description": auction.description,

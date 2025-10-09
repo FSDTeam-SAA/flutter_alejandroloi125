@@ -79,7 +79,7 @@ class _LoginScreenViewState extends State<LoginScreenView> {
                 controller: emailController,
                 hintText: "Email",
                 prefixIcon: Icons.email_outlined,
-                // validator: ap.validateEmail,
+                validator: ap.validateEmail,
                 keyboardType: TextInputType.emailAddress,
               ),
               const SizedBox(height: 10),
@@ -87,7 +87,7 @@ class _LoginScreenViewState extends State<LoginScreenView> {
                 controller: passwordController,
                 hintText: "Password",
                 prefixIcon: Icons.lock_outline,
-                // validator: ap.validatePassword,
+                validator: ap.validatePassword,
               ),
 
               Padding(

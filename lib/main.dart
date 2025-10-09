@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
+import 'core/env/env.dart';
 import 'core/network/api_service/api_client.dart';
 import 'core/network/api_service/token_store.dart';
 
@@ -24,9 +25,14 @@ import 'feature/profile/repository/profile_repository.dart';
 import 'feature/profile/service/profile_service.dart';
 
 import 'feature/splash/view/splash_view.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 
-void main() {
+void main() async{
   WidgetsFlutterBinding.ensureInitialized();
+
+  Stripe.publishableKey = AppEnv.stripePublishableKey;   // pk_live_xxx / pk_test_xxx
+  Stripe.merchantIdentifier = 'merchant.com.your.bundle';
+  await Stripe.instance.applySettings();
 
 
 
@@ -95,6 +101,8 @@ void main() {
         ChangeNotifierProvider<AuctionProvider>(
           create: (ctx) => AuctionProvider(ctx.read<AuctionRepository>()),
         ),
+
+        
 
 
 

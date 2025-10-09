@@ -9,16 +9,23 @@ android {
     namespace = "com.example.alejandroloi"
 
     // keep compile/ndk at the android level
-    compileSdk = flutter.compileSdkVersion
+//    compileSdk = flutter.compileSdkVersion
+    compileSdk = flutter.compileSdkVersion.toInt()
     ndkVersion = flutter.ndkVersion
 
-    defaultConfig {
-        applicationId = "com.example.alejandroloi"
 
-        // Kotlin DSL properties:
-        minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
-        versionCode = flutter.versionCode
+    defaultConfig {
+//        applicationId = "com.example.alejandroloi"
+//
+//        // Kotlin DSL properties:
+//        minSdkVersion flutter.minSdkVersion
+//        targetSdk = flutter.targetSdkVersion
+//        versionCode = flutter.versionCode
+//        versionName = flutter.versionName
+        applicationId = "com.example.alejandroloi"
+        minSdk = flutter.minSdkVersion.toInt()
+        targetSdk = flutter.targetSdkVersion.toInt()
+        versionCode = flutter.versionCode.toInt()
         versionName = flutter.versionName
     }
 

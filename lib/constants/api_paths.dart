@@ -1,4 +1,7 @@
 class ApiPaths {
+
+
+
   static const String register      = '/auth/register';
   static const String login         = '/auth/login';
   static const String verifyEmail   = '/auth/verify'; // POST {email, code}
@@ -43,6 +46,12 @@ class ApiPaths {
   static String updateProject(String id)  => '/project/update-project/$id';
   static String deleteProject(String id)  => '/project/$id';
 
+  /// NEW: submit proposal
+  static String askProposal(String projectId) =>
+      '/project/ask-proposal/$projectId';
+
+
+
   // ===== Auction =====
   static const String createAuction = '/auction/create-auction';
   static const String allAuction    = '/auction/all-auction';
@@ -58,6 +67,12 @@ class ApiPaths {
   static String deleteAuction(String id)        => '/auction/$id';
 
   static String bidAuction(String id) => '/auction/bid/$id'; // NEW
+
+
+  // ===== Payment =====
+  static const String createPayment  = '/payment/create-payment';
+  static const String confirmPayment = '/payment/confirm-payment';
+
 
 
 

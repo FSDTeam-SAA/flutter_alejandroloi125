@@ -36,23 +36,7 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
     super.dispose();
   }
 
-  // Future<void> _submit() async {
-  //   final okForm = _formKey.currentState?.validate() ?? false;
-  //   if (!okForm) return;
-  //
-  //   if (!mounted) return;
-  //
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //     const SnackBar(content: Text('Password updated successfully')),
-  //   );
-  //
-  //   Get.offAll(
-  //         () => LoginScreenView(),
-  //     transition: Transition.rightToLeft,
-  //     duration: const Duration(milliseconds: 350),
-  //     curve: Curves.easeInOut,
-  //   );
-  // }
+
 
   Future<void> _submit() async {
     // onPressed of Continue

@@ -2,10 +2,13 @@
 import 'package:dio/dio.dart';
 import 'package:alejandroloi/constants/api_paths.dart';
 import 'package:alejandroloi/core/network/api_service/api_client.dart';
+import 'package:dio/dio.dart';
+import '../../core/network/api_service/api_client.dart';
 
 class ProjectService {
   final Dio _dio;
   ProjectService(ApiClient client) : _dio = client.dio;
+
 
   Future<Map<String, dynamic>> create({
     required String title,
@@ -44,6 +47,28 @@ class ProjectService {
     );
     return Map<String, dynamic>.from(res.data ?? const {});
   }
+
+// —— SUBMIT PROPOSAL (FIXED KEYS & TYPES) ——
+  Future<Map<String, dynamic>> submitProposal({
+    required String projectId,
+    required String coverLetter,
+    required int budget,
+    required int deliveryDays,
+  }) async {
+    final payload = {
+      'cover_letter'  : coverLetter,
+      'budget'        : budget.toString(),          // backend expects string
+      'delivery_timer': deliveryDays.toString(),    // exact key + string
+    };
+
+    final res = await _dio.patch(ApiPaths.askProposal(projectId), data: payload);
+    return (res.data is Map)
+        ? Map<String, dynamic>.from(res.data as Map)
+        : <String, dynamic>{};
+  }
+
+
+
 
   Future<Map<String, dynamic>> getAllByUser(
       String userId, {

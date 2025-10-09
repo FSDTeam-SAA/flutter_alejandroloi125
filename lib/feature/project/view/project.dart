@@ -1,131 +1,177 @@
 // lib/feature/project/view/project_screen.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
+
 import '../../../core/network/api_service/api_client.dart';
 import '../../../core/network/api_service/token_store.dart';
-import '../controller/project_controller.dart';
 
-import '../model/project_model.dart';
-import '../repo/project_repo.dart';
-import '../services/project_services.dart';
+import '../../../providers/project_provider.dart';
+import '../../../repository/project_repository.dart';
+import '../../../services/project_service.dart';
+import '../../models/project.dart';
 import 'project_detail.dart';
 import '../../app_ground.dart';
 
-class ProjectScreen extends StatefulWidget {
+class ProjectScreen extends StatelessWidget {
   const ProjectScreen({super.key});
 
   @override
-  State<ProjectScreen> createState() => _ProjectScreenState();
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider<ProjectProvider>(
+      create: (_) {
+        final tokenStore = TokenStore();
+        final apiClient  = ApiClient(tokenStore);
+        final service    = ProjectService(apiClient);
+        final repo       = ProjectRepository(service);
+        return ProjectProvider(repo); // <-- no fetch here
+      },
+      child: const _ProjectBody(),
+    );
+  }
 }
 
-class _ProjectScreenState extends State<ProjectScreen> {
+class _ProjectBody extends StatefulWidget {
+  const _ProjectBody();
+
+  @override
+  State<_ProjectBody> createState() => _ProjectBodyState();
+}
+
+class _ProjectBodyState extends State<_ProjectBody> {
   final _searchCtl = TextEditingController();
-  late final ProjectController controller;
+  final _scroll = ScrollController();
+  bool _paging = false;
 
   @override
   void initState() {
     super.initState();
 
-    // ✅ Setup dependencies
-    final tokenStore = TokenStore();
-    final apiClient = ApiClient(tokenStore);
-    final service = ProjectService(apiClient);
-    final repo = ProjectRepository(service);
-    controller = Get.put(ProjectController(repo));
+    // First fetch AFTER first frame
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      context.read<ProjectProvider>().fetch(page: 1, limit: 10);
+    });
 
-    // ✅ Load initial projects
-    controller.loadProjects();
+    // Infinite scroll
+    _scroll.addListener(() {
+      final prov = context.read<ProjectProvider>();
+      if (_paging || prov.loading) return;
+
+      final nearBottom =
+          _scroll.position.pixels >= _scroll.position.maxScrollExtent - 120;
+
+      if (nearBottom && prov.page < prov.pages) {
+        _paging = true;
+        prov.fetch(page: prov.page + 1, limit: 10).whenComplete(() {
+          if (mounted) _paging = false;
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
+    _scroll.dispose();
     _searchCtl.dispose();
     super.dispose();
   }
 
+  Future<void> _refresh() =>
+      context.read<ProjectProvider>().fetch(page: 1, limit: 10);
+
   @override
   Widget build(BuildContext context) {
+    final prov = context.watch<ProjectProvider>();
+
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F10),
       appBar: AppBar(
         backgroundColor: const Color(0xFF0F0F10),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,color: Colors.white,),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
           onPressed: () => Get.offAll(
                 () => const AppGround(),
             transition: Transition.rightToLeft,
             duration: const Duration(milliseconds: 350),
           ),
         ),
-        title: const Text('Projects',style: TextStyle(color: Colors.white),),
+        title: const Text('Projects', style: TextStyle(color: Colors.white)),
       ),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: Column(
             children: [
-              // 🔹 Search bar
               _SearchBar(
                 controller: _searchCtl,
                 onChanged: (_) => setState(() {}),
               ),
               const SizedBox(height: 12),
-
-              // 🔹 Reactive project list
               Expanded(
-                child: Obx(() {
-                  if (controller.loading.value) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
+                child: RefreshIndicator(
+                  onRefresh: _refresh,
+                  child: Builder(
+                    builder: (_) {
+                      if (prov.loading && prov.items.isEmpty) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if ((prov.error ?? '').isNotEmpty && prov.items.isEmpty) {
+                        return Center(
+                          child: Text(prov.error!,
+                              style: const TextStyle(color: Colors.redAccent)),
+                        );
+                      }
 
-                  if (controller.error.isNotEmpty) {
-                    return Center(
-                      child: Text(
-                        controller.error.value,
-                        style: const TextStyle(color: Colors.redAccent),
-                      ),
-                    );
-                  }
+                      final q = _searchCtl.text.trim().toLowerCase();
+                      final filtered = prov.items.where((p) {
+                        if (q.isEmpty) return true;
+                        return p.title.toLowerCase().contains(q) ||
+                            p.location.toLowerCase().contains(q) ||
+                            p.category.toLowerCase().contains(q);
+                      }).toList();
 
-                  final q = _searchCtl.text.trim().toLowerCase();
-                  final filtered = controller.projects.where((p) {
-                    if (q.isEmpty) return true;
-                    return p.title.toLowerCase().contains(q) ||
-                        p.location.toLowerCase().contains(q) ||
-                        p.category.toLowerCase().contains(q);
-                  }).toList();
+                      if (filtered.isEmpty) return const _EmptyState();
 
-                  if (filtered.isEmpty) return const _EmptyState();
+                      return ListView.separated(
+                        controller: _scroll,
+                        itemCount:
+                        filtered.length + (prov.page < prov.pages ? 1 : 0),
+                        separatorBuilder: (_, __) =>
+                        const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          if (index == filtered.length) {
+                            // paging spinner
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 12),
+                              child: Center(
+                                child: SizedBox(
+                                  height: 22,
+                                  width: 22,
+                                  child:
+                                  CircularProgressIndicator(strokeWidth: 2),
+                                ),
+                              ),
+                            );
+                          }
 
-                  return ListView.builder(
-                    itemCount: filtered.length,
-                    itemBuilder: (context, index) {
-                      final proj = filtered[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: ProjectCard(
-                          project: proj,
-                          onViewDetails: () {
-                            if ((proj.id ?? '').isNotEmpty) {
+                          final proj = filtered[index];
+                          return ProjectCard(
+                            project: proj,
+                            onViewDetails: () {
                               Get.to(
-                                    () => ProjectDetailScreen(projectId: proj.id!),
+                                    () => ProjectDetailScreen(projectId: proj.id),
                                 transition: Transition.rightToLeft,
                                 duration: const Duration(milliseconds: 300),
                               );
-                            } else {
-                              Get.snackbar(
-                                'Missing ID',
-                                'Cannot open details for this project',
-                                snackPosition: SnackPosition.BOTTOM,
-                              );
-                            }
-                          },
-                        ),
+                            },
+                          );
+                        },
                       );
                     },
-                  );
-                }),
+                  ),
+                ),
               ),
             ],
           ),
@@ -135,7 +181,8 @@ class _ProjectScreenState extends State<ProjectScreen> {
   }
 }
 
-// 🔹 Search bar widget
+// ---------------- UI Widgets ----------------
+
 class _SearchBar extends StatelessWidget {
   const _SearchBar({required this.controller, required this.onChanged});
   final TextEditingController controller;
@@ -176,7 +223,8 @@ class _SearchBar extends StatelessWidget {
                       controller.clear();
                       onChanged('');
                     },
-                    child: const Icon(Icons.cancel_outlined, size: 18, color: Colors.white70),
+                    child: const Icon(Icons.cancel_outlined,
+                        size: 18, color: Colors.white70),
                   ),
               ],
             ),
@@ -199,9 +247,9 @@ class _SearchBar extends StatelessWidget {
   }
 }
 
-// 🔹 Project card widget
 class ProjectCard extends StatelessWidget {
-  const ProjectCard({super.key, required this.project, required this.onViewDetails});
+  const ProjectCard(
+      {super.key, required this.project, required this.onViewDetails});
 
   final Project project;
   final VoidCallback onViewDetails;
@@ -209,6 +257,11 @@ class ProjectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const orange = Color(0xFFFF8C3B);
+
+    final budgetRange =
+        '\$${_fmt(project.minBudget)} - \$${_fmt(project.maxBudget)}';
+    final daysText = '${project.deadlineDays} Days';
+    final proposalsText = '${project.skills.length} Proposals'; // placeholder
 
     return Container(
       decoration: BoxDecoration(
@@ -220,37 +273,53 @@ class ProjectCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(project.category, style: const TextStyle(color: orange, fontSize: 12.5, fontWeight: FontWeight.w600)),
+          Text(project.category,
+              style: const TextStyle(
+                  color: orange, fontSize: 12.5, fontWeight: FontWeight.w600)),
           const SizedBox(height: 6),
-          Text(project.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 16.5, fontWeight: FontWeight.w700, color: Colors.white)),
+          Text(
+            project.title,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+                fontSize: 16.5, fontWeight: FontWeight.w700, color: Colors.white),
+          ),
           const SizedBox(height: 6),
-          Text(project.description, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white70, fontSize: 13.5)),
+          Text(
+            project.description,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: Colors.white70, fontSize: 13.5),
+          ),
           const SizedBox(height: 12),
           _TwoCols(
             leftIcon: Icons.attach_money_rounded,
-            leftText: project.budget,
+            leftText: budgetRange,
             rightIcon: Icons.timelapse_rounded,
-            rightText: '${project.days} Days',
+            rightText: daysText,
           ),
           const SizedBox(height: 8),
           _TwoCols(
             leftIcon: Icons.place_rounded,
             leftText: project.location,
             rightIcon: Icons.group_rounded,
-            rightText: '${project.proposals} Proposals',
+            rightText: proposalsText,
           ),
           const SizedBox(height: 12),
           const Divider(color: Color(0xFF2B2C31), height: 1),
           const SizedBox(height: 10),
           Row(
-            children: [ _AvatarStack(urls: []),
+            children: [
+              const _AvatarStack(urls: []),
               const Spacer(),
               InkWell(
                 borderRadius: BorderRadius.circular(8),
                 onTap: onViewDetails,
                 child: const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-                  child: Text('View Details', style: TextStyle(color: orange, fontWeight: FontWeight.w700)),
+                  child: Text('View Details',
+                      style:
+                      TextStyle(color: orange, fontWeight: FontWeight.w700)),
                 ),
               ),
             ],
@@ -261,12 +330,13 @@ class ProjectCard extends StatelessWidget {
   }
 }
 
-
-
-
-// 🔹 Two-column helper
 class _TwoCols extends StatelessWidget {
-  const _TwoCols({required this.leftIcon, required this.leftText, required this.rightIcon, required this.rightText});
+  const _TwoCols({
+    required this.leftIcon,
+    required this.leftText,
+    required this.rightIcon,
+    required this.rightText,
+  });
 
   final IconData leftIcon;
   final String leftText;
@@ -278,15 +348,30 @@ class _TwoCols extends StatelessWidget {
     const labelStyle = TextStyle(color: Colors.white70, fontSize: 13.5);
     return Row(
       children: [
-        Expanded(child: Row(children: [Icon(leftIcon, size: 18, color: Colors.white70), const SizedBox(width: 6), Text(leftText, style: labelStyle)])),
+        Expanded(
+          child: Row(
+            children: [
+              Icon(leftIcon, size: 18, color: Colors.white70),
+              const SizedBox(width: 6),
+              Flexible(child: Text(leftText, style: labelStyle)),
+            ],
+          ),
+        ),
         const SizedBox(width: 12),
-        Expanded(child: Row(children: [Icon(rightIcon, size: 18, color: Colors.white70), const SizedBox(width: 6), Text(rightText, style: labelStyle)])),
+        Expanded(
+          child: Row(
+            children: [
+              Icon(rightIcon, size: 18, color: Colors.white70),
+              const SizedBox(width: 6),
+              Flexible(child: Text(rightText, style: labelStyle)),
+            ],
+          ),
+        ),
       ],
     );
   }
 }
 
-// 🔹 Empty state
 class _EmptyState extends StatelessWidget {
   const _EmptyState({super.key});
 
@@ -295,14 +380,15 @@ class _EmptyState extends StatelessWidget {
     return Column(
       children: [
         const SizedBox(height: 24),
-        Icon(Icons.topic_outlined, size: 32, color: Colors.white.withOpacity(.65)),
+        Icon(Icons.topic_outlined,
+            size: 32, color: Colors.white.withOpacity(.65)),
         const SizedBox(height: 8),
-        Text('No projects found', style: TextStyle(color: Colors.white.withOpacity(.8))),
+        Text('No projects found',
+            style: TextStyle(color: Colors.white.withOpacity(.8))),
       ],
     );
   }
 }
-
 
 class _AvatarStack extends StatelessWidget {
   const _AvatarStack({required this.urls});
@@ -316,7 +402,9 @@ class _AvatarStack extends StatelessWidget {
 
     return SizedBox(
       height: size,
-      width: size + (urls.isEmpty ? 0 : (urls.length.clamp(0, 3) - 1) * overlap) + (extras > 0 ? overlap + 10 : 0),
+      width: size +
+          (urls.isEmpty ? 0 : (urls.length.clamp(0, 3) - 1) * overlap) +
+          (extras > 0 ? overlap + 10 : 0),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -358,4 +446,16 @@ class _AvatarStack extends StatelessWidget {
       ),
     );
   }
+}
+
+// --- number formatting helper ---
+String _fmt(int n) {
+  final s = n.toString();
+  final buf = StringBuffer();
+  for (int i = 0; i < s.length; i++) {
+    final left = s.length - i - 1;
+    buf.write(s[i]);
+    if (left % 3 == 0 && left != 0) buf.write(',');
+  }
+  return buf.toString();
 }

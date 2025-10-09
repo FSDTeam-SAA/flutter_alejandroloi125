@@ -1,60 +1,136 @@
-// lib/investment_detail_screen.dart
+// lib/feature/investment/view/investment_detail_screen.dart
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 
-import '../invest.dart'; // for InvestScreen
+import 'package:alejandroloi/providers/investment_provider.dart';
+import '../../models/investment.dart';
+import '../invest.dart';
 
-// Theme colors
-const _bg = Color(0xFF0F0F12);
-const _card = Color(0xFF1B1E23);
-const _inner = Color(0xFF23262B);
+// ===== Theme (match the mock) =====
+const _bg     = Color(0xFF0F0F12);
+const _card   = Color(0xFF1B1E23);
+const _inner  = Color(0xFF23262B);
 const _accent = Color(0xFFFF7A1A);
 
-class InvestmentDetailScreen extends StatelessWidget {
-  /// Pass the full investment data (Map/DTO/model). No network/API calls here.
-  final dynamic investment;
-  const InvestmentDetailScreen({super.key, required this.investment});
+BoxDecoration _cardBox({Color color = _card, double radius = 12}) => BoxDecoration(
+  color: color,
+  borderRadius: BorderRadius.circular(radius),
+  border: Border.all(color: Colors.white.withOpacity(.06), width: 1),
+  boxShadow: [
+    BoxShadow(
+      color: Colors.black.withOpacity(.13),
+      blurRadius: 18,
+      offset: const Offset(0, 10),
+    ),
+  ],
+);
+
+class InvestmentDetailScreen extends StatefulWidget {
+  final String investmentId;
+  final Investment? prefetched;
+  const InvestmentDetailScreen({
+    super.key,
+    required this.investmentId,
+    this.prefetched,
+  });
+
+  @override
+  State<InvestmentDetailScreen> createState() => _InvestmentDetailScreenState();
+}
+
+class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
+  Investment? _inv;
+  String? _error;
+  bool _loading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    if (widget.prefetched != null) {
+      setState(() { _inv = widget.prefetched; _loading = false; });
+      return;
+    }
+    setState(() { _loading = true; _error = null; });
+    try {
+      final inv = await context.read<InvestmentProvider>().getById(widget.investmentId);
+      if (!mounted) return;
+      setState(() { _inv = inv; _loading = false; });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() { _error = e.toString(); _loading = false; });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final inv = investment;
+    if (_loading) {
+      return const Scaffold(
+        backgroundColor: _bg,
+        body: Center(child: CircularProgressIndicator(color: _accent)),
+      );
+    }
+    if (_error != null) {
+      return Scaffold(
+        backgroundColor: _bg,
+        body: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              _TopBar(),
+              const SizedBox(height: 16),
+              Container(
+                decoration: _cardBox(),
+                padding: const EdgeInsets.all(16),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  const Text('Couldn’t load details', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)),
+                  const SizedBox(height: 8),
+                  Text(_error!, style: TextStyle(color: Colors.white.withOpacity(.75))),
+                  const SizedBox(height: 10),
+                  Align(alignment: Alignment.centerRight, child: TextButton(onPressed: _load, child: const Text('Retry'))),
+                ]),
+              ),
+            ]),
+          ),
+        ),
+      );
+    }
 
-    // Safe access
-    final title = _name(inv);
-    final category = _category(inv);
-    final desc = _description(inv);
-    final loc = _location(inv);
-    final imagePathOrUrl = _imageUrl(inv);
+    final inv       = _inv!;
+    final title     = inv.name.isNotEmpty ? inv.name : 'Urban Farming Initiative';
+    final category  = inv.category.isNotEmpty ? inv.category.join(', ') : 'Agriculture';
+    final rawDesc   = inv.description.isNotEmpty
+        ? inv.description
+        : 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum metus eu egestas pharetra. Fusce bibendum odio et venenatis efficitur.';
+    final desc      = _scrubQuotes(rawDesc);
+    final loc       = inv.location;
+    final imageUrl  = inv.primaryImageUrl ??
+        'https://images.unsplash.com/photo-1524404794195-0f93a1c1a5a5?q=80&w=1200&auto=format&fit=crop';
+    final goal      = inv.fundingGoal ?? 25000; // mock shows $25,000
+    final progress  = inv.progressPct.clamp(0, 100);
+    final daysLeft  = _daysLeft(inv.fundingDuration) == 0 ? 10 : _daysLeft(inv.fundingDuration);
+    final backers   = 28; // static for mock
 
-    final goal = _goal(inv);
-    final progressPct = _progressPct(inv);
-    final daysLeft = _daysLeft(inv);
-    final backers = _backers(inv) ?? 0;
-
-    // Gallery (with fallbacks)
-    final gallery = _galleryImages(inv);
-    final g1 = gallery.isNotEmpty
-        ? gallery[0]
+    final gallery   = inv.images.map((e) => e.url).where((u) => u.isNotEmpty).toList();
+    final g1 = gallery.isNotEmpty ? gallery[0]
         : 'https://images.unsplash.com/photo-1524404794195-0f93a1c1a5a5?q=80&w=1200&auto=format&fit=crop';
-    final g2 = gallery.length > 1
-        ? gallery[1]
+    final g2 = gallery.length > 1 ? gallery[1]
         : 'https://images.unsplash.com/photo-1509395176047-4a66953fd231?q=80&w=1200&auto=format&fit=crop';
 
-    // Terms → bullets
-    final termsText = _terms(inv);
-    final bullets = termsText.isNotEmpty
-        ? termsText
-        .split(RegExp(r'\r?\n'))
-        .where((s) => s.trim().isNotEmpty)
-        .toList()
+    final bullets = inv.investmentTerms.trim().isNotEmpty
+        ? inv.investmentTerms.split(RegExp(r'\r?\n')).where((s) => s.trim().isNotEmpty).toList()
         : const [
       'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
       'Quisque tempus tortor nec pharetra viverra.',
-      'Fusce id metus et amet leo convallis convallis.',
+      'Fusce id metus at amet leo convallis convallis.',
       'Duis mollis dolor sit amet tortor egestas, vel consectetur dui finibus.',
-      'Duis lacus quam vel est sodales, sit amet tristique mauris fringilla.',
-      'Sed in leo velit ultricies dignissim.',
+      'Duis iaculis quam vel est sodales, sit amet tristique mauris fringilla.',
+      'Sed in mi eu velit ultrices dignissim.',
     ];
 
     return Scaffold(
@@ -64,178 +140,139 @@ class InvestmentDetailScreen extends StatelessWidget {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
           children: [
-            // ---------- HERO ----------
-            _HeroImage(image: imagePathOrUrl),
+            _TopBar(),
             const SizedBox(height: 10),
 
-            // ---------- CONTENT CARD ----------
+            // ===== HERO =====
+            _HeroCard(image: imageUrl),
+            const SizedBox(height: 14),
+
+            // ===== CONTENT CARD =====
             Container(
-              decoration: BoxDecoration(
-                color: _card,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              padding: const EdgeInsets.fromLTRB(12, 14, 12, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(category,
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(.65),
-                        fontSize: 12,
-                      )),
-                  const SizedBox(height: 4),
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
-                    ),
+              decoration: _cardBox(),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                // Category (uppercase like the mock)
+                Text(
+                  category.toUpperCase(),
+                  style: const TextStyle(
+                    color: _accent,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: .25,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    desc.isNotEmpty
-                        ? desc
-                        : 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc tincidunt metus ex egestas pharetra. Fusce bibendum odio et venenatis efficitur.',
-                    style: TextStyle(
-                      height: 1.35,
-                      color: Colors.white.withOpacity(.75),
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
+                ),
+                const SizedBox(height: 4),
 
-                  if (loc.isNotEmpty) ...[
-                    _Pill(icon: CupertinoIcons.location_solid, label: loc),
-                    const SizedBox(height: 12),
-                  ],
+                // Title (explicit white so it never looks dim)
+                Text(
+                  title,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
+                ),
+                const SizedBox(height: 8),
 
-                  // Progress block
-                  Container(
-                    decoration: BoxDecoration(
-                      color: _inner,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      children: [
-                        _ProgressBar(
-                          value: (progressPct / 100).clamp(0, 1),
-                          color: _accent,
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            _Metric(
-                              top: '$progressPct%',
-                              bottom: 'of \$${_fmt(goal)}',
-                            ),
-                            _DotDivider(),
-                            _Metric(
-                              top: '$backers',
-                              bottom: 'Backers',
-                            ),
-                            _DotDivider(),
-                            _Metric(
-                              top: '$daysLeft',
-                              bottom: 'Days left',
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
+                // Short description (limited lines on card)
+                Text(
+                  desc,
+                  style: TextStyle(height: 1.38, color: Colors.white.withOpacity(.78), fontSize: 13),
+                  maxLines: 4,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 14),
 
-                  const SizedBox(height: 12),
-
-                  // Invest button
-                  SizedBox(
-                    width: double.infinity,
-                    child: TextButton(
-                      onPressed: () {
-                        Get.to(
-                              () => InvestScreen(),
-                          transition: Transition.rightToLeft,
-                          duration: const Duration(milliseconds: 350),
-                          curve: Curves.easeInOut,
-                        );
-                      },
-                      style: TextButton.styleFrom(
-                        backgroundColor: _accent,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text(
-                        'Invest Now',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 15,
-                        ),
-                      ),
-                    ),
-                  ),
+                // Location pill
+                if (loc.isNotEmpty) ...[
+                  _LocationPill(label: loc),
+                  const SizedBox(height: 16),
                 ],
-              ),
+
+                // Progress block
+                Container(
+                  decoration: _cardBox(color: _inner, radius: 10),
+                  padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
+                  child: Column(children: [
+                    _ProgressBar(value: (progress / 100), color: _accent),
+                    const SizedBox(height: 12),
+                    Row(children: [
+                      _Metric(top: '$progress%', bottom: 'of \$${_fmt(goal)}'),
+                      _DividerV(),
+                      _Metric(top: '$backers', bottom: 'Backers'),
+                      _DividerV(),
+                      _Metric(top: '$daysLeft', bottom: 'Days left'),
+                    ]),
+                  ]),
+                ),
+
+                const SizedBox(height: 16),
+
+                // CTA
+                SizedBox(
+                  height: 46,
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () {
+                      Get.to(
+                            () => InvestScreen(
+                          investmentId: widget.investmentId,
+                          investmentTitle: title,
+                        ),
+                        transition: Transition.rightToLeft,
+                        duration: const Duration(milliseconds: 350),
+                        curve: Curves.easeInOut,
+                      );
+                    },
+                    style: TextButton.styleFrom(
+                      backgroundColor: _accent,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                    ),
+                    child: const Text('Invest Now'),
+                  ),
+                ),
+              ]),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: 14),
 
-            // ---------- ABOUT ----------
+            // ===== About =====
             _SectionCard(
               title: 'About This Project',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    desc.isNotEmpty
-                        ? desc
-                        : 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum quis dui eget velit auctor mollis.',
-                    style: TextStyle(
-                      height: 1.45,
-                      fontSize: 13,
-                      color: Colors.white.withOpacity(.78),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    desc.isNotEmpty
-                        ? desc
-                        : 'Curabitur sed nunc vitae ex tincidunt porttitor blandit eget purus.',
-                    style: TextStyle(
-                      height: 1.45,
-                      fontSize: 13,
-                      color: Colors.white.withOpacity(.78),
-                    ),
-                  ),
-                ],
-              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(
+                  desc,
+                  style: TextStyle(height: 1.45, fontSize: 13, color: Colors.white.withOpacity(.82)),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  'Curabitur sed nunc vitae ex tincidunt porttitor blandit eget purus. Interdum et malesuada fames ac ante ipsum primis in faucibus. In a neque at neque convallis mollis eget sed velit. Fusce semper convallis dapibus. Integer sapien mi, vehicula in lorem non, blandit vestibulum augue. Aenean ac posuere quam. Nam dapibus est ut rutrum posuere.',
+                  style: TextStyle(height: 1.45, fontSize: 13, color: Colors.white.withOpacity(.82)),
+                ),
+              ]),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
 
-            // ---------- GALLERY ----------
+            // ===== Gallery =====
             _SectionCard(
               title: 'Gallery',
-              child: Row(
-                children: [
-                  Expanded(child: _GalleryThumb(image: g1)),
-                  const SizedBox(width: 10),
-                  Expanded(child: _GalleryThumb(image: g2)),
-                ],
-              ),
+              child: Row(children: [
+                Expanded(child: _GalleryThumb(image: g1)),
+                const SizedBox(width: 10),
+                Expanded(child: _GalleryThumb(image: g2)),
+              ]),
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
 
-            // ---------- TERMS ----------
+            // ===== Terms =====
             _SectionCard(
               title: 'Investment Terms',
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [for (final b in bullets) _Bullet(text: b)],
-              ),
+              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                for (final b in bullets) _Bullet(text: b),
+                const SizedBox(height: 8),
+                Opacity(opacity: .25, child: Container(height: 3, width: double.infinity, color: Colors.white)),
+              ]),
             ),
           ],
         ),
@@ -244,352 +281,129 @@ class InvestmentDetailScreen extends StatelessWidget {
   }
 }
 
-// -----------------------------
-// Safe access helpers
-// -----------------------------
-String _name(dynamic inv) {
-  try {
-    final v = (inv as dynamic).name;
-    if (v is String && v.isNotEmpty) return v;
-  } catch (_) {}
-  try {
-    final v = (inv as dynamic).title;
-    if (v is String && v.isNotEmpty) return v;
-  } catch (_) {}
-  return 'Urban Farming Initiative';
-}
-
-String _description(dynamic inv) {
-  try {
-    final v = (inv as dynamic).description;
-    if (v is String) return v;
-  } catch (_) {}
-  return '';
-}
-
-String _category(dynamic inv) {
-  try {
-    final v = (inv as dynamic).category;
-    if (v is String) return v;
-    if (v is List) return v.join(', ');
-  } catch (_) {}
-  return 'Agriculture';
-}
-
-String _location(dynamic inv) {
-  try {
-    final v = (inv as dynamic).location;
-    if (v is String) return v;
-  } catch (_) {}
-  return '';
-}
-
-String _terms(dynamic inv) {
-  try {
-    final v = (inv as dynamic).investment_terms;
-    if (v is String) return v;
-  } catch (_) {}
-  try {
-    final v = (inv as dynamic).terms;
-    if (v is String) return v;
-  } catch (_) {}
-  return '';
-}
-
-String _imageUrl(dynamic inv) {
-  // Direct URL fields
-  try {
-    final v = (inv as dynamic).imageUrl;
-    if (v is String && v.isNotEmpty) return v;
-  } catch (_) {}
-  try {
-    final v = (inv as dynamic).imageLink;
-    if (v is String && v.isNotEmpty) return v;
-  } catch (_) {}
-
-  // Array forms
-  try {
-    final arr = (inv as dynamic).image;
-    if (arr is List && arr.isNotEmpty) {
-      final f = arr.first;
-      if (f is Map && f['url'] is String) return f['url'] as String;
-      if (f is String) return f;
-    }
-  } catch (_) {}
-  try {
-    final arr = (inv as dynamic).images;
-    if (arr is List && arr.isNotEmpty) {
-      final f = arr.first;
-      if (f is Map && f['url'] is String) return f['url'] as String;
-      if (f is String) return f;
-    }
-  } catch (_) {}
-
-  // Fallback asset
-  return 'assets/images/agriculture.jpg';
-}
-
-List<String> _galleryImages(dynamic inv) {
-  final out = <String>[];
-  try {
-    final arr = (inv as dynamic).images;
-    if (arr is List) {
-      for (final x in arr) {
-        if (x is String) out.add(x);
-        if (x is Map && x['url'] is String) out.add(x['url'] as String);
-      }
-    }
-  } catch (_) {}
-  try {
-    final arr = (inv as dynamic).image;
-    if (arr is List) {
-      for (final x in arr) {
-        if (x is String) out.add(x);
-        if (x is Map && x['url'] is String) out.add(x['url'] as String);
-      }
-    }
-  } catch (_) {}
-  return out.take(2).toList();
-}
-
-int _goal(dynamic inv) {
-  try {
-    final v = (inv as dynamic).fundingGoal;
-    if (v is num) return v.toInt();
-  } catch (_) {}
-  try {
-    final v = (inv as dynamic).funding_goal;
-    if (v is num) return v.toInt();
-  } catch (_) {}
-  return 25000;
-}
-
-num _raised(dynamic inv) {
-  try {
-    final v = (inv as dynamic).amountRaised;
-    if (v is num) return v;
-  } catch (_) {}
-  try {
-    final v = (inv as dynamic).raised;
-    if (v is num) return v;
-  } catch (_) {}
-  return 0;
-}
-
-String? _createdAtIso(dynamic inv) {
-  try {
-    final v = (inv as dynamic).createdAt;
-    if (v is String) return v;
-  } catch (_) {}
-  try {
-    final v = (inv as dynamic).created_at;
-    if (v is String) return v;
-  } catch (_) {}
-  return null;
-}
-
-dynamic _fundingDuration(dynamic inv) {
-  try {
-    return (inv as dynamic).fundingDuration;
-  } catch (_) {}
-  try {
-    return (inv as dynamic).funding_duration;
-  } catch (_) {}
-  return null;
-}
-
-int _daysLeft(dynamic inv) {
-  final fd = _fundingDuration(inv);
-  final createdAtIso = _createdAtIso(inv);
-
-  int totalDays = 0;
-  if (fd is int) {
-    totalDays = fd;
-  } else if (fd is String) {
-    final s = fd.toLowerCase();
-    final n = int.tryParse(RegExp(r'\d+').firstMatch(s)?.group(0) ?? '');
-    if (n != null) {
-      if (s.contains('month')) {
-        totalDays = n * 30;
-      } else if (s.contains('week')) {
-        totalDays = n * 7;
-      } else if (s.contains('day')) {
-        totalDays = n;
-      }
-    }
+// Header row: back + label
+class _TopBar extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Row(children: [
+      _roundBackBtn(),
+      const SizedBox(width: 8),
+      const Text(
+        'Investments Details',
+        style: TextStyle(fontSize: 12.5, color: Colors.white70, fontWeight: FontWeight.w700, letterSpacing: .2),
+      ),
+    ]);
   }
-  if (totalDays == 0) return 10;
 
-  DateTime start;
-  try {
-    start = createdAtIso != null ? DateTime.parse(createdAtIso) : DateTime.now();
-  } catch (_) {
-    start = DateTime.now();
-  }
-  final end = start.add(Duration(days: totalDays));
-  final left = end.difference(DateTime.now()).inDays;
-  return left < 0 ? 0 : left;
+  static Widget _roundBackBtn() => Container(
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: const Color(0xFF2F6F80).withOpacity(0.35),
+      boxShadow: [BoxShadow(blurRadius: 6, offset: const Offset(0, 2), color: Colors.black.withOpacity(.10))],
+    ),
+    child: IconButton(
+      icon: const Icon(CupertinoIcons.back),
+      color: Colors.white,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints.tightFor(width: 36, height: 36),
+      onPressed: () => Get.back(),
+    ),
+  );
 }
 
-int _progressPct(dynamic inv) {
-  try {
-    final v = (inv as dynamic).progressPct;
-    if (v is num) return v.clamp(0, 100).toInt();
-  } catch (_) {}
-  try {
-    final v = (inv as dynamic).progress;
-    if (v is num) return v.clamp(0, 100).toInt();
-  } catch (_) {}
-
-  final g = _goal(inv);
-  final r = _raised(inv);
-  if (g > 0) return ((r / g) * 100).clamp(0, 100).toInt();
-  return 45;
-}
-
-int? _backers(dynamic inv) {
-  try {
-    final v = (inv as dynamic).backers;
-    if (v is num) return v.toInt();
-  } catch (_) {}
-  try {
-    final v = (inv as dynamic).investorsCount;
-    if (v is num) return v.toInt();
-  } catch (_) {}
-  try {
-    final v = (inv as dynamic).contributors;
-    if (v is num) return v.toInt();
-  } catch (_) {}
-  return null;
-}
-
-/// ---------- HERO IMAGE ----------
-class _HeroImage extends StatelessWidget {
-  final String image; // may be asset path or http url
-  const _HeroImage({required this.image});
+class _HeroCard extends StatelessWidget {
+  final String image;
+  const _HeroCard({required this.image});
 
   bool get _isNetwork {
-    final uri = Uri.tryParse(image);
-    return uri != null && (uri.scheme == 'http' || uri.scheme == 'https');
+    final u = Uri.tryParse(image);
+    return u != null && (u.scheme == 'http' || u.scheme == 'https');
   }
 
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: Stack(
-        children: [
-          AspectRatio(
-            aspectRatio: 16 / 9,
-            child: ClipRRect(
-              borderRadius: BorderRadius.zero,
-              child: _isNetwork
-                  ? Image.network(image,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _broken())
-                  : Image.asset(image,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _broken()),
-            ),
-          ),
-          // top controls
-          Positioned(
-            left: 8,
-            right: 8,
-            top: 8,
-            child: Row(
-              children: [
-                _roundBtn(const Icon(CupertinoIcons.back),
-                    onPressed: () => Get.back()),
-                const Spacer(),
-                _roundBtn(const Icon(CupertinoIcons.heart)),
-              ],
-            ),
-          ),
-          // author chip
-          Positioned(
-            left: 8,
-            bottom: 8,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      child: Stack(children: [
+        AspectRatio(
+          aspectRatio: 16 / 9,
+          child: _isNetwork
+              ? Image.network(image, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _broken())
+              : Image.asset(image, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _broken()),
+        ),
+        // gradient overlay
+        Positioned.fill(
+          child: IgnorePointer(
+            child: DecoratedBox(
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(.45),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 12,
-                    backgroundImage:
-                    NetworkImage('https://i.pravatar.cc/100?img=24'),
-                  ),
-                  const SizedBox(width: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Eleanor_Pen',
-                          style: TextStyle(
-                              fontWeight: FontWeight.w700, fontSize: 12)),
-                      Text('@eleanorp',
-                          style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.white.withOpacity(.75))),
-                    ],
-                  ),
-                  const SizedBox(width: 8),
-                  const _TinyPill(icon: CupertinoIcons.eye, label: '2.1k'),
-                  const SizedBox(width: 6),
-                  const _TinyPill(
-                      icon: CupertinoIcons.hand_thumbsup, label: '142'),
-                ],
-              ),
-            ),
-          ),
-          // gradient fade
-          Positioned.fill(
-            child: IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.center,
-                    colors: [Colors.black.withOpacity(.45), Colors.transparent],
-                  ),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withOpacity(.35),
+                    Colors.transparent,
+                    Colors.black.withOpacity(.60),
+                  ],
+                  stops: const [0.0, 0.45, 1.0],
                 ),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+        // top controls
+        Positioned(
+          left: 8,
+          right: 8,
+          top: 8,
+          child: Row(children: [
+            _roundBtn(const Icon(CupertinoIcons.back), onPressed: () => Get.back()),
+            const Spacer(),
+            _roundBtn(const Icon(CupertinoIcons.heart)),
+          ]),
+        ),
+        // author chip
+        Positioned(
+          left: 8,
+          bottom: 8,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(.55), // slightly denser for contrast
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Colors.white.withOpacity(.12), width: 1),
+            ),
+            child: Row(children: [
+              const CircleAvatar(radius: 12, backgroundImage: NetworkImage('https://i.pravatar.cc/100?img=24')),
+              const SizedBox(width: 8),
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                const Text('Eleanor_Pen', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+                Text('@eleanorp', style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(.9))),
+              ]),
+              const SizedBox(width: 8),
+              const _TinyPill(icon: CupertinoIcons.eye, label: '2.1k'),
+              const SizedBox(width: 6),
+              const _TinyPill(icon: CupertinoIcons.hand_thumbsup, label: '142'),
+            ]),
+          ),
+        ),
+      ]),
     );
   }
 
-  Widget _broken() => Container(
-    color: Colors.black26,
-    alignment: Alignment.center,
-    child: const Icon(Icons.broken_image_outlined),
-  );
+  Widget _broken() => Container(color: Colors.black26, alignment: Alignment.center, child: const Icon(Icons.broken_image_outlined));
 
   Widget _roundBtn(Icon icon, {VoidCallback? onPressed}) {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: const Color(0xFF2F6F80).withOpacity(0.35),
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 6,
-            spreadRadius: 0,
-            offset: const Offset(0, 2),
-            color: Colors.black.withOpacity(0.10),
-          ),
-        ],
+        boxShadow: [BoxShadow(blurRadius: 6, offset: const Offset(0, 2), color: Colors.black.withOpacity(0.10))],
       ),
       child: IconButton(
         icon: icon,
         color: Colors.white,
         padding: EdgeInsets.zero,
-        constraints:
-        const BoxConstraints.tightFor(width: 40, height: 40),
+        constraints: const BoxConstraints.tightFor(width: 40, height: 40),
         onPressed: onPressed,
       ),
     );
@@ -604,44 +418,54 @@ class _TinyPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(.45),
-        borderRadius: BorderRadius.circular(8),
+        color: Colors.black.withOpacity(.55),
+        borderRadius: BorderRadius.circular(9),
+        border: Border.all(color: Colors.white.withOpacity(.12), width: 1),
       ),
-      child: Row(
-        children: [
-          Icon(icon, size: 12),
-          const SizedBox(width: 4),
-          Text(label, style: const TextStyle(fontSize: 11)),
-        ],
-      ),
+      child: Row(children: [
+        Icon(icon, size: 12, color: Colors.white.withOpacity(.95)),
+        const SizedBox(width: 5),
+        const Text(
+          // label dynamic below via RichText to keep style strict
+          '',
+          style: TextStyle(fontSize: 0), // placeholder (we'll render with RichText)
+        ),
+        RichText(
+          text: TextSpan(
+            text: label,
+            style: const TextStyle(
+              fontSize: 11,
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              letterSpacing: .1,
+            ),
+          ),
+        ),
+      ]),
     );
   }
 }
 
-class _Pill extends StatelessWidget {
-  final IconData icon;
+class _LocationPill extends StatelessWidget {
   final String label;
-  const _Pill({required this.icon, required this.label});
+  const _LocationPill({required this.label});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding:
-      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF23262B),
+        color: _inner,
         borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.white.withOpacity(.10), width: 1),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: Colors.white.withOpacity(.9)),
-          const SizedBox(width: 6),
-          Text(label, style: const TextStyle(fontSize: 12)),
-        ],
-      ),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(CupertinoIcons.location_solid, size: 14, color: Colors.white.withOpacity(.95)),
+        const SizedBox(width: 6),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600)),
+      ]),
     );
   }
 }
@@ -654,59 +478,41 @@ class _Metric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Column(
-        children: [
-          Text(top,
-              style: const TextStyle(
-                  fontWeight: FontWeight.w800, fontSize: 16)),
-          const SizedBox(height: 2),
-          Text(bottom,
-              style: TextStyle(
-                  fontSize: 11, color: Colors.white.withOpacity(.7))),
-        ],
-      ),
+      child: Column(children: [
+        Text(top, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
+        const SizedBox(height: 2),
+        Text(bottom, style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(.74))),
+      ]),
     );
   }
 }
 
-class _DotDivider extends StatelessWidget {
+class _DividerV extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       width: 1,
-      height: 28,
-      child: Center(
-        child: Container(
-          width: 1,
-          height: 18,
-          color: Colors.white.withOpacity(.12),
-        ),
-      ),
+      child: Center(child: Container(width: 1, height: 22, color: Colors.white.withOpacity(.14))),
     );
   }
 }
 
 class _ProgressBar extends StatelessWidget {
-  final double value;
+  final double value; // 0..1
   final Color color;
   const _ProgressBar({required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {
-    final bg = Colors.white.withOpacity(.12);
+    const track = Color(0xFF3A3D43); // stronger contrast
     return SizedBox(
-      height: 8,
+      height: 8, // a bit thicker like the mock
       child: ClipRRect(
         borderRadius: BorderRadius.circular(99),
-        child: Stack(
-          children: [
-            Container(color: bg),
-            FractionallySizedBox(
-              widthFactor: value.clamp(0.0, 1.0),
-              child: Container(color: color),
-            ),
-          ],
-        ),
+        child: Stack(children: [
+          Container(color: track),
+          FractionallySizedBox(widthFactor: value.clamp(0, 1), child: Container(color: color)),
+        ]),
       ),
     );
   }
@@ -719,23 +525,23 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const card = Color(0xFF1B1E23);
     return Container(
-      decoration: BoxDecoration(
-        color: card,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title,
-              style: const TextStyle(
-                  fontWeight: FontWeight.w800, fontSize: 16)),
-          const SizedBox(height: 10),
-          child,
-        ],
-      ),
+      decoration: _cardBox(),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const SizedBox(height: 2),
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white, // crisp, not dim
+            fontWeight: FontWeight.w800,
+            fontSize: 16,
+            letterSpacing: .1,
+          ),
+        ),
+        const SizedBox(height: 12),
+        child,
+      ]),
     );
   }
 }
@@ -748,11 +554,34 @@ class _GalleryThumb extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
-      child: AspectRatio(
-        aspectRatio: 16 / 9,
-        child: Ink.image(
-          image: NetworkImage(image),
-          fit: BoxFit.cover,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.white.withOpacity(.18), width: 1),
+        ),
+        child: AspectRatio(
+          aspectRatio: 16 / 9,
+          child: Image.network(
+            image,
+            fit: BoxFit.cover,
+            filterQuality: FilterQuality.medium,
+            loadingBuilder: (ctx, child, evt) {
+              if (evt == null) return child;
+              return Container(
+                color: _inner,
+                alignment: Alignment.center,
+                child: const CupertinoActivityIndicator(),
+              );
+            },
+            errorBuilder: (ctx, err, stack) => Container(
+              color: _inner,
+              alignment: Alignment.center,
+              child: Icon(
+                Icons.broken_image_outlined,
+                color: Colors.white.withOpacity(.7),
+                size: 24,
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -766,32 +595,31 @@ class _Bullet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.only(top: 6),
-            child: Icon(Icons.circle, size: 6),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                height: 1.4,
-                fontSize: 13,
-                color: Colors.white.withOpacity(.85),
-              ),
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 7),
+          child: SizedBox(
+            width: 6,
+            height: 6,
+            child: DecoratedBox(
+              decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
             ),
           ),
-        ],
-      ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: TextStyle(height: 1.45, fontSize: 13, color: Colors.white.withOpacity(.85)),
+          ),
+        ),
+      ]),
     );
   }
 }
 
-// simple number formatter (kept)
+// ===== helpers =====
 String _fmt(int n) {
   final s = n.toString();
   final buf = StringBuffer();
@@ -802,3 +630,20 @@ String _fmt(int n) {
   }
   return buf.toString();
 }
+
+int _daysLeft(String? fundingDuration) {
+  final s = (fundingDuration ?? '').toLowerCase().trim();
+  if (s.isEmpty) return 10; // default like mock
+  final m = RegExp(r'\d+').firstMatch(s)?.group(0);
+  final n = int.tryParse(m ?? '');
+  if (n == null) return 10;
+  if (s.contains('month')) return n * 30;
+  if (s.contains('week'))  return n * 7;
+  if (s.contains('day'))   return n;
+  return n;
+}
+
+// Removes leading/trailing quotes or smart quotes so text never shows stray “ or ”
+String _scrubQuotes(String s) =>
+    s.trim().replaceAll(RegExp(r'''^[“"'`‘’]+|[”"'`‘’]+$'''), '');
+

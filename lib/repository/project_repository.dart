@@ -54,6 +54,29 @@ class ProjectRepository {
     }
   }
 
+  // —— NEW: submit proposal ——
+  Future<void> submitProposal({
+    required String projectId,
+    required String coverLetter,
+    required int budget,
+    required int deliveryDays,
+  }) async {
+    try {
+      final r = await service.submitProposal(
+        projectId: projectId,
+        coverLetter: coverLetter,
+        budget: budget,
+        deliveryDays: deliveryDays,
+      );
+      if (r['success'] != true) {
+        throw Exception(r['message'] ?? 'Proposal submit failed');
+      }
+    } on DioException catch (e) {
+      throw _wrap(e);
+    }
+  }
+
+
   Future<ProjectPage> getAll({int page = 1, int limit = 10}) async {
     try {
       final r = await service.getAll(page: page, limit: limit);

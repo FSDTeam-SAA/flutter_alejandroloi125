@@ -1,7 +1,6 @@
-
-
-import 'package:flutter/material.dart';
+// lib/feature/home/widgets/botton_card.dart
 import 'package:alejandroloi/core/util/app_colors.dart';
+import 'package:flutter/material.dart';
 
 class BottomCard extends StatelessWidget {
   final String imagePath;
@@ -23,7 +22,6 @@ class BottomCard extends StatelessWidget {
       borderRadius: BorderRadius.circular(6),
       onTap: onTap,
       child: Container(
-
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(6),
           color: AppColors.fieldColor,
@@ -32,18 +30,14 @@ class BottomCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// leading icon / image
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: Image.asset(imagePath, height: 28, width: 28),
             ),
             const SizedBox(width: 12),
-
-            /// text content
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     title,
@@ -68,44 +62,3 @@ class BottomCard extends StatelessWidget {
     );
   }
 }
-
-
-
-
-
-
-
-
-/*
-import 'package:flutter/material.dart';
-import 'package:alejandroloi/core/util/app_colors.dart';
-
-Widget bottomCard({
-  required String imagePath,
-  required Widget child,
-}) {
-  return Container(
-    height: 86,
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(6),
-      color: AppColors.fieldColor,
-    ),
-    padding: const EdgeInsets.all(8),
-    child: Row(
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 30),
-          child: Image.asset(imagePath, height: 30, width: 30),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [child],
-          ),
-        ),
-      ],
-    ),
-  );
-}
-*/

@@ -7,6 +7,8 @@ class AuthProvider extends ChangeNotifier {
   final AuthRepository repo;
   AuthProvider(this.repo);
 
+
+
   bool _loading = false;
   String? _error;
   User? _user;
@@ -22,6 +24,9 @@ class AuthProvider extends ChangeNotifier {
   String? get pendingEmail => _pendingEmail;
   bool get ready => _ready;
   bool get loggedIn => _loggedIn;
+
+  // ✅ add this so old code compiles:
+  User? get currentUser => _user;
 
   void _setLoading(bool v) { _loading = v; notifyListeners(); }
   void _setError(String? e) { _error = e; notifyListeners(); }
