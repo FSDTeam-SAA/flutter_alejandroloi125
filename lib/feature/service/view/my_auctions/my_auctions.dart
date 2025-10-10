@@ -18,7 +18,7 @@ class _MyAuctionScreenState extends State<MyAuctionScreen> {
   String? _error;
 
   int _page = 1;
-  int _pages = 3; // total pages in this local demo
+  final int _pages = 3; // total pages in this local demo
   final int _limit = 10;
 
   final List<_Auction> _items = [];
@@ -243,7 +243,6 @@ class _AuctionCard extends StatelessWidget {
   final VoidCallback? onView, onDelete;
 
   const _AuctionCard.dynamic({
-    super.key,
     required this.imageUrl,
     required this.title,
     required this.priceLabel,

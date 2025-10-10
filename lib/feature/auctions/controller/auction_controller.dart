@@ -1,6 +1,5 @@
 import 'package:get/get.dart';
 
-import '../../aven/view/my_event_auctions/my_event_auction.dart';
 import '../model/auction_model.dart';
 import '../repo/auction_repo.dart';
 

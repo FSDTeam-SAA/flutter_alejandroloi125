@@ -186,7 +186,6 @@ class _InvestmentCard extends StatelessWidget {
     required this.showCompleted,
     required this.onDelete,
     required this.onView,
-    super.key,
   });
 
   @override
@@ -289,18 +288,18 @@ class _InvestmentCard extends StatelessWidget {
                     Expanded(
                       child: OutlinedButton(
                         style: ButtonStyle(
-                          backgroundColor: MaterialStateProperty.all(Colors.transparent),
-                          side: MaterialStateProperty.resolveWith<BorderSide>((states) {
-                            final disabled = states.contains(MaterialState.disabled);
+                          backgroundColor: WidgetStateProperty.all(Colors.transparent),
+                          side: WidgetStateProperty.resolveWith<BorderSide>((states) {
+                            final disabled = states.contains(WidgetState.disabled);
                             return BorderSide(color: const Color(0xFFFF6A00).withOpacity(disabled ? 0.45 : 1), width: 1.5);
                           }),
-                          foregroundColor: MaterialStateProperty.resolveWith<Color>((states) {
-                            final disabled = states.contains(MaterialState.disabled);
+                          foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
+                            final disabled = states.contains(WidgetState.disabled);
                             return const Color(0xFFFF6A00).withOpacity(disabled ? 0.45 : 1);
                           }),
-                          overlayColor: MaterialStateProperty.all(const Color(0xFFFF6A00).withOpacity(0.08)),
-                          shape: MaterialStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                          padding: MaterialStateProperty.all(const EdgeInsets.symmetric(vertical: 12)),
+                          overlayColor: WidgetStateProperty.all(const Color(0xFFFF6A00).withOpacity(0.08)),
+                          shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+                          padding: WidgetStateProperty.all(const EdgeInsets.symmetric(vertical: 12)),
                         ),
                         onPressed: showCompleted ? null : onDelete,
                         child: const Text('Delete', style: TextStyle(fontWeight: FontWeight.w700)),
@@ -347,7 +346,6 @@ class _ProgressBar extends StatelessWidget {
     required this.fill,
     this.height = 10,
     this.radius = 6,
-    super.key,
   });
 
   @override

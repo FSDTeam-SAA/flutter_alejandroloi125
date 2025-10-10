@@ -5,7 +5,6 @@ import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/feature/auth/view/login_screen_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart';
 
 import '../providers/auth_provider.dart';
 import 'package:provider/provider.dart'; // removed

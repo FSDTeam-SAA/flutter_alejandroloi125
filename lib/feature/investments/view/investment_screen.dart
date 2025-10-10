@@ -313,14 +313,14 @@ class _ProgressBar extends StatelessWidget {
 }
 
 class _ShimmerCard extends StatelessWidget {
-  const _ShimmerCard({super.key});
+  const _ShimmerCard();
   @override
   Widget build(BuildContext context) =>
       Container(height: 240, decoration: BoxDecoration(color: const Color(0xFF1B1E23), borderRadius: BorderRadius.circular(14)));
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState({super.key});
+  const _EmptyState();
   @override
   Widget build(BuildContext context) => Column(children: [
     const SizedBox(height: 40),
@@ -332,7 +332,7 @@ class _EmptyState extends StatelessWidget {
 
 class _ErrorBox extends StatelessWidget {
   final String message; final VoidCallback onRetry;
-  const _ErrorBox({super.key, required this.message, required this.onRetry});
+  const _ErrorBox({required this.message, required this.onRetry});
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(14),

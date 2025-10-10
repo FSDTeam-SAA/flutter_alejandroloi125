@@ -9,8 +9,7 @@ import 'package:alejandroloi/core/util/styles.dart';
 
 import '../../../providers/investment_provider.dart';
 import '../../app_ground.dart';
-import '../../create_service/view/create_services_view.dart';
-import '../../service/view/service_view.dart'; // your existing screen
+// your existing screen
 
 // inside _CreateInvestmentsViewState
 import 'dart:io';

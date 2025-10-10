@@ -229,13 +229,13 @@ class AuctionListResponse {
         .map((m) => AuctionDto.fromJson(Map<String, dynamic>.from(m)))
         .toList();
 
-    int _i(dynamic v, int d) => (v is num) ? v.toInt() : int.tryParse('$v') ?? d;
+    int i(dynamic v, int d) => (v is num) ? v.toInt() : int.tryParse('$v') ?? d;
 
     return AuctionListResponse(
-      total: _i(meta['total'], items.length),
-      page : _i(meta['page'], 1),
-      limit: _i(meta['limit'], items.length),
-      pages: _i(meta['pages'], 1),
+      total: i(meta['total'], items.length),
+      page : i(meta['page'], 1),
+      limit: i(meta['limit'], items.length),
+      pages: i(meta['pages'], 1),
       auctions: items,
     );
   }

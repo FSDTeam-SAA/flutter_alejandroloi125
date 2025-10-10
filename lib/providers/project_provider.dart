@@ -186,9 +186,7 @@ class ProjectProvider extends ChangeNotifier {
       return false;
     }
     final days = deadlineDaysStr != null ? int.parse(deadlineDaysStr) : null;
-    final skills = skillsCsv != null
-        ? skillsCsv.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList()
-        : null;
+    final skills = skillsCsv?.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
 
     _set(loading: true, error: null);
     try {

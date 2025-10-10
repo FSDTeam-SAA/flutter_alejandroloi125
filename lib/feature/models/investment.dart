@@ -49,7 +49,7 @@ class Investment {
       return const [];
     }
 
-    int? intOr(dynamic v) => v is num ? v.toInt() : int.tryParse('${v}');
+    int? intOr(dynamic v) => v is num ? v.toInt() : int.tryParse('$v');
 
 
 

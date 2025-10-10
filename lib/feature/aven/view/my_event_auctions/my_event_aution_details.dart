@@ -238,7 +238,6 @@ class _DetailsCard extends StatelessWidget {
   final String statusText;                                  // (change here)
 
   const _DetailsCard({
-    super.key,
     required this.title,                                    // (change here)
     required this.description,                              // (change here)
     required this.finalBidText,                             // (change here)

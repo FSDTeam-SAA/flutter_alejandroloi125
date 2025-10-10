@@ -272,7 +272,6 @@ class _ProjectCard extends StatelessWidget {
   final VoidCallback onView;
 
   const _ProjectCard({
-    super.key,
     required this.status,
     required this.statusColor,
     required this.category,

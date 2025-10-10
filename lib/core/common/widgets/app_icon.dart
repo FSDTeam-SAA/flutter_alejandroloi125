@@ -3,7 +3,7 @@ import 'package:get/get.dart';
 
 
 class AppIconWidget extends StatelessWidget {
-  AppIconWidget({super.key});
+  const AppIconWidget({super.key});
 
   @override
   Widget build(BuildContext context) {

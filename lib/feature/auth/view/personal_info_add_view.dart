@@ -260,7 +260,7 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
                 const Text("Gender", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
-                  value: _gender,
+                  initialValue: _gender,
                   isExpanded: true,
                   hint: const Text('Select gender', style: TextStyle(color: Colors.white)),
                   items: _genders

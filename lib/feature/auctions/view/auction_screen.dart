@@ -49,7 +49,6 @@ class AuctionScreen extends StatelessWidget {
     // NOTE: keep Providers available; UI is identical.
     return Theme(
       data: dark.copyWith(
-        useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFF0F0F10),
         cardColor: const Color(0xFF1A1B1E),
         dividerColor: const Color(0xFF2B2C31),
@@ -213,7 +212,7 @@ class _PillTabs extends StatelessWidget {
                 child: TabBar(
                   controller: tabController,
                   dividerColor: Colors.transparent,
-                  overlayColor: MaterialStateProperty.all(Colors.transparent),
+                  overlayColor: WidgetStateProperty.all(Colors.transparent),
                   labelPadding: EdgeInsets.zero,
                   labelStyle: const TextStyle(
                       fontWeight: FontWeight.w800, fontSize: 14),

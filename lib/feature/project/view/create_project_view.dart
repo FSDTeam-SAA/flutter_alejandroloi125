@@ -3,10 +3,8 @@ import 'package:alejandroloi/core/common/widgets/custom_text_field.dart';
 import 'package:alejandroloi/core/common/widgets/save_botton.dart';
 import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/styles.dart';
-import 'package:alejandroloi/feature/service/view/service_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart';
 import 'package:provider/provider.dart';
 
 import '../../../providers/project_provider.dart';

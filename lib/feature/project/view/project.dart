@@ -373,7 +373,7 @@ class _TwoCols extends StatelessWidget {
 }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState({super.key});
+  const _EmptyState();
 
   @override
   Widget build(BuildContext context) {

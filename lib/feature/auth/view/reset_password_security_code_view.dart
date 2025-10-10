@@ -25,7 +25,7 @@ class _ResetPasswordSecurityCodeState extends State<ResetPasswordSecurityCode> {
   final otpController = TextEditingController();
   int _seconds = 45;
   Timer? _t;
-  bool _loading = false; // local-only (no API)
+  final bool _loading = false; // local-only (no API)
 
   void _startTimer() {
     _t?.cancel();

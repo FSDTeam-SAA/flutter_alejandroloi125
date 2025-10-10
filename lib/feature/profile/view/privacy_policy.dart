@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 
 class PrivacyPolicyScreenView extends StatelessWidget {
   const PrivacyPolicyScreenView({super.key});

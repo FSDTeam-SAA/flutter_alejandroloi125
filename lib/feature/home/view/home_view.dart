@@ -321,7 +321,7 @@ class _HomeScreenViewState extends State<HomeScreenView> {
               const SizedBox(height: 20),
 
               // -------- Live Auctions --------
-              const _SectionHeader(title: 'Live Auctions'),
+              const SectionHeader(title: 'Live Auctions'),
               const SizedBox(height: 10),
               SizedBox(
                 height: 200,
@@ -352,7 +352,7 @@ class _HomeScreenViewState extends State<HomeScreenView> {
               const SizedBox(height: 20),
 
               // -------- Invest Desk --------
-              const _SectionHeader(title: 'Invest Desk'),
+              const SectionHeader(title: 'Invest Desk'),
               const SizedBox(height: 10),
               SizedBox(
                 height: 300,
@@ -390,7 +390,7 @@ class _HomeScreenViewState extends State<HomeScreenView> {
               ),
 
               // -------- Project Proposal --------
-              const _SectionHeader(title: 'Project Proposal'),
+              const SectionHeader(title: 'Project Proposal'),
               const SizedBox(height: 10),
               SizedBox(
                 height: 300,
@@ -453,8 +453,8 @@ class _HomeScreenViewState extends State<HomeScreenView> {
 }
 
 // Small header row for "See all" style sections (kept simple)
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({required this.title, this.onSeeAll});
+class SectionHeader extends StatelessWidget {
+  const SectionHeader({super.key, required this.title, this.onSeeAll});
   final String title;
   final VoidCallback? onSeeAll;
 

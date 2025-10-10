@@ -7,13 +7,13 @@ class NavigationService {
     navigatorKey = GlobalKey<NavigatorState>();
   }
 
-  navigate(Widget widget) {
+  Future? navigate(Widget widget) {
     return navigatorKey.currentState?.push(
       MaterialPageRoute(builder: (context) => widget),
     );
   }
 
-  navigateReplace(Widget widget) {
+  Future? navigateReplace(Widget widget) {
     return navigatorKey.currentState?.pushReplacement(
       MaterialPageRoute(builder: (context) => widget),
     );

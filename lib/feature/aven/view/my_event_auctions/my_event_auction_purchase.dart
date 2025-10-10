@@ -186,7 +186,7 @@ class _MyEventAuctionPurchaseState extends State<MyEventAuctionPurchase> {
                       value: savePayment,
                       onChanged: (v) => setState(() => savePayment = v ?? false),
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      fillColor: MaterialStateProperty.resolveWith((_) => Colors.white24),
+                      fillColor: WidgetStateProperty.resolveWith((_) => Colors.white24),
                       checkColor: Colors.white,
                     ),
                   ),

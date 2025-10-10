@@ -2,7 +2,6 @@ import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controller/auction_controller.dart';
-import '../model/auction_model.dart';
 import 'auction_detail.dart';
 
 class UpcomingAuctionTile extends StatelessWidget {

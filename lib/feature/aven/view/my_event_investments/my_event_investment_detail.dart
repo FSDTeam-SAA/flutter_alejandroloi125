@@ -295,7 +295,7 @@ class _Investor {
     // nested user object (common)
     final user = (m['user'] is Map) ? Map<String, dynamic>.from(m['user']) : <String, dynamic>{};
 
-    String _pickName(Map<String, dynamic> mm) =>
+    String pickName(Map<String, dynamic> mm) =>
         (mm['fullName'] ??
             mm['name'] ??
             mm['username'] ??
@@ -303,7 +303,7 @@ class _Investor {
             '—')
             .toString();
 
-    String _pickAvatar(Map<String, dynamic> mm) =>
+    String pickAvatar(Map<String, dynamic> mm) =>
         (mm['avatar'] ??
             mm['image'] ??
             mm['photo'] ??
@@ -313,7 +313,7 @@ class _Investor {
             '')
             .toString();
 
-    int _pickAmount(Map<String, dynamic> mm) {
+    int pickAmount(Map<String, dynamic> mm) {
       final keys = ['amount', 'investment_amount', 'value', 'investAmount', 'invested', 'price'];
       for (final k in keys) {
         final v = mm[k];
@@ -323,16 +323,16 @@ class _Investor {
       return 0;
     }
 
-    String? _pickWhen(Map<String, dynamic> mm) =>
+    String? pickWhen(Map<String, dynamic> mm) =>
         (mm['createdAt'] ?? mm['date'] ?? mm['time'] ?? '').toString().trim().isEmpty
             ? null
             : (mm['createdAt'] ?? mm['date'] ?? mm['time']).toString();
 
     return _Investor(
-      name: _pickName(m),
-      avatarUrl: _pickAvatar(m),
-      amount: _pickAmount(m),
-      when: _pickWhen(m),
+      name: pickName(m),
+      avatarUrl: pickAvatar(m),
+      amount: pickAmount(m),
+      when: pickWhen(m),
     );
   }
 }
@@ -433,7 +433,7 @@ List<_Investor> _extractInvestors(Investment inv) {
   final d = inv as dynamic;
 
   // Safely try to read a list property by name
-  List? _tryProp(String name) {
+  List? tryProp(String name) {
     try {
       switch (name) {
         case 'investors':
@@ -457,11 +457,11 @@ List<_Investor> _extractInvestors(Investment inv) {
   }
 
   // 1) Try common dynamic properties on the model instance
-  List? list = _tryProp('investors') ??
-      _tryProp('backers') ??
-      _tryProp('investments') ??
-      _tryProp('funders') ??
-      _tryProp('supporters');
+  List? list = tryProp('investors') ??
+      tryProp('backers') ??
+      tryProp('investments') ??
+      tryProp('funders') ??
+      tryProp('supporters');
 
   // 2) If model exposes toJson(), read from that map
   if (list == null) {

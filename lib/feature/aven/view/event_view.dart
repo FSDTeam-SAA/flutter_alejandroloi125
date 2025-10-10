@@ -2,7 +2,6 @@ import 'package:alejandroloi/core/common/widgets/pilltabs.dart';
 import 'package:alejandroloi/core/util/styles.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 
 import '../../app_ground.dart';
 import 'my_event_investments/my_event_investment.dart';

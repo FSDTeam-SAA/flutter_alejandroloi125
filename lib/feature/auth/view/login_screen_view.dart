@@ -14,7 +14,7 @@ import '../../app_ground.dart';
 import 'forget_password_view.dart';
 
 class LoginScreenView extends StatefulWidget {
-  LoginScreenView({super.key});
+  const LoginScreenView({super.key});
   @override
   State<LoginScreenView> createState() => _LoginScreenViewState();
 }

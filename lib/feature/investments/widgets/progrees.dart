@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 class ProgressBar extends StatelessWidget {
   final double value;
   final Color color;
-  const ProgressBar({required this.value, required this.color});
+  const ProgressBar({super.key, required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {

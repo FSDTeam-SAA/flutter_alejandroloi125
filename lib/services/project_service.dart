@@ -29,7 +29,7 @@ class ProjectService {
       'category'   : category,
       'budget_min' : minBudget,             // <— NOT min_budget
       'budget_max' : maxBudget,             // <— NOT max_budget
-      'deadline'   : '${deadlineDays} day', // <— string form typically required
+      'deadline'   : '$deadlineDays day', // <— string form typically required
       'location'   : location,
       // If backend prefers comma string instead of array, do: skills.join(', ')
       'skills'     : skills,
@@ -107,7 +107,7 @@ class ProjectService {
     if (category != null)     payload['category'] = category;
     if (minBudget != null)    payload['budget_min'] = minBudget;
     if (maxBudget != null)    payload['budget_max'] = maxBudget;
-    if (deadlineDays != null) payload['deadline'] = '${deadlineDays} day';
+    if (deadlineDays != null) payload['deadline'] = '$deadlineDays day';
     if (location != null)     payload['location'] = location;
     if (skills != null)       payload['skills'] = skills;
     if (status != null)       payload['status'] = status;

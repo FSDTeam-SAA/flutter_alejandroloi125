@@ -124,13 +124,13 @@ class InvestmentRepository {
       }
 
       // Normalize shapes: {data:{investment:{...}}} OR {data:{...}} OR {...}
-      Map<String, dynamic> _asMap(dynamic v) =>
+      Map<String, dynamic> asMap(dynamic v) =>
           v is Map ? Map<String, dynamic>.from(v) : <String, dynamic>{};
 
-      final data = _asMap(raw['data']);
-      final item = _asMap(data['investment']).isNotEmpty
-          ? _asMap(data['investment'])
-          : (data.isNotEmpty ? data : _asMap(raw));
+      final data = asMap(raw['data']);
+      final item = asMap(data['investment']).isNotEmpty
+          ? asMap(data['investment'])
+          : (data.isNotEmpty ? data : asMap(raw));
 
       if (item.isEmpty) throw Exception('Investment not found');
       return Investment.fromJson(item);

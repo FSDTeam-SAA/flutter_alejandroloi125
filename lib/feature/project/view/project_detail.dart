@@ -101,7 +101,6 @@ class _DetailBodyState extends State<_DetailBody> {
         secondary: Color(0xFF2A2B30),
       ),
       dividerColor: const Color(0xFF2B2C31),
-      useMaterial3: true,
     );
 
     if (_loading) {
@@ -306,7 +305,7 @@ class _DetailBodyState extends State<_DetailBody> {
               ),
               const SizedBox(height: 18),
 
-              const _SectionHeader('Project Description'),
+              const SectionHeader(text: 'Project Description'),
               const SizedBox(height: 8),
               _Para(
                 data.description.isNotEmpty
@@ -318,7 +317,7 @@ class _DetailBodyState extends State<_DetailBody> {
               ),
               const SizedBox(height: 16),
 
-              const _SectionHeader('Skills Required'),
+              const SectionHeader(text: 'Skills Required',),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -327,7 +326,7 @@ class _DetailBodyState extends State<_DetailBody> {
               ),
               const SizedBox(height: 18),
 
-              const _SectionHeader('Project Proposal'),
+              const SectionHeader(text: 'Project Proposal'),
               const SizedBox(height: 8),
               const ProposalCard(
                 name: 'Eleanor Pena',
@@ -419,8 +418,8 @@ class _InfoChip extends StatelessWidget {
   }
 }
 
-class _SectionHeader extends StatelessWidget {
-  const _SectionHeader(this.text, {this.trailing});
+class SectionHeader extends StatelessWidget {
+  const SectionHeader({super.key,  required this.text, this.trailing});
   final String text;
   final Widget? trailing;
 
