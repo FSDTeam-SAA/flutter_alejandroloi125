@@ -87,5 +87,88 @@ class AuctionService {
     final root = (res.data as Map).cast<String, dynamic>();
     return AuctionListResponse.fromJson(root);
   }
+
+// // lib/services/auction_service.dart
+//   Future<void> bid(String auctionId, int amount) async {
+//     await _dio.post(ApiPaths.bidAuction(auctionId), data: {'amount': amount});
+//   }
+
+  Future<void> bid(String auctionId, int amount, {String? message}) async {
+    final body = <String, dynamic>{'amount': amount};
+    if (message != null && message.trim().isNotEmpty) {
+      body['message'] = message.trim();
+    }
+    await _dio.patch(ApiPaths.bidAuction(auctionId), data: body);
+  }
+
+
+  // GET /auction/bid/:id
+  Future<List<BidItem>> getBids(String auctionId) async {
+    final res = await _dio.get(ApiPaths.bidAuction(auctionId));
+    final root = (res.data as Map).cast<String, dynamic>();
+    final list = (root['data'] is List) ? List.from(root['data']) : const <dynamic>[];
+    return list
+        .whereType<Map>()
+        .map((m) => BidItem.fromJson(Map<String, dynamic>.from(m)))
+        .toList();
+  }
+
+
+
+  // PATCH /auction/bid/:id -> send message OR amount
+  Future<void> bidOrMessage(
+      String auctionId, {
+        int? amount,
+        String? message,
+      }) async {
+    final body = <String, dynamic>{};
+    if (amount != null) body['amount'] = amount; // send number
+    if (message != null && message.trim().isNotEmpty) {
+      body['message'] = message.trim();
+    }
+    if (body.isEmpty) {
+      throw ArgumentError('Provide either amount or message');
+    }
+    await _dio.patch(ApiPaths.bidAuction(auctionId), data: body);
+  }
+
+
+}
+
+
+class BidItem {
+  final String id;
+  final int? amount;
+  final String? message;
+  final String? userId;
+  final DateTime createdAt;
+
+  BidItem({
+    required this.id,
+    this.amount,
+    this.message,
+    this.userId,
+    required this.createdAt,
+  });
+
+  factory BidItem.fromJson(Map<String, dynamic> j) {
+    DateTime parseDt(dynamic v) {
+      try { return DateTime.parse(v.toString()); } catch (_) { return DateTime.now(); }
+    }
+
+    int? asInt(dynamic v) {
+      if (v == null) return null;
+      if (v is num) return v.toInt();
+      return int.tryParse(v.toString());
+    }
+
+    return BidItem(
+      id: (j['_id'] ?? j['id'] ?? '').toString(),
+      amount: asInt(j['amount']),
+      message: j['message']?.toString(),
+      userId: j['user']?.toString(),
+      createdAt: parseDt(j['createdAt'] ?? DateTime.now().toIso8601String()),
+    );
+  }
 }
 

@@ -18,4 +18,19 @@ class AuctionRepository {
       {int page = 1, int limit = 10}) =>
       service.getByUser(userId, page: page, limit: limit);
 
+  // Future<void> bid(String id, int amount) => service.bid(id, amount);
+
+  Future<void> bid(String id, int amount, {String? message}) =>
+      service.bid(id, amount, message: message);
+
+  Future<List<BidItem>> getBids(String auctionId) => service.getBids(auctionId);
+
+  Future<void> bidOrMessage(
+      String auctionId, {
+        int? amount,
+        String? message,
+      }) =>
+      service.bidOrMessage(auctionId, amount: amount, message: message);
+
+
 }

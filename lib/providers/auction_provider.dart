@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../feature/models/auction.dart';
 import '../repository/auction_repository.dart';
+import '../services/auction_service.dart';
 
 class AuctionProvider extends ChangeNotifier {
   final AuctionRepository repo;
@@ -48,6 +49,9 @@ class AuctionProvider extends ChangeNotifier {
       rethrow;
     }
   }
+
+
+
 
 
 
@@ -105,6 +109,57 @@ class AuctionProvider extends ChangeNotifier {
       ..clear()
       ..addAll(map.values);
   }
+
+
+
+  // ======= chat (bids/messages) state =======
+  bool _chatLoading = false;
+  String? _chatError;
+  List<BidMessageDto> _chat = [];
+  bool get chatLoading => _chatLoading;
+  String? get chatError => _chatError;
+  List<BidMessageDto> get chat => List.unmodifiable(_chat);
+
+  Future<void> fetchBids(String auctionId) async {
+    _chatLoading = true;
+    _chatError = null;
+    notifyListeners();
+    try {
+      final items = await repo.getBids(auctionId);
+      // _chat = items;
+      _chatLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _chatLoading = false;
+      _chatError = e.toString();
+      notifyListeners();
+    }
+  }
+
+
+  Future<List<BidItem>> getChat(String auctionId) async {
+    try {
+      return await repo.getBids(auctionId);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> bidOrMessage({
+    required String auctionId,
+    int? amount,
+    String? message,
+  }) async {
+    try {
+      await repo.bidOrMessage(auctionId, amount: amount, message: message);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Keep for compatibility if used elsewhere:
+  Future<void> placeBid({required String auctionId, required int amount}) =>
+      bidOrMessage(auctionId: auctionId, amount: amount);
 
 
 

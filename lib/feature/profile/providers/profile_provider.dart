@@ -7,6 +7,7 @@ import '../repository/profile_repository.dart';
 class ProfileProvider extends ChangeNotifier {
   final ProfileRepository repo;
   ProfileProvider(this.repo);
+  
 
   bool _loading = false;
   String? _error;
@@ -33,7 +34,7 @@ class ProfileProvider extends ChangeNotifier {
 
   Future<bool> fetch(String userId) async {
     _setError(null); _setLoading(true);
-    try { _me = await repo.fetch(userId); return true; }
+    try { _me = await repo.fetch(userId,); return true; }
     catch (e){ _setError(e.toString()); return false; }
     finally { _setLoading(false); }
   }

@@ -27,7 +27,6 @@ class InvestScreen extends StatefulWidget {
 }
 
 class _InvestScreenState extends State<InvestScreen> {
-  bool saveCard = false;
   bool agree = false;
 
   final _amountCtrl = TextEditingController();
@@ -37,10 +36,36 @@ class _InvestScreenState extends State<InvestScreen> {
   bool _loading = true;
   String? _error;
 
+  // ---------- NEW: helpers ----------
+  static const int _fallbackMin = 1000;
+
+  int get _minInvestment => 1000;
+
+  int get _typedAmount {
+    final t = _amountCtrl.text.trim();
+    return int.tryParse(t.isEmpty ? '0' : t) ?? 0;
+  }
+
+  bool get _canPay => agree && _typedAmount >= _minInvestment && !_paying;
+
+  String _money(num n) {
+    final s = n.toStringAsFixed(0);
+    final b = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      b.write(s[i]);
+      final left = s.length - i - 1;
+      if (left % 3 == 0 && left != 0) b.write(',');
+    }
+    return '\$$b';
+  }
+  // -----------------------------------
+
   @override
   void initState() {
     super.initState();
     _load();
+    // Rebuild totals & button label as user types
+    _amountCtrl.addListener(() => setState(() {}));
   }
 
   @override
@@ -75,21 +100,22 @@ class _InvestScreenState extends State<InvestScreen> {
 
     if (!agree) {
       Get.snackbar('Agreement required', 'Please accept the terms to continue',
-          snackPosition: SnackPosition.BOTTOM);
+          snackPosition: SnackPosition.TOP);
       return;
     }
 
-    final raw = _amountCtrl.text.trim();
-    final amount = int.tryParse(raw.isEmpty ? '0' : raw) ?? 0;
-    if (amount <= 0) {
-      Get.snackbar('Amount', 'Enter a valid amount',
-          snackPosition: SnackPosition.BOTTOM);
+    final amount = _typedAmount; // <<< dynamic amount
+    if (amount < _minInvestment) {
+      Get.snackbar(
+        'Amount too low',
+        'Minimum investment is ${_money(_minInvestment)}',
+        snackPosition: SnackPosition.TOP,
+      );
       return;
     }
 
     setState(() => _paying = true);
     try {
-      // NOTE: use existing getter `user` (no need to edit AuthProvider)
       final auth = context.read<AuthProvider>();
       final userId = auth.user?.id;
       if (userId == null || userId.isEmpty) {
@@ -113,15 +139,13 @@ class _InvestScreenState extends State<InvestScreen> {
           paymentIntentClientSecret: clientSecret,
           merchantDisplayName: 'AlejandroLoi',
           style: ThemeMode.dark,
-          primaryButtonLabel: 'Invest \$$amount',
+          primaryButtonLabel: 'Invest ${_money(amount)}',
         ),
       );
 
       await Stripe.instance.presentPaymentSheet();
 
       final txId = clientSecret.split('_secret').first; // "pi_xxx"
-      // await payment.confirmPayment(transactionId: txId);
-      // NEW (correct key):
       await payment.confirmPayment(paymentIntentId: txId);
 
       Get.snackbar('Success', 'Payment completed',
@@ -132,7 +156,6 @@ class _InvestScreenState extends State<InvestScreen> {
       final msg = e.error.localizedMessage ?? (canceled ? 'Payment cancelled' : 'Payment failed');
       Get.snackbar(title, msg, snackPosition: SnackPosition.TOP);
     } on DioException catch (e) {
-      // Prefer server-provided message (JSON or plain text), otherwise Dio's message
       String message = e.message ?? 'Request failed';
       final data = e.response?.data;
 
@@ -151,6 +174,8 @@ class _InvestScreenState extends State<InvestScreen> {
       Get.snackbar('Error', message, snackPosition: SnackPosition.TOP);
     } catch (e) {
       Get.snackbar('Error', e.toString(), snackPosition: SnackPosition.TOP);
+    } finally {
+      if (mounted) setState(() => _paying = false);
     }
   }
 
@@ -191,7 +216,7 @@ class _InvestScreenState extends State<InvestScreen> {
         body: ListView(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           children: [
-            // RED BOX (unchanged UI)
+            // HEADER CARD
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -251,11 +276,12 @@ class _InvestScreenState extends State<InvestScreen> {
               ),
             ),
             const SizedBox(height: 6),
-            Text('Minimum investment: \$1000',
-                style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(.6))),
+            // DYNAMIC MIN
+            Text(
+              'Minimum investment: ${_money(_minInvestment)}',
+              style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(.6)),
+            ),
             const SizedBox(height: 16),
-
-            const SizedBox(height: 8),
 
             Row(
               children: [
@@ -296,31 +322,37 @@ class _InvestScreenState extends State<InvestScreen> {
             ),
             const SizedBox(height: 16),
 
+            // DYNAMIC TOTAL
             Row(
-              children: const [
-                Text('Total Investment:',
+              children: [
+                const Text('Total Investment:',
                     style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15)),
-                Spacer(),
-                Text('\$1000',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                const Spacer(),
+                Text(
+                  _money(_typedAmount),
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+                ),
               ],
             ),
             const SizedBox(height: 16),
 
+            // DYNAMIC BUTTON
             SizedBox(
               width: double.infinity,
               child: TextButton(
-                onPressed: _startPayment,
+                onPressed: _canPay ? _startPayment : null,
                 style: TextButton.styleFrom(
-                  backgroundColor: accent,
-                  foregroundColor: Colors.black,
+                  backgroundColor: _canPay ? accent : Colors.white12,
+                  foregroundColor: _canPay ? Colors.black : Colors.white60,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                child: const Text('Invest \$1000',
-                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16)),
+                child: Text(
+                  'Invest ${_money(_typedAmount)}',
+                  style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                ),
               ),
             ),
           ],

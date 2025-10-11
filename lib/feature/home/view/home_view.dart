@@ -32,7 +32,7 @@ class _HomeScreenViewState extends State<HomeScreenView> {
   String? _error;
 
   // Greeting fallbacks (match your mock)
-  String _helloName = 'Abu Sayed';
+  String _helloName = 'Alex';
   String _helloLocation = 'NY,USA';
   String? _avatarUrl; // NEW: dynamic avatar
 
@@ -78,7 +78,8 @@ class _HomeScreenViewState extends State<HomeScreenView> {
             if (name.isNotEmpty) _helloName = name;
 
             // Prefer "address", otherwise try "location" or "nationality"
-            final addrRaw = data['address'] ?? data['location'] ?? data['nationality'];
+            final addrRaw =
+                data['address'] ?? data['location'] ?? data['nationality'];
             final addr = _textize(addrRaw).trim();
             if (addr.isNotEmpty) _helloLocation = addr;
 
@@ -99,24 +100,32 @@ class _HomeScreenViewState extends State<HomeScreenView> {
 
       // ---------- 2) Lists in parallel ----------
       final res = await Future.wait([
-        _dio.get(ApiPaths.allAuction),     // /auction/all-auction
-        _dio.get(ApiPaths.allInvestment),  // /investment/all-investment
-        _dio.get(ApiPaths.allProject),     // /project/all-project
+        _dio.get(ApiPaths.allAuction), // /auction/all-auction
+        _dio.get(ApiPaths.allInvestment), // /investment/all-investment
+        _dio.get(ApiPaths.allProject), // /project/all-project
       ]);
 
       // ---------- Auctions ----------
       _auctions.clear();
-      final auctionsList =
-      _pickList(res[0].data, keys: const ['auctions', 'data', 'items', 'results']);
+      final auctionsList = _pickList(
+        res[0].data,
+        keys: const ['auctions', 'data', 'items', 'results'],
+      );
       if (auctionsList != null) {
         for (final raw in auctionsList) {
           final m = Map<String, dynamic>.from(raw as Map);
-          _auctions.add(Auctions(
-            imageUrl: _textize(m['image'] ?? m['cover'] ?? 'assets/images/tree.jpg'),
-            title: _textize(m['title'] ?? m['name'] ?? 'Live Auction'),
-            currentPrice: _asDouble(m['currentPrice'] ?? m['price'] ?? m['amount'] ?? 0),
-            viewers: _asInt(m['viewers'] ?? m['watchers'] ?? 0),
-          ));
+          _auctions.add(
+            Auctions(
+              imageUrl: _textize(
+                m['image'] ?? m['cover'] ?? 'assets/images/tree.jpg',
+              ),
+              title: _textize(m['title'] ?? m['name'] ?? 'Live Auction'),
+              currentPrice: _asDouble(
+                m['currentPrice'] ?? m['price'] ?? m['amount'] ?? 0,
+              ),
+              viewers: _asInt(m['viewers'] ?? m['watchers'] ?? 0),
+            ),
+          );
         }
       }
 
@@ -129,42 +138,54 @@ class _HomeScreenViewState extends State<HomeScreenView> {
       if (investsList != null) {
         for (final raw in investsList.take(5)) {
           final m = Map<String, dynamic>.from(raw as Map);
-          _invests.add(_InvestItem(
-            type: _textize(m['category'] ?? m['type'] ?? 'Agriculture'),
-            title: _textize(m['name'] ?? m['title'] ?? 'Urban Farming Initiative'),
-            percent: _asInt(m['progressPct'] ?? m['fundedPercent'] ?? 0),
-            price: _asNum(m['target'] ?? m['amount'] ?? m['price'] ?? 0).toString(),
-            assetImage: 'assets/images/tree.jpg', // keep your mock look
-          ));
+          _invests.add(
+            _InvestItem(
+              type: _textize(m['category'] ?? m['type'] ?? 'Agriculture'),
+              title: _textize(
+                m['name'] ?? m['title'] ?? 'Urban Farming Initiative',
+              ),
+              percent: _asInt(m['progressPct'] ?? m['fundedPercent'] ?? 0),
+              price: _asNum(
+                m['target'] ?? m['amount'] ?? m['price'] ?? 0,
+              ).toString(),
+              assetImage: 'assets/images/tree.jpg', // keep your mock look
+            ),
+          );
         }
       }
 
       // ---------- Projects ----------
       _projects.clear();
-      final projectsList =
-      _pickList(res[2].data, keys: const ['projects', 'data', 'items', 'results']);
+      final projectsList = _pickList(
+        res[2].data,
+        keys: const ['projects', 'data', 'items', 'results'],
+      );
       if (projectsList != null) {
         for (final raw in projectsList.take(5)) {
           final m = Map<String, dynamic>.from(raw as Map);
-          _projects.add(_ProjectMini(
-            category: _textize(m['category'] ?? 'Design'),
-            title: _textize(m['title'] ?? m['name'] ?? 'Project'),
-            blurb: _textize(m['description'] ?? 'Looking for an experienced pro to help…'),
-            priceRange: _priceRange(m),
-            duration: (m['duration']?.toString().isNotEmpty == true)
-                ? '${m['duration']} Days'
-                : '15 Days',
-            location: _textize(m['location'] ?? 'Brooklyn, NY'),
-            proposals: (m['proposalsCount'] != null)
-                ? '${m['proposalsCount']} Proposals'
-                : '8 Proposals',
-            avatars: const [
-              'https://i.pravatar.cc/60?img=12',
-              'https://i.pravatar.cc/60?img=22',
-              'https://i.pravatar.cc/60?img=32',
-              'https://i.pravatar.cc/60?img=42',
-            ],
-          ));
+          _projects.add(
+            _ProjectMini(
+              category: _textize(m['category'] ?? 'Design'),
+              title: _textize(m['title'] ?? m['name'] ?? 'Project'),
+              blurb: _textize(
+                m['description'] ?? 'Looking for an experienced pro to help…',
+              ),
+              priceRange: _priceRange(m),
+              duration: (m['duration']?.toString().isNotEmpty == true)
+                  ? '${m['duration']} Days'
+                  : '15 Days',
+              location: _textize(m['location'] ?? 'Brooklyn, NY'),
+              proposals: (m['proposalsCount'] != null)
+                  ? '${m['proposalsCount']} Proposals'
+                  : '8 Proposals',
+              avatars: const [
+                'https://i.pravatar.cc/60?img=12',
+                'https://i.pravatar.cc/60?img=22',
+                'https://i.pravatar.cc/60?img=32',
+                'https://i.pravatar.cc/60?img=42',
+              ],
+            ),
+          );
         }
       }
 
@@ -210,7 +231,8 @@ class _HomeScreenViewState extends State<HomeScreenView> {
 
   static double _asDouble(dynamic v) =>
       (v is num) ? v.toDouble() : double.tryParse('$v') ?? 0.0;
-  static int _asInt(dynamic v) => (v is num) ? v.toInt() : int.tryParse('$v') ?? 0;
+  static int _asInt(dynamic v) =>
+      (v is num) ? v.toInt() : int.tryParse('$v') ?? 0;
   static num _asNum(dynamic v) => (v is num) ? v : num.tryParse('$v') ?? 0;
 
   static String _priceRange(Map<String, dynamic> m) {
@@ -239,8 +261,11 @@ class _HomeScreenViewState extends State<HomeScreenView> {
                     ? NetworkImage(_avatarUrl!) as ImageProvider
                     : null,
                 child: (_avatarUrl == null || _avatarUrl!.isEmpty)
-                    ? const Icon(Icons.account_circle_outlined,
-                    color: Colors.white, size: 38)
+                    ? const Icon(
+                        Icons.account_circle_outlined,
+                        color: Colors.white,
+                        size: 38,
+                      )
                     : null,
               ),
               const SizedBox(width: 10),
@@ -258,15 +283,20 @@ class _HomeScreenViewState extends State<HomeScreenView> {
                     ),
                     Text(
                       _helloLocation,
-                      style:
-                      const TextStyle(fontSize: 16, color: Colors.white70),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.white70,
+                      ),
                     ),
                   ],
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.notifications_on_outlined,
-                    color: Colors.white, size: 30),
+                icon: const Icon(
+                  Icons.notifications_on_outlined,
+                  color: Colors.white,
+                  size: 30,
+                ),
                 onPressed: () {},
               ),
             ],
@@ -286,11 +316,13 @@ class _HomeScreenViewState extends State<HomeScreenView> {
                 imagePath: Images.currency,
                 title: "Investments",
                 subtitle:
-                "Develop Investment Strategy and Engage with Potential Funders.",
+                    "Develop Investment Strategy and Engage with Potential Funders.",
                 onTap: () {
-                  Get.to(() => const InvestmentsScreen(),
-                      transition: Transition.rightToLeft,
-                      duration: const Duration(milliseconds: 300));
+                  Get.to(
+                    () => const InvestmentsScreen(),
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 300),
+                  );
                 },
               ),
               const SizedBox(height: 15),
@@ -298,11 +330,13 @@ class _HomeScreenViewState extends State<HomeScreenView> {
                 imagePath: Images.layout,
                 title: "Project",
                 subtitle:
-                "Post a need or offer to complete someone else's project",
+                    "Post a need or offer to complete someone else's project",
                 onTap: () {
-                  Get.to(() => const ProjectScreen(),
-                      transition: Transition.rightToLeft,
-                      duration: const Duration(milliseconds: 300));
+                  Get.to(
+                    () => const ProjectScreen(),
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 300),
+                  );
                 },
               ),
               const SizedBox(height: 15),
@@ -310,11 +344,13 @@ class _HomeScreenViewState extends State<HomeScreenView> {
                 imagePath: Images.key,
                 title: "Auctions",
                 subtitle:
-                "Participate in the live product auction by placing your bid.",
+                    "Participate in the live product auction by placing your bid.",
                 onTap: () {
-                  Get.to(() => const AuctionScreen(),
-                      transition: Transition.rightToLeft,
-                      duration: const Duration(milliseconds: 300));
+                  Get.to(
+                    () => const AuctionScreen(),
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 300),
+                  );
                 },
               ),
 
@@ -333,11 +369,11 @@ class _HomeScreenViewState extends State<HomeScreenView> {
                     final a = _auctions.isNotEmpty
                         ? _auctions[index]
                         : Auctions(
-                      imageUrl: "assets/images/tree.jpg",
-                      title: "Gaming Console",
-                      currentPrice: 450,
-                      viewers: 25,
-                    );
+                            imageUrl: "assets/images/tree.jpg",
+                            title: "Gaming Console",
+                            currentPrice: 450,
+                            viewers: 25,
+                          );
                     return Padding(
                       padding: const EdgeInsets.only(right: 12),
                       child: SizedBox(
@@ -362,12 +398,12 @@ class _HomeScreenViewState extends State<HomeScreenView> {
                     final it = _invests.isNotEmpty
                         ? _invests[index]
                         : _InvestItem(
-                      type: 'Agriculture',
-                      title: 'Urban Farming Initiative',
-                      percent: 45,
-                      price: '25000',
-                      assetImage: 'assets/images/tree.jpg',
-                    );
+                            type: 'Agriculture',
+                            title: 'Urban Farming Initiative',
+                            percent: 45,
+                            price: '25000',
+                            assetImage: 'assets/images/tree.jpg',
+                          );
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: InkWell(
@@ -402,21 +438,21 @@ class _HomeScreenViewState extends State<HomeScreenView> {
                     final p = _projects.isNotEmpty
                         ? _projects[index]
                         : _ProjectMini(
-                      category: 'Design',
-                      title: 'Website Redesign for Local Business',
-                      blurb:
-                      'Looking for an experienced web designer to revamp our company website. Need',
-                      priceRange: '\$ 1,500 - 3,000',
-                      duration: '15 Days',
-                      location: 'Brooklyn, NY',
-                      proposals: '8 Proposals',
-                      avatars: const [
-                        'https://i.pravatar.cc/60?img=12',
-                        'https://i.pravatar.cc/60?img=22',
-                        'https://i.pravatar.cc/60?img=32',
-                        'https://i.pravatar.cc/60?img=42',
-                      ],
-                    );
+                            category: 'Design',
+                            title: 'Website Redesign for Local Business',
+                            blurb:
+                                'Looking for an experienced web designer to revamp our company website. Need',
+                            priceRange: '\$ 1,500 - 3,000',
+                            duration: '15 Days',
+                            location: 'Brooklyn, NY',
+                            proposals: '8 Proposals',
+                            avatars: const [
+                              'https://i.pravatar.cc/60?img=12',
+                              'https://i.pravatar.cc/60?img=22',
+                              'https://i.pravatar.cc/60?img=32',
+                              'https://i.pravatar.cc/60?img=42',
+                            ],
+                          );
 
                     return Padding(
                       padding: const EdgeInsets.only(right: 12),

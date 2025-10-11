@@ -86,6 +86,7 @@ class AuctionDto {
   final AuctionScheduleDto schedule;
   final List<String> skills;
   final String? createdBy;
+  final String? status; // <--- NEW
 
   // (CHANGE HERE) add location
   final String location;
@@ -103,6 +104,7 @@ class AuctionDto {
     required this.createdBy,
     // (CHANGE HERE) add to constructor
     required this.location,
+    this.status, // <--- NEW
   });
 
   factory AuctionDto.fromJson(Map<String, dynamic> j) => AuctionDto(
@@ -128,64 +130,11 @@ class AuctionDto {
     createdBy: j['createdBy']?.toString(),
     // (CHANGE HERE) parse location safely
     location: (j['location'] ?? '').toString(),
+    status: j['status']?.toString(), // <--- NEW
   );
 }
 
 
-// class AuctionDto {
-//   final String id;
-//   final String name;
-//   final String description;
-//   final List<String> category;
-//   final int startingBid;
-//   final List<AuctionImageDto> image;
-//   final int? duration; // minutes
-//   final AuctionScheduleDto schedule;
-//   final List<String> skills;
-//   final String? createdBy;
-//
-//   AuctionDto({
-//     required this.id,
-//     required this.name,
-//     required this.description,
-//     required this.category,
-//     required this.startingBid,
-//     required this.image,
-//     required this.duration,
-//     required this.schedule,
-//     required this.skills,
-//     required this.createdBy,
-//   });
-//
-//   factory AuctionDto.fromJson(Map<String, dynamic> j) => AuctionDto(
-//     id: (j['_id'] ?? j['id'] ?? '').toString(),
-//     name: (j['name'] ?? '').toString(),
-//     description: (j['description'] ?? '').toString(),
-//     category: (j['category'] is List
-//         ? (j['category'] as List)
-//         : <dynamic>[])
-//         .map((e) => e.toString())
-//         .toList(),
-//     startingBid: (j['starting_bid'] ?? 0) is int
-//         ? j['starting_bid'] as int
-//         : int.tryParse('${j['starting_bid']}') ?? 0,
-//     image: (j['image'] is List ? j['image'] as List : const [])
-//         .map((e) => AuctionImageDto.fromJson(
-//         (e as Map).cast<String, dynamic>()))
-//         .toList(),
-//     duration: (j['duration'] == null)
-//         ? null
-//         : (j['duration'] is int
-//         ? j['duration'] as int
-//         : int.tryParse('${j['duration']}')),
-//     schedule: AuctionScheduleDto.fromJson(
-//         (j['schedule'] as Map).cast<String, dynamic>()),
-//     skills: (j['skills'] is List ? j['skills'] as List : const [])
-//         .map((e) => e.toString())
-//         .toList(),
-//     createdBy: j['createdBy']?.toString(),
-//   );
-// }
 
 class AuctionListResponse {
   final int total;
@@ -202,20 +151,7 @@ class AuctionListResponse {
     required this.auctions,
   });
 
-  // factory AuctionListResponse.fromJson(Map<String, dynamic> j) {
-  //   final data = (j['data'] as Map).cast<String, dynamic>();
-  //   final meta = (data..remove('auctions'));
-  //   final list = (data['auctions'] as List? ?? const [])
-  //       .map((e) => AuctionDto.fromJson((e as Map).cast<String, dynamic>()))
-  //       .toList();
-  //   return AuctionListResponse(
-  //     total: (meta['total'] ?? list.length) as int,
-  //     page: (meta['page'] ?? 1) as int,
-  //     limit: (meta['limit'] ?? list.length) as int,
-  //     pages: (meta['pages'] ?? 1) as int,
-  //     auctions: list,
-  //   );
-  // }
+
 
   // lib/feature/models/auction.dart  (where AuctionListResponse lives)
 // REPLACE the factory with this exact version
@@ -241,6 +177,56 @@ class AuctionListResponse {
   }
 
 
+
+
 }
+
+
+class BidMessageDto {
+  final String id;
+  final String? auction; // id or null depending on backend shape
+  final String? user;    // id of user
+  final int amount;
+  final String message;
+  final DateTime createdAt;
+
+  BidMessageDto({
+    required this.id,
+    required this.auction,
+    required this.user,
+    required this.amount,
+    required this.message,
+    required this.createdAt,
+  });
+
+  factory BidMessageDto.fromJson(Map<String, dynamic> j) {
+    int _i(dynamic v, [int d = 0]) => (v is num) ? v.toInt() : int.tryParse('$v') ?? d;
+    DateTime _dt(dynamic v) => DateTime.tryParse('$v') ?? DateTime.fromMillisecondsSinceEpoch(0);
+
+    return BidMessageDto(
+      id: (j['_id'] ?? j['id'] ?? '').toString(),
+      auction: j['auction']?.toString(),
+      user: j['user']?.toString(),
+      amount: _i(j['amount']),
+      message: (j['message'] ?? '').toString(),
+      createdAt: _dt(j['createdAt']),
+    );
+  }
+}
+
+class BidListResponse {
+  final List<BidMessageDto> items;
+  BidListResponse(this.items);
+
+  factory BidListResponse.fromJson(Map<String, dynamic> j) {
+    final data = (j['data'] is List) ? (j['data'] as List) : const <dynamic>[];
+    final items = data
+        .whereType<Map>()
+        .map((m) => BidMessageDto.fromJson(Map<String, dynamic>.from(m)))
+        .toList();
+    return BidListResponse(items);
+  }
+}
+
 
 

@@ -16,6 +16,7 @@ import 'core/env/env.dart';
 import 'core/network/api_service/api_client.dart';
 import 'core/network/api_service/token_store.dart';
 
+import 'core/network/payment_service.dart';
 import 'feature/auth/providers/auth_provider.dart';
 import 'feature/auth/repository/auth_repository.dart';
 
@@ -102,7 +103,13 @@ void main() async{
           create: (ctx) => AuctionProvider(ctx.read<AuctionRepository>()),
         ),
 
-        
+        ProxyProvider<ApiClient, PaymentService>(
+          update: (_, client, __) => PaymentService(client.dio),
+        ),
+
+
+
+
 
 
 

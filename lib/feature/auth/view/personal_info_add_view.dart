@@ -40,6 +40,7 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
 
   @override
   void initState() {
+    debugPrint("PersonalInfoAddView: initState called");
     super.initState();
 
     // Ensure we have profile data; if not, fetch it first.
@@ -48,9 +49,7 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
       String? uid = auth.user?.id ?? await auth.repo.tokenStore.readUserId();
 
       final pp = context.read<ProfileProvider>();
-      if (pp.me == null && uid != null) {
-        await pp.fetch(uid); // this will notifyListeners()
-      }
+      if(uid != null) await pp.fetch(uid ?? ""); // this will notifyListeners()
 
       // If data is already present, hydrate now.
       if (pp.me != null && !_hydrated) {

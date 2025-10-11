@@ -5,10 +5,10 @@ import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
 import '../../app_ground.dart';
-import '../../../providers/auction_provider.dart';
 import '../../models/auction.dart' as api; // DTOs
+import '../../../providers/auction_provider.dart';
+import '../../../core/env/env.dart' show AppEnv; // for baseUrl
 import 'auction_detail.dart';
-import '../../../core/env/env.dart' show AppEnv; // <-- to build absolute URLs
 
 enum AuctionStatus { live, upcoming, ended }
 
@@ -46,7 +46,6 @@ class AuctionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dark = ThemeData.dark();
-    // NOTE: keep Providers available; UI is identical.
     return Theme(
       data: dark.copyWith(
         scaffoldBackgroundColor: const Color(0xFF0F0F10),
@@ -384,26 +383,31 @@ class _AuctionListViewState extends State<AuctionListView> {
     final minutes = d.duration ?? 60;
     final end = (start == null) ? null : start.add(Duration(minutes: minutes));
 
-    final now = DateTime.now();
-    final status = (start == null || end == null)
-        ? AuctionStatus.live
-        : now.isBefore(start)
-        ? AuctionStatus.upcoming
-        : now.isAfter(end)
-        ? AuctionStatus.ended
-        : AuctionStatus.live;
+    AuctionStatus statusFromDates() {
+      final now = DateTime.now();
+      if (start == null || end == null) return AuctionStatus.live;
+      if (now.isBefore(start)) return AuctionStatus.upcoming;
+      if (now.isAfter(end)) return AuctionStatus.ended;
+      return AuctionStatus.live;
+    }
 
-    // ===== image fix: support relative URLs and empty/variant payloads =====
-    // The API returns: image: [{ url, filename, public_id }]  OR sometimes string(s).
+    // Prefer API's status when present (your backend returns "upcoming"/"ended"/"live")
+    final s = (d.status ?? '').toLowerCase();
+    final status = s == 'upcoming'
+        ? AuctionStatus.upcoming
+        : s == 'ended'
+        ? AuctionStatus.ended
+        : s == 'live' || s == 'running'
+        ? AuctionStatus.live
+        : statusFromDates();
+
+    // robust image: support relative URLs and empty payloads
     String rawUrl = '';
     if (d.image.isNotEmpty) {
-      // Prefer DTO's url field when present
       rawUrl = d.image.first.url;
     }
-    // Build absolute URL if needed + final fallback
-    final img = _absoluteUrl(rawUrl).isEmpty
-        ? _kPlaceholder
-        : _absoluteUrl(rawUrl);
+    final img =
+    _absoluteUrl(rawUrl).isEmpty ? _kPlaceholder : _absoluteUrl(rawUrl);
 
     return Auction(
       id: d.id,
@@ -446,7 +450,7 @@ class _AuctionListViewState extends State<AuctionListView> {
   }
 }
 
-// ===== Cards / Tiles (unchanged visuals; now robust image widget) =====
+// ===== Cards / Tiles (design unchanged) =====
 
 class LiveAuctionCard extends StatelessWidget {
   const LiveAuctionCard({super.key, required this.a});
@@ -478,7 +482,7 @@ class LiveAuctionCard extends StatelessWidget {
                   ),
                   child: AspectRatio(
                     aspectRatio: 16 / 9,
-                    child: _NetImage(a.imageUrl), // <-- robust image
+                    child: _NetImage(a.imageUrl),
                   ),
                 ),
                 Positioned(
@@ -505,7 +509,8 @@ class LiveAuctionCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: const Color(0x66000000),
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: const Color(0x55FFFFFF), width: 1),
+                      border:
+                      Border.all(color: const Color(0x55FFFFFF), width: 1),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -572,12 +577,13 @@ class UpcomingAuctionTile extends StatelessWidget {
               child: SizedBox(
                 height: 80,
                 width: 110,
-                child: _NetImage(a.imageUrl), // <-- robust image
+                child: _NetImage(a.imageUrl),
               ),
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -645,7 +651,7 @@ class EndedAuctionTile extends StatelessWidget {
               child: SizedBox(
                 height: 80,
                 width: 110,
-                child: _NetImage(a.imageUrl), // <-- robust image
+                child: _NetImage(a.imageUrl),
               ),
             ),
             Expanded(
@@ -742,7 +748,7 @@ String _absoluteUrl(String url) {
   if (u.startsWith('http://') || u.startsWith('https://')) return u;
 
   // Build absolute from backend base if the server returns relative paths
-  final base = AppEnv.baseUrl; // or AppEnv.fileBaseUrl if you have one
+  final base = AppEnv.baseUrl;
   if (base.isEmpty) return u;
   if (base.endsWith('/') && u.startsWith('/')) return '$base${u.substring(1)}';
   if (!base.endsWith('/') && !u.startsWith('/')) return '$base/$u';
@@ -779,7 +785,7 @@ String _timeOf(DateTime d) {
   return '$h:$m $ampm';
 }
 
-/// Small image widget that won’t break layout if URL is bad/relative.
+/// Small image widget that won’t break layout if URL is bad.
 class _NetImage extends StatelessWidget {
   final String url;
   const _NetImage(this.url);
@@ -790,15 +796,14 @@ class _NetImage extends StatelessWidget {
     return Image.network(
       u,
       fit: BoxFit.cover,
-      // Subtle loader without design changes
       loadingBuilder: (ctx, child, progress) {
         if (progress == null) return child;
         return Container(
           color: const Color(0x11000000),
-          child: const Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          child:
+          const Center(child: CircularProgressIndicator(strokeWidth: 2)),
         );
       },
-      // Fallback if the URL 404s or is invalid
       errorBuilder: (ctx, _, __) {
         return Container(
           color: const Color(0x11000000),

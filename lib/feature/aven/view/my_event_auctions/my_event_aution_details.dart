@@ -1,50 +1,52 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../providers/auction_provider.dart';        // (change here)
-import '../../../models/auction.dart';                       // (change here)
+import '../../../../providers/auction_provider.dart';
+import '../../../models/auction.dart';
 import 'my_event_auction_purchase.dart';
 
-/// Color palette tuned to the mock
+/// Color palette
 const _bg = Color(0xFF2B2B2E);
 const _card = Color(0xFF1E1F22);
 const _pillGreen = Color(0xFF2AA86F);
 const _accent = Color(0xFFFF7A00);
 
 class MyEventAutionDetailScreen extends StatefulWidget {
-  final String auctionId;                                   // (change here)
-  const MyEventAutionDetailScreen({
-    super.key,
-    required this.auctionId,                                // (change here)
-  });
+  final String auctionId;
+  const MyEventAutionDetailScreen({super.key, required this.auctionId});
 
   @override
   State<MyEventAutionDetailScreen> createState() => _MyEventAutionDetailScreenState();
 }
 
 class _MyEventAutionDetailScreenState extends State<MyEventAutionDetailScreen> {
-  AuctionDto? _auction;                                     // (change here)
-  bool _loading = true;                                     // (change here)
-  String? _error;                                           // (change here)
+  AuctionDto? _auction;
+  bool _loading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) async { // (change here)
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       try {
         final a = await context.read<AuctionProvider>().one(widget.auctionId);
         if (!mounted) return;
-        setState(() { _auction = a; _loading = false; });
+        setState(() {
+          _auction = a;
+          _loading = false;
+        });
       } catch (e) {
         if (!mounted) return;
-        setState(() { _error = e.toString(); _loading = false; });
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
       }
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    // loading & error states (keeps scaffold look)
     if (_loading) {
       return const Scaffold(backgroundColor: _bg, body: Center(child: CircularProgressIndicator()));
     }
@@ -59,12 +61,9 @@ class _MyEventAutionDetailScreenState extends State<MyEventAutionDetailScreen> {
         ),
       );
     }
-    final a = _auction!;                                    // (change here)
 
-    // pick first image URL if present, else fall back to asset
-    final headerUrl = (a.image.isNotEmpty && a.image.first.url.isNotEmpty)
-        ? a.image.first.url
-        : null;                                             // (change here)
+    final a = _auction!;
+    final headerUrl = (a.image.isNotEmpty && a.image.first.url.isNotEmpty) ? a.image.first.url : null;
 
     return Scaffold(
       backgroundColor: _bg,
@@ -72,20 +71,46 @@ class _MyEventAutionDetailScreenState extends State<MyEventAutionDetailScreen> {
         top: false,
         child: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(child: _Header(imageUrl: headerUrl)),    // (change here)
+            // Top app bar with title
+            SliverAppBar(
+              pinned: true,
+              backgroundColor: _bg,
+              elevation: 0,
+              centerTitle: false,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+              ),
+              title: const Text(
+                'Auction Details',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+              ),
+            ),
+
+            // Header image with heart
+            SliverToBoxAdapter(child: _Header(imageUrl: headerUrl)),
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+            // Details card
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: _DetailsCard(                                   // (change here)
-                  title: a.name,                                        // (change here)
-                  description: a.description,                           // (change here)
-                  finalBidText: _money(a.startingBid),                  // (change here)
-                  statusText: 'Won',                                    // keep your UI label
+                child: _DetailsCard(
+                  title: a.name,
+                  description: a.description,
+                  finalBidText: _money(a.startingBid),
+                  statusText: 'Won',
+                  auctionId: a.id,
+                  finalBidAmount: a.startingBid.round(),
+                  imageUrl: headerUrl,      // pass to purchase screen
+                  itemTitle: a.name,        // pass to purchase screen
                 ),
               ),
             ),
+
             const SliverToBoxAdapter(child: SizedBox(height: 16)),
+
+            // Live chat (demo)
             const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
@@ -101,30 +126,35 @@ class _MyEventAutionDetailScreenState extends State<MyEventAutionDetailScreen> {
 }
 
 class _Header extends StatelessWidget {
-  final String? imageUrl;                                   // (change here)
-  const _Header({this.imageUrl});                           // (change here)
+  final String? imageUrl;
+  const _Header({this.imageUrl});
 
   @override
   Widget build(BuildContext context) {
-    final top = MediaQuery.of(context).padding.top;
+    final topInset = MediaQuery.of(context).padding.top;
 
     return AspectRatio(
       aspectRatio: 375 / 228,
       child: Stack(
         fit: StackFit.expand,
         children: [
-          // IMAGE (network if available, else your asset)        // (change here)
+          // Image (network -> asset fallback)
           ClipRRect(
             borderRadius: const BorderRadius.only(
               bottomLeft: Radius.circular(16),
               bottomRight: Radius.circular(16),
             ),
-            child: imageUrl == null
+            child: imageUrl == null || imageUrl!.isEmpty
                 ? Image.asset('assets/images/earpod.jpg', fit: BoxFit.cover)
-                : Image.network(imageUrl!, fit: BoxFit.cover),
+                : Image.network(
+              imageUrl!,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) =>
+                  Image.asset('assets/images/earpod.jpg', fit: BoxFit.cover),
+            ),
           ),
 
-          // GRADIENT
+          // Gradient overlay
           Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
@@ -141,34 +171,9 @@ class _Header extends StatelessWidget {
             ),
           ),
 
-          // TOP ICONS (left: back + share, right: heart)
+          // “LIVE” pill
           Positioned(
-            top: top + 12,
-            left: 12,
-            right: 12,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    _RoundIconButton(
-                      icon: Icons.arrow_back,
-                      onTap: () => Navigator.of(context, rootNavigator: true).pop(),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                ),
-                _RoundIconButton(
-                  icon: Icons.favorite_border,
-                  onTap: () {},
-                ),
-              ],
-            ),
-          ),
-
-          // LIVE PILL (CENTERED)
-          Positioned(
-            top: top + 28,
+            top: topInset + 28,
             left: 0,
             right: 0,
             child: const Align(
@@ -177,7 +182,19 @@ class _Header extends StatelessWidget {
             ),
           ),
 
-          // CREATOR + STATS (kept as in your UI)
+          // Heart over image (top-right)
+          Positioned(
+            top: topInset + 12,
+            right: 12,
+            child: _RoundIconButton(
+              icon: Icons.favorite_border,
+              onTap: () {
+                // TODO: toggle favorite
+              },
+            ),
+          ),
+
+          // Creator + stats (demo)
           Positioned(
             left: 16,
             right: 16,
@@ -196,21 +213,12 @@ class _Header extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        'Eleanor Pena',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 14,
-                          color: Colors.white,
-                        ),
-                      ),
+                      Text('Eleanor Pena',
+                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.white)),
                       SizedBox(height: 2),
                       Opacity(
                         opacity: 0.85,
-                        child: Text(
-                          '@eleanorpena',
-                          style: TextStyle(fontSize: 12, color: Colors.white),
-                        ),
+                        child: Text('@eleanorpena', style: TextStyle(fontSize: 12, color: Colors.white)),
                       ),
                     ],
                   ),
@@ -232,49 +240,49 @@ class _Header extends StatelessWidget {
 }
 
 class _DetailsCard extends StatelessWidget {
-  final String title;                                       // (change here)
-  final String description;                                 // (change here)
-  final String finalBidText;                                // (change here)
-  final String statusText;                                  // (change here)
+  final String title;
+  final String description;
+  final String finalBidText;
+  final String statusText;
+
+  // these let us pass data to the purchase screen
+  final String auctionId;
+  final int finalBidAmount;
+  final String? imageUrl;
+  final String? itemTitle;
 
   const _DetailsCard({
-    required this.title,                                    // (change here)
-    required this.description,                              // (change here)
-    required this.finalBidText,                             // (change here)
-    required this.statusText,                               // (change here)
+    required this.title,
+    required this.description,
+    required this.finalBidText,
+    required this.statusText,
+    required this.auctionId,
+    required this.finalBidAmount,
+    this.imageUrl,
+    this.itemTitle,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: _card,
-        borderRadius: BorderRadius.circular(16),
-      ),
+      decoration: BoxDecoration(color: _card, borderRadius: BorderRadius.circular(16)),
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title + Won pill
+          // Title + status
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(
-                  title,                                     // (change here)
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-                ),
+                child: Text(title,
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _pillGreen,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  statusText,                                // (change here)
-                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-                ),
+                decoration: BoxDecoration(color: _pillGreen, borderRadius: BorderRadius.circular(20)),
+                child: Text(statusText,
+                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
               ),
             ],
           ),
@@ -282,16 +290,13 @@ class _DetailsCard extends StatelessWidget {
           Opacity(
             opacity: 0.9,
             child: Text(
-              description,                                   // (change here)
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontSize: 13,
-                color: Colors.white,
-              ),
+              description,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 13, color: Colors.white),
             ),
           ),
           const SizedBox(height: 16),
 
-          // Final Bid + Purchase
+          // Final bid + CTA
           Row(
             children: [
               Column(
@@ -302,14 +307,8 @@ class _DetailsCard extends StatelessWidget {
                     child: Text('Final Bid:', style: TextStyle(fontSize: 12, color: Colors.white70)),
                   ),
                   const SizedBox(height: 4),
-                  Text(
-                    finalBidText,                             // (change here)
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: _accent,
-                    ),
-                  ),
+                  Text(finalBidText,
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _accent)),
                 ],
               ),
               const Spacer(),
@@ -319,14 +318,19 @@ class _DetailsCard extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _accent,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(horizontal: 18),
                   ),
                   onPressed: () {
                     Navigator.of(context, rootNavigator: true).push(
-                      _slideRightToLeft(const MyEventAuctionPurchase()),
+                      _slideRightToLeft(
+                        MyEventAuctionPurchase(
+                          auctionId: auctionId,
+                          amount: finalBidAmount,
+                          imageUrl: imageUrl,
+                          itemTitle: itemTitle,
+                        ),
+                      ),
                     );
                   },
                   child: const Text('Purchase'),
@@ -340,6 +344,7 @@ class _DetailsCard extends StatelessWidget {
   }
 }
 
+// ---------------- Live Chat (demo) ----------------
 class _LiveChatSection extends StatefulWidget {
   const _LiveChatSection();
 
@@ -369,29 +374,20 @@ class _LiveChatSectionState extends State<_LiveChatSection> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: _card,
-        borderRadius: BorderRadius.circular(16),
-      ),
+      decoration: BoxDecoration(color: _card, borderRadius: BorderRadius.circular(16)),
       child: Column(
         children: [
-          // section header
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
             child: Row(
               children: const [
                 Icon(Icons.chat_bubble_outline, size: 18, color: Colors.white),
                 SizedBox(width: 8),
-                Text(
-                  'Live Chat',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white),
-                ),
+                Text('Live Chat', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
               ],
             ),
           ),
           const Divider(height: 1, thickness: 1, color: Colors.white24),
-
-          // messages list
           ListView.separated(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             shrinkWrap: true,
@@ -401,8 +397,6 @@ class _LiveChatSectionState extends State<_LiveChatSection> {
             itemCount: _messages.length,
           ),
           const SizedBox(height: 4),
-
-          // input
           Padding(
             padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
             child: Row(
@@ -434,9 +428,7 @@ class _LiveChatSectionState extends State<_LiveChatSection> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _accent,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
                     onPressed: _send,
                     child: const Icon(Icons.near_me_outlined),
@@ -460,6 +452,7 @@ class _LiveChatSectionState extends State<_LiveChatSection> {
   }
 }
 
+// ---------------- Reusable bits ----------------
 class _RoundIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
@@ -474,10 +467,8 @@ class _RoundIconButton extends StatelessWidget {
       child: Container(
         height: 36,
         width: 36,
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.45),
-          borderRadius: BorderRadius.circular(18),
-        ),
+        decoration:
+        BoxDecoration(color: Colors.black.withOpacity(0.45), borderRadius: BorderRadius.circular(18)),
         child: Icon(icon, size: 20, color: Colors.white),
       ),
     );
@@ -491,10 +482,7 @@ class _LivePill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.redAccent,
-        borderRadius: BorderRadius.circular(20),
-      ),
+      decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(20)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -511,15 +499,8 @@ class _LivePill extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 6),
-          const Text(
-            'LIVE',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
-            ),
-          ),
+          const Text('LIVE',
+              style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
         ],
       ),
     );
@@ -536,10 +517,7 @@ class _StatPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.45),
-        borderRadius: BorderRadius.circular(16),
-      ),
+      decoration: BoxDecoration(color: Colors.black.withOpacity(0.45), borderRadius: BorderRadius.circular(16)),
       child: Row(
         children: [
           Icon(icon, size: 14, color: Colors.white),
@@ -581,29 +559,17 @@ class _ChatRow extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      message.user,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    child: Text(message.user,
+                        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
                   ),
                   Opacity(
                     opacity: 0.7,
-                    child: Text(
-                      message.time,
-                      style: const TextStyle(fontSize: 11, color: Colors.white70),
-                    ),
+                    child: Text(message.time, style: const TextStyle(fontSize: 11, color: Colors.white70)),
                   ),
                 ],
               ),
               const SizedBox(height: 4),
-              Text(
-                message.text,
-                style: const TextStyle(fontSize: 13, color: Colors.white),
-              ),
+              Text(message.text, style: const TextStyle(fontSize: 13, color: Colors.white)),
             ],
           ),
         ),
@@ -619,14 +585,14 @@ Route _slideRightToLeft(Widget page) {
     transitionDuration: const Duration(milliseconds: 320),
     reverseTransitionDuration: const Duration(milliseconds: 280),
     transitionsBuilder: (_, animation, __, child) {
-      final tween = Tween(begin: const Offset(1, 0), end: Offset.zero)
-          .chain(CurveTween(curve: Curves.easeInOut));
+      final tween =
+      Tween(begin: const Offset(1, 0), end: Offset.zero).chain(CurveTween(curve: Curves.easeInOut));
       return SlideTransition(position: animation.drive(tween), child: child);
     },
   );
 }
 
-/// ------- helpers -------
+// ---- formatting helper ----
 String _money(num n) {
   final s = n.toStringAsFixed(0);
   final b = StringBuffer();
