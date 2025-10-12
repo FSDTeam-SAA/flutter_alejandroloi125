@@ -135,7 +135,7 @@ class _CreateProjectViewState extends State<CreateProjectView> {
 
                 Text("Category", style: bodyText1),
                 CustomTextField(
-                  hintText: 'Enter your Category Name',
+                  hintText: 'Enter your Category Name(e.g: Build,Home)',
                   controller: _categoryCtl,
                   validator: (v) => _required(v, 'Category'),
                 ),
@@ -206,7 +206,7 @@ class _CreateProjectViewState extends State<CreateProjectView> {
                   child: Text("Deadline", style: bodyText1),
                 ),
                 CustomTextField(
-                  hintText: "Number of day",
+                  hintText: "Number of day(e.g:30)",
                   prefixIcon: Icons.watch_later_outlined,
                   keyboardType: const TextInputType.numberWithOptions(decimal: false),
                   controller: _durationCtl,

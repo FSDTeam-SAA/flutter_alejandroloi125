@@ -16,7 +16,7 @@ class ProjectService {
     required String category,
     required int minBudget,
     required int maxBudget,
-    required int deadlineDays,
+    required int durationDays,
     required String location,
     required List<String> skills,
   }) async {
@@ -29,7 +29,7 @@ class ProjectService {
       'category'   : category,
       'budget_min' : minBudget,             // <— NOT min_budget
       'budget_max' : maxBudget,             // <— NOT max_budget
-      'deadline'   : '$deadlineDays day', // <— string form typically required
+      'duration'   : durationDays, // <— string form typically required
       'location'   : location,
       // If backend prefers comma string instead of array, do: skills.join(', ')
       'skills'     : skills,

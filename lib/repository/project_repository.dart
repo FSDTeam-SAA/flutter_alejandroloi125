@@ -22,7 +22,7 @@ class ProjectRepository {
     required String category,
     required int minBudget,
     required int maxBudget,
-    required int deadlineDays,
+    required int durationDays,
     required String location,
     required List<String> skills,
   }) async {
@@ -33,7 +33,7 @@ class ProjectRepository {
         category: category,
         minBudget: minBudget,
         maxBudget: maxBudget,
-        deadlineDays: deadlineDays,
+        durationDays: durationDays,
         location: location,
         skills: skills,
       );

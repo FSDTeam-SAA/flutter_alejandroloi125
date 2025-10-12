@@ -50,55 +50,28 @@ class _ResetPasswordSecurityCodeState extends State<ResetPasswordSecurityCode> {
     super.dispose();
   }
 
-  // Future<void> _verify() async {
-  //   if (_loading) return;
-  //
-  //   final code = otpController.text.trim();
-  //   if (code.length != 6) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text('Enter the 6-digit OTP from your email')),
-  //     );
-  //     return;
-  //   }
-  //
-  //   setState(() => _loading = true);
-  //
-  //   // No API call — proceed to new password screen with entered OTP
-  //   if (!mounted) return;
-  //   Get.to(
-  //         () => CreateNewPasswordScreen(email: widget.email, otp: code),
-  //     transition: Transition.rightToLeft,
-  //     duration: const Duration(milliseconds: 350),
-  //     curve: Curves.easeInOut,
-  //   );
-  //
-  //   if (!mounted) return;
-  //   setState(() => _loading = false);
-  // }
-
   Future<void> _verify() async {
-// _verify()
+    // _verify()
     final ap = context.read<AuthProvider>();
     final code = otpController.text.trim();
-    final err  = ap.validateOtp(code);
+    final err = ap.validateOtp(code);
     if (err != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
+      Get.snackbar(
+        'Error',
+        err, // err is a String
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 3),
+      );
       return;
     }
-    Get.to(() => CreateNewPasswordScreen(email: widget.email, otp: code));
+    Get.to(
+      () => CreateNewPasswordScreen(email: widget.email, otp: code),
+      transition: Transition.rightToLeft,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeInOut,
+    );
   }
-
-
-  // Future<void> _resend() async {
-  //   if (_loading || _seconds > 0) return;
-  //
-  //   // No API call — just restart timer and notify the user
-  //   _startTimer();
-  //   if (!mounted) return;
-  //   ScaffoldMessenger.of(context).showSnackBar(
-  //     const SnackBar(content: Text('Code resent')),
-  //   );
-  // }
 
   Future<void> _resend() async {
     // _resend()
@@ -106,13 +79,26 @@ class _ResetPasswordSecurityCodeState extends State<ResetPasswordSecurityCode> {
       final ok = await context.read<AuthProvider>().sendResetOtp(widget.email);
       if (ok) {
         _startTimer();
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('OTP resent')));
+        Get.snackbar(
+          'Success',
+          'OTP resent',
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 3),
+        );
       } else {
         final ap = context.read<AuthProvider>();
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ap.error ?? 'Resend failed')));
+        // ScaffoldMessenger.of(
+        //   context,
+        // ).showSnackBar(SnackBar(content: Text(ap.error ?? 'Resend failed')));
+        Get.snackbar(
+          'Error',
+          ap.error ?? 'Resend failed',
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 3),
+
+        );
       }
     }
-
   }
 
   @override
@@ -126,73 +112,91 @@ class _ResetPasswordSecurityCodeState extends State<ResetPasswordSecurityCode> {
           child: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
         ),
         backgroundColor: Colors.transparent,
-        title: const Text("Enter security code", style: TextStyle(color: Colors.white)),
+        title: const Text(
+          "Enter security code",
+          style: TextStyle(color: Colors.white),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text("Enter OTP", style: headingText),
-          Text(
-            "Please check your Email for a message with your code. Your code is 6 numbers long.",
-            style: bodyText1.copyWith(color: const Color(0xFFB5B7BA)),
-          ),
-          const SizedBox(height: 12),
-          Text(widget.email, style: TextStyle(color: AppColors.bottomColor1, fontSize: 16)),
-          const SizedBox(height: 30),
-
-          AbsorbPointer(
-            absorbing: _loading,
-            child: Pinput(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              autofocus: true,
-              length: 6,
-              controller: otpController,
-              keyboardType: TextInputType.number,
-              textInputAction: TextInputAction.done,
-              defaultPinTheme: PinTheme(
-                height: 52,
-                width: 48,
-                textStyle: const TextStyle(
-                  fontSize: 20, color: Colors.white, fontWeight: FontWeight.bold,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.fieldColor,
-                  borderRadius: BorderRadius.circular(9),
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 10),
-          Center(
-            child: Text(
-              _seconds > 0 ? 'Resend code in ${_seconds}s' : 'You can resend now',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Enter OTP", style: headingText),
+            Text(
+              "Please check your Email for a message with your code. Your code is 6 numbers long.",
               style: bodyText1.copyWith(color: const Color(0xFFB5B7BA)),
             ),
-          ),
-          const SizedBox(height: 20),
+            const SizedBox(height: 12),
+            Text(
+              widget.email,
+              style: TextStyle(color: AppColors.bottomColor1, fontSize: 16),
+            ),
+            const SizedBox(height: 30),
 
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _loading ? null : _verify,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.bottomColor1,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            AbsorbPointer(
+              absorbing: _loading,
+              child: Pinput(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                autofocus: true,
+                length: 6,
+                controller: otpController,
+                keyboardType: TextInputType.number,
+                textInputAction: TextInputAction.done,
+                defaultPinTheme: PinTheme(
+                  height: 52,
+                  width: 48,
+                  textStyle: const TextStyle(
+                    fontSize: 20,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.fieldColor,
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                ),
               ),
-              child: Text(_loading ? "Verifying..." : "Verify"),
             ),
-          ),
 
-          const SizedBox(height: 10),
-          Center(
-            child: TextButton(
-              onPressed: (_seconds == 0 && !_loading) ? _resend : null,
-              child: const Text('Resend', style: TextStyle(color: Colors.orangeAccent)),
+            const SizedBox(height: 10),
+            Center(
+              child: Text(
+                _seconds > 0
+                    ? 'Resend code in ${_seconds}s'
+                    : 'You can resend now',
+                style: bodyText1.copyWith(color: const Color(0xFFB5B7BA)),
+              ),
             ),
-          ),
-        ]),
+            const SizedBox(height: 20),
+
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _loading ? null : _verify,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.bottomColor1,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(_loading ? "Verifying..." : "Verify"),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+            Center(
+              child: TextButton(
+                onPressed: (_seconds == 0 && !_loading) ? _resend : null,
+                child: const Text(
+                  'Resend',
+                  style: TextStyle(color: Colors.orangeAccent),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

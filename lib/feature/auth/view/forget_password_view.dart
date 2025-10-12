@@ -19,26 +19,10 @@ class _ForgetPasswordViewState extends State<ForgetPasswordView> {
   final _formKey = GlobalKey<FormState>();
 
   @override
-  void dispose() { emailController.dispose(); super.dispose(); }
-
-  // Future<void> _continue() async {
-  //   final ap = context.read<AuthProvider>();
-  //   if (!(_formKey.currentState?.validate() ?? false)) return;
-  //
-  //   final ok = await ap.sendResetOtp(emailController.text.trim());
-  //   if (!mounted) return;
-  //
-  //   if (ok) {
-  //     Get.to(() => ResetPasswordSecurityCode(email: emailController.text.trim()));
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       const SnackBar(content: Text('OTP sent to your email')),
-  //     );
-  //   } else {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(content: Text(ap.error ?? 'Failed to send OTP')),
-  //     );
-  //   }
-  // }
+  void dispose() {
+    emailController.dispose();
+    super.dispose();
+  }
 
   Future<void> _continue() async {
     // onTap of Continue button
@@ -49,13 +33,25 @@ class _ForgetPasswordViewState extends State<ForgetPasswordView> {
     if (!mounted) return;
 
     if (ok) {
-      Get.to(() => ResetPasswordSecurityCode(email: emailController.text.trim()));
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('OTP sent to your email')),
+      Get.to(
+        () => ResetPasswordSecurityCode(email: emailController.text.trim()),
+        transition: Transition.rightToLeft,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+      );
+      Get.snackbar(
+        'Success',
+        'OTP sent to your email',
+        snackPosition: SnackPosition.TOP, // like your other example
+        duration: const Duration(seconds: 3),
+        colorText: Colors.white,
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ap.error ?? 'Failed to send OTP')),
+      Get.snackbar(
+        'Error',
+        ap.error ?? 'Failed to send OTP',
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 3),
       );
     }
   }
@@ -67,32 +63,46 @@ class _ForgetPasswordViewState extends State<ForgetPasswordView> {
       backgroundColor: Colors.black,
       appBar: AppBar(
         centerTitle: true,
-        leading: InkWell(onTap: () => Get.back(),
-            child: const Icon(Icons.arrow_back, color: Colors.white, size: 30)),
+        leading: InkWell(
+          onTap: () => Get.back(),
+          child: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
+        ),
         backgroundColor: Colors.transparent,
-        title: const Text('Forgot Password', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Forgot Password',
+          style: TextStyle(color: Colors.white),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Select which contact details should we use to reset your password', style: text16),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 15),
-              child: CustomTextField(
-                prefixIcon: Icons.email_outlined,
-                hintText: 'Email',
-                controller: emailController,
-                // validator: (v) => ap.validateEmail(v),
-                validator: (v) => context.read<AuthProvider>().validateEmail(v),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Select which contact details should we use to reset your password',
+                style: text16,
               ),
-            ),
-            GestureDetector(
-              onTap: ap.loading ? null : _continue,
-              child: bottomWidget(text: ap.loading ? 'Please wait...' : 'Continue'),
-            ),
-          ]),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                child: CustomTextField(
+                  prefixIcon: Icons.email_outlined,
+                  hintText: 'Email',
+                  controller: emailController,
+                  // validator: (v) => ap.validateEmail(v),
+                  validator: (v) =>
+                      context.read<AuthProvider>().validateEmail(v),
+                ),
+              ),
+              GestureDetector(
+                onTap: ap.loading ? null : _continue,
+                child: bottomWidget(
+                  text: ap.loading ? 'Please wait...' : 'Continue',
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

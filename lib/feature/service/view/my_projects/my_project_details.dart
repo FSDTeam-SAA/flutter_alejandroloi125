@@ -1,6 +1,10 @@
 // lib/feature/service/view/my_projects/my_project_details.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+
+import '../../../app_ground.dart';
 
 class MyProjectDetailScreen extends StatefulWidget {
   final String projectId;
@@ -48,6 +52,28 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
         statusBarColor: Colors.transparent,
       ),
       child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          surfaceTintColor: Colors.black, // avoid Material3 light tint
+          elevation: 0,
+          systemOverlayStyle: SystemUiOverlayStyle.light, // white status-bar icons
+          iconTheme: const IconThemeData(color: Colors.white),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              } else {
+                Get.offAll(() => const AppGround());
+              }
+            },
+          ),
+          title: const Text(
+            'Project Details',
+            style: TextStyle(fontWeight: FontWeight.w800,color: Colors.white),
+          ),
+          centerTitle: false,
+        ),
         backgroundColor: bg,
         body: SafeArea(
           child: ListView(
@@ -75,10 +101,10 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
                       padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
                       child: Row(
                         children: [
-                          _CircleIconButton(
-                            icon: Icons.arrow_back_ios_new,
-                            onTap: () => Navigator.pop(context),
-                          ),
+                          // _CircleIconButton(
+                          //   icon: Icons.arrow_back_ios_new,
+                          //   onTap: () => Navigator.pop(context),
+                          // ),
                           const Spacer(),
                           _CircleIconButton(
                             icon: Icons.favorite_border,

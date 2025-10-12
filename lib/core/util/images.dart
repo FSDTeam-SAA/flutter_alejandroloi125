@@ -46,6 +46,7 @@ class Images {
   static const String wake = 'assets/images/wake.png';
   static const String privacy = 'assets/images/privacy.png';
   static const String terms = 'assets/images/terms.png';
+  static const String users = 'assets/images/users_image.jpg';
   static const String logout = 'assets/images/logout.png';
 
 

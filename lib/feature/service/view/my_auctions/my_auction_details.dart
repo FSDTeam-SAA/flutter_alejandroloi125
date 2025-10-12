@@ -1,8 +1,16 @@
+// lib/feature/auction/view/my_auction_details.dart
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 
-class MyAuctionDetailScreen extends StatelessWidget {
+import '../../../../constants/api_paths.dart';
+import '../../../../core/env/env.dart';
+import '../../../../core/network/api_service/api_client.dart';
+import '../../../app_ground.dart';
+
+class MyAuctionDetailScreen extends StatefulWidget {
   final String auctionId;
 
   const MyAuctionDetailScreen({
@@ -11,27 +19,196 @@ class MyAuctionDetailScreen extends StatelessWidget {
   });
 
   @override
+  State<MyAuctionDetailScreen> createState() => _MyAuctionDetailScreenState();
+}
+
+class _MyAuctionDetailScreenState extends State<MyAuctionDetailScreen> {
+  late final Dio _dio;
+
+  bool _loading = true;
+  String? _error;
+
+  // ---- data from API ----
+  String _title = '';
+  String _desc = '';
+  String _image = ''; // absolute url or asset fallback
+  String _currentBid = '';
+  String _scheduleText = '';
+  String _durationText = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _dio = context.read<ApiClient>().dio;
+    _fetch();
+  }
+
+  Future<void> _fetch() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final res = await _dio.get(ApiPaths.getAuctionById(widget.auctionId));
+
+      final data = _pickMap(res.data, keys: const ['data', 'auction']);
+      if (data == null) throw Exception('Auction not found');
+
+      final sched = (data['schedule'] is Map)
+          ? Map<String, dynamic>.from(data['schedule'])
+          : const <String, dynamic>{};
+
+      final imageRaw = data['image'] ?? data['cover'] ?? data['thumbnail'];
+      final img = _absolute(_resolveImage(imageRaw));
+
+      setState(() {
+        _title = (data['name'] ?? data['title'] ?? 'Auction').toString();
+        _desc = (data['description'] ?? '').toString();
+        _image = img.isEmpty ? 'assets/images/earpod.jpg' : img;
+
+        final bidNum = data['currentBid'] ??
+            data['starting_bid'] ??
+            data['startingBid'] ??
+            data['price'];
+        _currentBid = _formatMoney(bidNum);
+
+        final date = (sched['date'] ?? data['date'] ?? '').toString();
+        final time = (sched['time'] ?? data['time'] ?? '').toString();
+        _scheduleText = [date, time].where((s) => s.trim().isNotEmpty).join(' ');
+        if (_scheduleText.isEmpty) _scheduleText = '—';
+
+        final dur = data['duration']?.toString() ?? '';
+        _durationText = dur.isEmpty ? '—' : '$dur minutes';
+
+        _loading = false;
+      });
+    } on DioException catch (e) {
+      final d = e.response?.data;
+      final msg = (d is Map && d['message'] is String)
+          ? d['message'] as String
+          : (e.message ?? 'Request failed');
+      setState(() {
+        _error = msg;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  static Map<String, dynamic>? _pickMap(dynamic root,
+      {required List<String> keys}) {
+    if (root is Map) {
+      if (root['data'] is Map) return Map<String, dynamic>.from(root['data']);
+      for (final k in keys) {
+        if (root[k] is Map) return Map<String, dynamic>.from(root[k]);
+      }
+    }
+    return null;
+  }
+
+  static String _formatMoney(dynamic n) {
+    final v = (n is num) ? n : num.tryParse('$n');
+    if (v == null) return '\$0';
+    final s = v.toInt().toString();
+    final b = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      b.write(s[i]);
+      final left = s.length - i - 1;
+      if (left % 3 == 0 && left != 0) b.write(',');
+    }
+    return '\$${b.toString()}';
+  }
+
+  static String _resolveImage(dynamic raw) {
+    const fallback = 'assets/images/earpod.jpg';
+    if (raw == null) return fallback;
+
+    if (raw is List && raw.isNotEmpty) {
+      return _resolveImage(raw.first);
+    }
+
+    if (raw is Map) {
+      final u = raw['url'] ?? raw['secure_url'] ?? raw['src'] ?? raw['path'];
+      if (u is String && u.trim().isNotEmpty) return u.trim();
+      return fallback;
+    }
+
+    if (raw is String) {
+      final s = raw.trim();
+      if (s.isEmpty) return fallback;
+      if (s.startsWith('http://') || s.startsWith('https://')) return s;
+      if (s.startsWith('assets/')) return s;
+      final m = RegExp(r'(https?://[^\s,}]+)').firstMatch(s);
+      if (m != null) return m.group(0)!;
+      return s; // relative path
+    }
+
+    return fallback;
+  }
+
+  static String _absolute(String url) {
+    final u = url.trim();
+    if (u.isEmpty) return u;
+    if (u.startsWith('http://') || u.startsWith('https://')) return u;
+    final base = AppEnv.baseUrl;
+    if (base.isEmpty) return u;
+    if (base.endsWith('/') && u.startsWith('/')) return '$base${u.substring(1)}';
+    if (!base.endsWith('/') && !u.startsWith('/')) return '$base/$u';
+    return '$base$u';
+  }
+
+  @override
   Widget build(BuildContext context) {
     const bg = Color(0xFF0D0F12);
     const cardBg = Color(0xFF15181C);
     const border = Color(0xFF242931);
     const accent = Color(0xFFFF8A34);
 
-    // Placeholder demo content (replace with real data when you have it)
-    final title = 'Gaming Console';
-    final desc =
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum metus eu egestas pharetra. Fusce bibendum odio et venenatis efficitur.';
-    const currentBid = '\$1,200';
-    const scheduleText = '25-08-2025 8:25 AM';
-    const durationText = '1 hour';
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value:
       SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
       child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          surfaceTintColor: Colors.black,
+          elevation: 0,
+          systemOverlayStyle: SystemUiOverlayStyle.light,
+          iconTheme: const IconThemeData(color: Colors.white),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              } else {
+                Get.offAll(() => const AppGround());
+              }
+            },
+          ),
+          title: const Text(
+            'Auctions Details',
+            style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
+          ),
+          centerTitle: false,
+        ),
         backgroundColor: bg,
         body: SafeArea(
-          child: ListView(
+          child: _loading
+              ? const Center(child: CircularProgressIndicator())
+              : (_error != null
+              ? Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(_error!,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70)),
+            ),
+          )
+              : ListView(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             children: [
               Container(
@@ -57,20 +234,49 @@ class MyAuctionDetailScreen extends StatelessWidget {
                               top: Radius.circular(14)),
                           child: AspectRatio(
                             aspectRatio: 16 / 9,
-                            child: Image.asset(
-                              'assets/images/earpod.jpg',
+                            child: _image.startsWith('http')
+                                ? Image.network(
+                              _image,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => _broken(),
+                              errorBuilder: (_, __, ___) =>
+                                  _broken(),
+                              loadingBuilder:
+                                  (ctx, child, progress) {
+                                if (progress == null) {
+                                  return child;
+                                }
+                                return Container(
+                                  color:
+                                  const Color(0x11000000),
+                                  alignment: Alignment.center,
+                                  child: const SizedBox(
+                                    height: 22,
+                                    width: 22,
+                                    child:
+                                    CircularProgressIndicator(
+                                        strokeWidth: 2),
+                                  ),
+                                );
+                              },
+                            )
+                                : Image.asset(
+                              _image.isEmpty
+                                  ? 'assets/images/earpod.jpg'
+                                  : _image,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) =>
+                                  _broken(),
                             ),
                           ),
                         ),
 
-                        // soft bottom gradient for text legibility
+                        // soft bottom gradient
                         Positioned.fill(
                           child: IgnorePointer(
                             child: DecoratedBox(
                               decoration: BoxDecoration(
-                                borderRadius: const BorderRadius.vertical(
+                                borderRadius:
+                                const BorderRadius.vertical(
                                     top: Radius.circular(14)),
                                 gradient: LinearGradient(
                                   begin: Alignment.topCenter,
@@ -93,16 +299,14 @@ class MyAuctionDetailScreen extends StatelessWidget {
                           right: 10,
                           child: Row(
                             children: [
-                              _CircleIconButton(
-                                icon: Icons.arrow_back_ios_new,
-                                onTap: () => Get.back(),
-                              ),
                               const Spacer(),
                               _CircleIconButton(
-                                  icon: Icons.share_outlined, onTap: () {}),
+                                  icon: Icons.share_outlined,
+                                  onTap: () {}),
                               const SizedBox(width: 8),
                               _CircleIconButton(
-                                  icon: Icons.more_horiz, onTap: () {}),
+                                  icon: Icons.more_horiz,
+                                  onTap: () {}),
                             ],
                           ),
                         ),
@@ -116,7 +320,8 @@ class MyAuctionDetailScreen extends StatelessWidget {
                                 horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
                               color: Colors.red.withOpacity(.96),
-                              borderRadius: BorderRadius.circular(999),
+                              borderRadius:
+                              BorderRadius.circular(999),
                               boxShadow: const [
                                 BoxShadow(
                                     color: Colors.black45,
@@ -132,13 +337,14 @@ class MyAuctionDetailScreen extends StatelessWidget {
                                 Text('LIVE',
                                     style: TextStyle(
                                         color: Colors.white,
-                                        fontWeight: FontWeight.w800)),
+                                        fontWeight:
+                                        FontWeight.w800)),
                               ],
                             ),
                           ),
                         ),
 
-                        // author chip + stats
+                        // author chip + stats (placeholder)
                         Positioned(
                           left: 12,
                           bottom: 10,
@@ -153,15 +359,19 @@ class MyAuctionDetailScreen extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                                crossAxisAlignment:
+                                CrossAxisAlignment.start,
                                 children: [
                                   Text('Eleanor Pena',
                                       style: TextStyle(
-                                          color: Colors.white.withOpacity(.95),
-                                          fontWeight: FontWeight.w700)),
+                                          color: Colors.white
+                                              .withOpacity(.95),
+                                          fontWeight:
+                                          FontWeight.w700)),
                                   Text('@eleanorpena',
                                       style: TextStyle(
-                                          color: Colors.white.withOpacity(.7),
+                                          color: Colors.white
+                                              .withOpacity(.7),
                                           fontSize: 12)),
                                 ],
                               ),
@@ -171,7 +381,8 @@ class MyAuctionDetailScreen extends StatelessWidget {
                                   text: '142'),
                               const SizedBox(width: 6),
                               const _TinyPill(
-                                  icon: Icons.favorite_border, text: '86'),
+                                  icon: Icons.favorite_border,
+                                  text: '86'),
                             ],
                           ),
                         ),
@@ -180,17 +391,18 @@ class MyAuctionDetailScreen extends StatelessWidget {
 
                     // ===== Body =====
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 0),
+                      padding:
+                      const EdgeInsets.fromLTRB(14, 12, 14, 0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // title + timer
                           Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment:
+                            CrossAxisAlignment.start,
                             children: [
                               Expanded(
                                 child: Text(
-                                  title,
+                                  _title,
                                   style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 18.5,
@@ -198,33 +410,34 @@ class MyAuctionDetailScreen extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              const _TimerPill(text: 'Ends in: 2:57'),
+                              const _TimerPill(text: 'Ends soon'),
                             ],
                           ),
                           const SizedBox(height: 8),
-
-                          // description
                           Text(
-                            desc,
+                            _desc.isEmpty
+                                ? '—'
+                                : _desc,
                             style: TextStyle(
                               color: Colors.white.withOpacity(.75),
                               height: 1.35,
                             ),
                           ),
                           const SizedBox(height: 12),
-
-                          // current bid
                           Row(
                             children: [
                               Text(
                                 'Current Bid ',
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(.85),
+                                  color:
+                                  Colors.white.withOpacity(.85),
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                               Text(
-                                currentBid,
+                                _currentBid.isEmpty
+                                    ? '\$0'
+                                    : _currentBid,
                                 style: const TextStyle(
                                   color: accent,
                                   fontWeight: FontWeight.w900,
@@ -241,12 +454,16 @@ class MyAuctionDetailScreen extends StatelessWidget {
 
                     // schedule + duration
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 12, 14, 2),
+                      padding:
+                      const EdgeInsets.fromLTRB(14, 12, 14, 2),
                       child: Row(
                         children: [
-                          _InfoPill(icon: Icons.event, text: scheduleText),
+                          _InfoPill(
+                              icon: Icons.event, text: _scheduleText),
                           const SizedBox(width: 12),
-                          _InfoPill(icon: Icons.schedule, text: durationText),
+                          _InfoPill(
+                              icon: Icons.schedule,
+                              text: _durationText),
                         ],
                       ),
                     ),
@@ -254,13 +471,12 @@ class MyAuctionDetailScreen extends StatelessWidget {
                     const SizedBox(height: 10),
                     const Divider(height: 1, color: border),
 
-                    // section header
                     const _SectionHeaderWithIcon(
                       icon: Icons.chat_bubble_outline,
                       text: 'Live Chat',
                     ),
 
-                    // static sample chat list (for layout only)
+                    // demo chat list
                     const Padding(
                       padding: EdgeInsets.fromLTRB(14, 0, 14, 14),
                       child: Column(
@@ -300,7 +516,7 @@ class MyAuctionDetailScreen extends StatelessWidget {
                 ),
               ),
             ],
-          ),
+          )),
         ),
       ),
     );
@@ -506,8 +722,7 @@ class _ChatItem extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   message,
-                  style:
-                  const TextStyle(color: Colors.white, height: 1.35),
+                  style: const TextStyle(color: Colors.white, height: 1.35),
                 ),
               ],
             ),

@@ -1,6 +1,13 @@
 // lib/feature/auction/view/my_auction_screen.dart
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
+
+import '../../../../constants/api_paths.dart';
+import '../../../../core/env/env.dart';
+import '../../../../core/network/api_service/api_client.dart';
+import '../../../auth/providers/auth_provider.dart';
 import 'my_auction_details.dart';
 
 class MyAuctionScreen extends StatefulWidget {
@@ -10,15 +17,17 @@ class MyAuctionScreen extends StatefulWidget {
 }
 
 class _MyAuctionScreenState extends State<MyAuctionScreen> {
+  late final Dio _dio;
+
   final _scroll = ScrollController();
 
-  // local-only state (no API / provider)
+  // state
   bool _loading = true;
   bool _paging = false;
   String? _error;
 
   int _page = 1;
-  final int _pages = 3; // total pages in this local demo
+  int _totalPages = 1; // will be inferred from API if available
   final int _limit = 10;
 
   final List<_Auction> _items = [];
@@ -26,15 +35,17 @@ class _MyAuctionScreenState extends State<MyAuctionScreen> {
   @override
   void initState() {
     super.initState();
+    _dio = context.read<ApiClient>().dio;
+
     // initial load
     _fetch(page: 1, limit: _limit);
 
     // infinite scroll
     _scroll.addListener(() {
       if (_paging || _loading) return;
-      final nearBottom = _scroll.position.pixels >=
-          _scroll.position.maxScrollExtent - 120;
-      if (nearBottom && _page < _pages) {
+      final nearBottom =
+          _scroll.position.pixels >= _scroll.position.maxScrollExtent - 120;
+      if (nearBottom && _page < _totalPages) {
         _paging = true;
         _fetch(page: _page + 1, limit: _limit).whenComplete(() {
           _paging = false;
@@ -49,33 +60,166 @@ class _MyAuctionScreenState extends State<MyAuctionScreen> {
     super.dispose();
   }
 
-  // local "fetch" that generates mock data
   Future<void> _fetch({required int page, required int limit}) async {
     try {
       if (page == 1) setState(() => _loading = true);
-      await Future.delayed(const Duration(milliseconds: 350)); // simulate work
 
-      final newItems = _makeFakePage(page, limit);
+      final userId = context.read<AuthProvider>().user?.id;
+
+      final q = <String, dynamic>{
+        if (userId != null && userId.isNotEmpty) 'userid': userId,
+        'page': page,
+        'limit': limit,
+      };
+
+      final res = await _dio.get(
+        ApiPaths.allAuction,
+        queryParameters: q,
+      );
+
+      final list = _pickList(
+        res.data,
+        keys: const ['auctions', 'data', 'items', 'results'],
+      );
+
+      _totalPages =
+          _inferTotalPages(res.data, fallback: (_page == 1) ? 1 : _totalPages);
+
+      final parsed = <_Auction>[];
+      if (list != null) {
+        for (final raw in list) {
+          final m = Map<String, dynamic>.from(raw as Map);
+          final sched =
+          (m['schedule'] is Map) ? Map<String, dynamic>.from(m['schedule']) : null;
+
+          parsed.add(
+            _Auction(
+              id: (m['id'] ?? m['_id'] ?? '').toString(),
+              name: _text(m['name'] ?? m['title'] ?? 'Auction'),
+              startingBid:
+              _asInt(m['startingBid'] ?? m['starting_price'] ?? m['price'] ?? 0),
+              fundingDuration: _text(m['fundingDuration'] ?? m['duration'] ?? ''),
+              scheduleDate: _text(sched?['date'] ?? m['date'] ?? ''),
+              scheduleTime: _text(sched?['time'] ?? m['time'] ?? ''),
+              cover: _absolute(
+                  _resolveImage(m['image'] ?? m['cover'] ?? m['thumbnail'])),
+              status: _text(m['status'] ?? ''),
+              isCompleted: _text(m['status'] ?? '').toLowerCase().contains('complete'),
+            ),
+          );
+        }
+      }
+
       setState(() {
         if (page == 1) _items.clear();
-        _items.addAll(newItems);
+        _items.addAll(parsed);
         _page = page;
         _loading = false;
         _error = null;
       });
+    } on DioException catch (e) {
+      final d = e.response?.data;
+      final msg = (d is Map && d['message'] is String)
+          ? d['message'] as String
+          : (e.message ?? 'Request failed');
+      setState(() {
+        _error = msg;
+        _loading = false;
+      });
     } catch (e) {
       setState(() {
+        _error = e.toString();
         _loading = false;
-        _error = 'Failed to load auctions';
       });
     }
   }
 
-  // local delete
+  // ---------- helpers: parsing ----------
+  static List? _pickList(dynamic root, {required List<String> keys}) {
+    if (root is List) return root;
+    if (root is! Map) return null;
+
+    final data = root['data'];
+    if (data is List) return data;
+    if (data is Map) {
+      for (final k in keys) {
+        final v = data[k];
+        if (v is List) return v;
+      }
+    }
+
+    for (final v in root.values) {
+      if (v is List) return v;
+      if (v is Map) {
+        for (final vv in v.values) {
+          if (vv is List) return vv;
+        }
+      }
+    }
+    return null;
+  }
+
+  static int _inferTotalPages(dynamic root, {required int fallback}) {
+    try {
+      if (root is Map) {
+        final meta = root['meta'] ?? root['pagination'] ?? root['page'];
+        if (meta is Map) {
+          final totalPages = meta['totalPages'] ?? meta['pages'] ?? meta['total_pages'];
+          if (totalPages is num) return totalPages.toInt();
+          final total = meta['total'] ?? meta['count'];
+          final limit = meta['limit'] ?? meta['perPage'] ?? meta['per_page'];
+          if (total is num && limit is num && limit > 0) {
+            return ((total / limit).ceil()).clamp(1, 9999);
+          }
+        }
+      }
+    } catch (_) {}
+    return fallback;
+  }
+
+  static String _text(dynamic v) => (v == null) ? '' : v.toString();
+
+  static int _asInt(dynamic v) {
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    return int.tryParse('$v') ?? 0;
+  }
+
+  static String _resolveImage(dynamic raw) {
+    const fallback = 'assets/images/watch.jpg';
+    if (raw == null) return fallback;
+    if (raw is List && raw.isNotEmpty) return _resolveImage(raw.first);
+    if (raw is Map) {
+      final u = raw['url'] ?? raw['secure_url'] ?? raw['src'] ?? raw['path'];
+      if (u is String && u.trim().isNotEmpty) return u.trim();
+      return fallback;
+    }
+    if (raw is String) {
+      final s = raw.trim();
+      if (s.isEmpty) return fallback;
+      if (s.startsWith('http://') || s.startsWith('https://')) return s;
+      if (s.startsWith('assets/')) return s;
+      final m = RegExp(r'(https?://[^\s,}]+)').firstMatch(s);
+      if (m != null) return m.group(0)!;
+      return s;
+    }
+    return fallback;
+  }
+
+  static String _absolute(String url) {
+    final u = url.trim();
+    if (u.isEmpty) return u;
+    if (u.startsWith('http://') || u.startsWith('https://')) return u;
+    final base = AppEnv.baseUrl;
+    if (base.isEmpty) return u;
+    if (base.endsWith('/') && u.startsWith('/')) return '$base${u.substring(1)}';
+    if (!base.endsWith('/') && !u.startsWith('/')) return '$base/$u';
+    return '$base$u';
+  }
+
   Future<void> _delete(String id) async {
     setState(() => _items.removeWhere((a) => a.id == id));
-    Get.snackbar('Deleted', 'Auction removed',
-        snackPosition: SnackPosition.TOP);
+    Get.snackbar('Deleted', 'Auction removed', snackPosition: SnackPosition.TOP);
   }
 
   @override
@@ -84,119 +228,117 @@ class _MyAuctionScreenState extends State<MyAuctionScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D0F12),
+      // REMOVED the local AppBar to avoid the extra dark header area.
       body: SafeArea(
-        child: Builder(builder: (_) {
-          if (_loading && items.isEmpty) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if ((_error ?? '').isNotEmpty && items.isEmpty) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Text(_error!, style: const TextStyle(color: Colors.white70)),
-              ),
-            );
-          }
-          if (items.isEmpty) {
-            return const Center(
-              child: Text('No auctions found',
-                  style: TextStyle(color: Colors.white70)),
-            );
-          }
-
-          return ListView.separated(
-            controller: _scroll,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            itemCount: items.length + (_page < _pages ? 1 : 0),
-            separatorBuilder: (_, __) => const SizedBox(height: 14),
-            itemBuilder: (context, i) {
-              if (i >= items.length) {
-                // paging loader
-                return const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Center(
-                    child: SizedBox(
-                      height: 22,
-                      width: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  ),
-                );
-              }
-
-              final a = items[i];
-              final price = (a.startingBid == null)
-                  ? '-'
-                  : '\$${_comma(a.startingBid!)}';
-              final time = _timeLabel(a.scheduleDate, a.scheduleTime, a.fundingDuration);
-
-              return _AuctionCard.dynamic(
-                imageUrl: a.cover ?? 'assets/images/watch.jpg',
-                title: a.name,
-                priceLabel: price,
-                timeLabel: time,
-                status: 'In Progress',
-                statusColor: const Color(0xFFFF8A34),
-                completed: false,
-                onView: () {
-                  Get.to(
-                        () => MyAuctionDetailScreen(auctionId: a.id),
-                    transition: Transition.rightToLeft,
-                    duration: const Duration(milliseconds: 300),
-                  );
-                },
-                onDelete: () async {
-                  final ok = await showDialog<bool>(
-                    context: context,
-                    builder: (_) => AlertDialog(
-                      title: const Text('Delete auction?'),
-                      content: const Text('This action cannot be undone.'),
-                      actions: [
-                        TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: const Text('Cancel')),
-                        TextButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            child: const Text('Delete')),
-                      ],
-                    ),
-                  ) ??
-                      false;
-                  if (!ok) return;
-                  await _delete(a.id);
-                },
+        child: Builder(
+          builder: (_) {
+            if (_loading && items.isEmpty) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            if ((_error ?? '').isNotEmpty && items.isEmpty) {
+              return Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child:
+                  Text(_error!, style: const TextStyle(color: Colors.white70)),
+                ),
               );
-            },
-          );
-        }),
+            }
+            if (items.isEmpty) {
+              return const Center(
+                child:
+                Text('No auctions found', style: TextStyle(color: Colors.white70)),
+              );
+            }
+
+            return ListView.separated(
+              controller: _scroll,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              itemCount: items.length + (_page < _totalPages ? 1 : 0),
+              separatorBuilder: (_, __) => const SizedBox(height: 14),
+              itemBuilder: (context, i) {
+                if (i >= items.length) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Center(
+                      child: SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                  );
+                }
+
+                final a = items[i];
+                final price =
+                (a.startingBid == null) ? '-' : '\$${_comma(a.startingBid!)}';
+                final time =
+                _timeLabel(a.scheduleDate, a.scheduleTime, a.fundingDuration);
+
+                final statusLower = a.status.toLowerCase();
+                final isCompleted =
+                    a.isCompleted || statusLower.contains('complete');
+                final inProgress =
+                    statusLower.contains('progress') || statusLower.contains('live');
+
+                final statusText = isCompleted
+                    ? 'Completed'
+                    : inProgress
+                    ? 'In Progress'
+                    : (a.status.isEmpty ? 'In Progress' : a.status);
+
+                final statusColor =
+                isCompleted ? const Color(0xFF5CD7B0) : const Color(0xFFFF8A34);
+
+                return _AuctionCard.dynamic(
+                  imageUrl: a.cover ?? 'assets/images/watch.jpg',
+                  title: a.name,
+                  priceLabel: price,
+                  timeLabel: time,
+                  status: statusText,
+                  statusColor: statusColor,
+                  completed: isCompleted,
+                  onView: () {
+                    Get.to(
+                          () => MyAuctionDetailScreen(auctionId: a.id),
+                      transition: Transition.rightToLeft,
+                      duration: const Duration(milliseconds: 300),
+                    );
+                  },
+                  onDelete: () async {
+                    final ok = await showDialog<bool>(
+                      context: context,
+                      builder: (_) => AlertDialog(
+                        title: const Text('Delete auction?'),
+                        content: const Text('This action cannot be undone.'),
+                        actions: [
+                          TextButton(
+                              onPressed: () =>
+                                  Navigator.pop(context, false),
+                              child: const Text('Cancel')),
+                          TextButton(
+                              onPressed: () =>
+                                  Navigator.pop(context, true),
+                              child: const Text('Delete')),
+                        ],
+                      ),
+                    ) ??
+                        false;
+                    if (!ok) return;
+                    await _delete(a.id);
+                  },
+                );
+              },
+            );
+          },
+        ),
       ),
     );
   }
-
-  // ---- mock data helpers ----
-  List<_Auction> _makeFakePage(int page, int limit) {
-    return List.generate(limit, (i) {
-      final num = (page - 1) * limit + i + 1;
-      return _Auction(
-        id: 'auction_$num',
-        name: 'Auction #$num',
-        startingBid: (num % 3 == 0) ? null : 1000 + num * 25,
-        fundingDuration: (num % 4 == 0)
-            ? '1h'
-            : (num % 3 == 0)
-            ? '30m'
-            : (num % 2 == 0)
-            ? '20m'
-            : '10m',
-        scheduleDate: (num % 5 == 0) ? null : '25-08-2025',
-        scheduleTime: (num % 2 == 0) ? '8:25' : '3:00 PM',
-        cover: null, // uses default asset
-      );
-    });
-  }
 }
 
-// ==== simple local model (only fields used by the UI) ====
+// ==== data model used by the screen ====
 class _Auction {
   final String id;
   final String name;
@@ -205,6 +347,8 @@ class _Auction {
   final String? scheduleDate;
   final String? scheduleTime;
   final String? cover;
+  final String status;
+  final bool isCompleted;
 
   _Auction({
     required this.id,
@@ -214,10 +358,12 @@ class _Auction {
     required this.scheduleDate,
     required this.scheduleTime,
     required this.cover,
+    required this.status,
+    required this.isCompleted,
   });
 }
 
-// ==== helpers + card (same visuals you already had) ====
+// ==== formatting + small helpers ====
 String _comma(int n) {
   final s = n.toString();
   final b = StringBuffer();
@@ -236,6 +382,7 @@ String _timeLabel(String? d, String? t, String duration) {
   return '$dd ${tt.isEmpty ? '' : tt}';
 }
 
+// ================= Card UI =================
 class _AuctionCard extends StatelessWidget {
   final String imageUrl, title, priceLabel, timeLabel, status;
   final Color statusColor;
@@ -279,12 +426,28 @@ class _AuctionCard extends StatelessWidget {
               child: AspectRatio(
                 aspectRatio: 16 / 9,
                 child: imageUrl.startsWith('http')
-                    ? Image.network(imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _broken())
-                    : Image.asset(imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _broken()),
+                    ? Image.network(
+                  imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _broken(),
+                  loadingBuilder: (ctx, child, progress) {
+                    if (progress == null) return child;
+                    return Container(
+                      color: const Color(0x11000000),
+                      alignment: Alignment.center,
+                      child: const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    );
+                  },
+                )
+                    : Image.asset(
+                  imageUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _broken(),
+                ),
               ),
             ),
           ),
@@ -299,6 +462,8 @@ class _AuctionCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                               style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 16.5,
@@ -368,9 +533,11 @@ class _AuctionCard extends StatelessWidget {
   }
 
   Widget _broken() => Container(
-      color: Colors.black26,
-      alignment: Alignment.center,
-      child: const Icon(Icons.broken_image_outlined));
+    color: Colors.black26,
+    alignment: Alignment.center,
+    child:
+    const Icon(Icons.broken_image_outlined, color: Colors.white70),
+  );
 }
 
 class _InfoBar extends StatelessWidget {
@@ -391,12 +558,15 @@ class _InfoBar extends StatelessWidget {
         Icon(icon, size: 16, color: Colors.white.withOpacity(0.85)),
         const SizedBox(width: 8),
         Flexible(
-          child: Text(label,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                  color: Colors.white.withOpacity(0.85),
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600)),
+          child: Text(
+            label,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.85),
+              fontSize: 12.5,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ),
       ]),
     );

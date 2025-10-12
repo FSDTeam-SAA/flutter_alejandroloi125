@@ -29,7 +29,11 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
   final _countryCtrl = TextEditingController();
 
   final List<String> _genders = const [
-    'Male', 'Female', 'Non-binary', 'Prefer not to say', 'Other',
+    'Male',
+    'Female',
+    'Non-binary',
+    'Prefer not to say',
+    'Other',
   ];
   String? _gender;
   Country? _country;
@@ -49,7 +53,7 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
       String? uid = auth.user?.id ?? await auth.repo.tokenStore.readUserId();
 
       final pp = context.read<ProfileProvider>();
-      if(uid != null) await pp.fetch(uid ?? ""); // this will notifyListeners()
+      if (uid != null) await pp.fetch(uid ?? ""); // this will notifyListeners()
 
       // If data is already present, hydrate now.
       if (pp.me != null && !_hydrated) {
@@ -75,8 +79,8 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
     final me = context.read<ProfileProvider>().me;
     if (me == null) return;
 
-    _name.text    = (me.name ?? '').trim();
-    _phone.text   = (me.phone ?? '').trim();
+    _name.text = (me.name ?? '').trim();
+    _phone.text = (me.phone ?? '').trim();
     _address.text = (me.address ?? '').trim();
 
     final dynamicAge = me.age;
@@ -127,7 +131,10 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
             borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Colors.white54),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 12,
+          ),
         ),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
         bottomSheetHeight: MediaQuery.of(context).size.height * 0.75,
@@ -152,7 +159,10 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
   );
 
   Future<void> _pickAvatar() async {
-    final x = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
+    final x = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
     if (x != null) setState(() => _avatar = File(x.path));
   }
 
@@ -167,7 +177,9 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
       phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
       nationality: _country?.name.isNotEmpty == true
           ? _country!.name
-          : (_countryCtrl.text.trim().isEmpty ? null : _countryCtrl.text.trim()),
+          : (_countryCtrl.text.trim().isEmpty
+                ? null
+                : _countryCtrl.text.trim()),
       address: _address.text.trim().isEmpty ? null : _address.text.trim(),
       avatar: _avatar,
     );
@@ -182,11 +194,17 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
         await pp.fetch(uid);
       }
       Get.back(result: true);
-      Get.snackbar('Success', 'Profile updated successfully',
-          snackPosition: SnackPosition.TOP);
+      Get.snackbar(
+        'Success',
+        'Profile updated successfully',
+        snackPosition: SnackPosition.TOP,
+      );
     } else {
-      Get.snackbar('Error', pp.error ?? 'Update failed',
-          snackPosition: SnackPosition.TOP);
+      Get.snackbar(
+        'Error',
+        pp.error ?? 'Update failed',
+        snackPosition: SnackPosition.TOP,
+      );
     }
   }
 
@@ -216,15 +234,11 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
           onPressed: () => Get.back(),
         ),
         backgroundColor: Colors.transparent,
-        title: const Text("Personal Information", style: TextStyle(color: Colors.white)),
-        actions: [
-          // Optional: avatar picker shortcut (doesn't change your UI layout)
-          IconButton(
-            onPressed: _pickAvatar,
-            icon: const Icon(Icons.photo_camera_outlined, color: Colors.white),
-            tooltip: 'Change Avatar',
-          ),
-        ],
+        title: const Text(
+          "Personal Information",
+          style: TextStyle(color: Colors.white),
+        ),
+
       ),
       body: AbsorbPointer(
         absorbing: loading,
@@ -234,10 +248,19 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
             padding: const EdgeInsets.all(16.0),
             child: ListView(
               children: [
-                Text("To create your new account, provide your information.", style: text16),
+                Text(
+                  "To create your new account, provide your information.",
+                  style: text16,
+                ),
 
                 const SizedBox(height: 14),
-                const Text("Name", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                const Text(
+                  "Name",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 CustomTextField(
                   hintText: "Enter your name",
@@ -246,7 +269,13 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
                 ),
 
                 const SizedBox(height: 14),
-                const Text("Age", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                const Text(
+                  "Age",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 CustomTextField(
                   hintText: "Enter your age",
@@ -256,17 +285,31 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
                 ),
 
                 const SizedBox(height: 14),
-                const Text("Gender", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                const Text(
+                  "Gender",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
                   initialValue: _gender,
                   isExpanded: true,
-                  hint: const Text('Select gender', style: TextStyle(color: Colors.white)),
+                  hint: const Text(
+                    'Select gender',
+                    style: TextStyle(color: Colors.white),
+                  ),
                   items: _genders
-                      .map((g) => DropdownMenuItem(
-                    value: g,
-                    child: Text(g, style: const TextStyle(color: Colors.white)),
-                  ))
+                      .map(
+                        (g) => DropdownMenuItem(
+                          value: g,
+                          child: Text(
+                            g,
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      )
                       .toList(),
                   onChanged: (v) => setState(() => _gender = v),
                   decoration: _decoration(''),
@@ -278,7 +321,13 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
                 ),
 
                 const SizedBox(height: 14),
-                const Text("Nationality", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                const Text(
+                  "Nationality",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 GestureDetector(
                   onTap: _pickCountry,
@@ -287,7 +336,10 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
                       readOnly: true,
                       controller: _countryCtrl,
                       decoration: _decoration('Select country').copyWith(
-                        suffixIcon: const Icon(Icons.arrow_drop_down, color: Colors.white70),
+                        suffixIcon: const Icon(
+                          Icons.arrow_drop_down,
+                          color: Colors.white70,
+                        ),
                       ),
                       style: const TextStyle(color: Colors.white),
                     ),
@@ -295,7 +347,13 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
                 ),
 
                 const SizedBox(height: 14),
-                const Text("Address", style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                const Text(
+                  "Address",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 CustomTextField(
                   hintText: "Enter your address",

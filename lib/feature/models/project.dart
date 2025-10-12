@@ -35,16 +35,32 @@ class Project {
     }
 
     // deadline can be number-of-days or a string like "10 day"
-    int days = 0;
-    if (j['deadline_days'] != null) {
-      days = (j['deadline_days'] as num).toInt();
-    } else if (j['deadline'] is num) {
-      days = (j['deadline'] as num).toInt();
-    } else if (j['deadline'] is String) {
-      final s = (j['deadline'] as String);
-      final m = RegExp(r'\d+').firstMatch(s);
-      days = m == null ? 0 : int.parse(m.group(0)!);
+    // int days = 0;
+    // if (j['duration'] != null) {
+    //   days = (j['duration'] as num).toInt();
+    // } else if (j['duration'] is num) {
+    //   days = (j['duration'] as num).toInt();
+    // } else if (j['duration'] is String) {
+    //   final s = (j['duration'] as String);
+    //   final m = RegExp(r'\d+').firstMatch(s);
+    //   days = m == null ? 0 : int.parse(m.group(0)!);
+    // }
+
+    // ---- helpers ----
+    int _asInt(dynamic v) {
+      if (v is num) return v.toInt();
+      if (v is String) {
+        // pull first integer inside the string (e.g. "30", "30 days")
+        final m = RegExp(r'-?\d+').firstMatch(v.trim());
+        if (m != null) return int.tryParse(m.group(0)!) ?? 0;
+      }
+      return 0;
     }
+
+    // duration / deadlineDays may be "30" or "30 days" or a number
+    final deadlineDays = _asInt(
+      j['duration'] ?? j['deadline'] ?? j['deadlineDays'],
+    );
 
     // skills can be list or comma string
     List<String> skills = [];
@@ -62,7 +78,7 @@ class Project {
       category: category,
       minBudget: (j['min_budget'] ?? j['budget_min'] ?? 0 as num).toInt(),
       maxBudget: (j['max_budget'] ?? j['budget_max'] ?? 0 as num).toInt(),
-      deadlineDays: days,
+      deadlineDays: deadlineDays,
       location: (j['location'] ?? '').toString(),
       skills: skills,
       status: j['status']?.toString(),

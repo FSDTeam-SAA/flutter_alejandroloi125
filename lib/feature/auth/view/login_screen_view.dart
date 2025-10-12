@@ -42,14 +42,20 @@ class _LoginScreenViewState extends State<LoginScreenView> {
     if (!mounted) return;
 
     if (ok) {
-      Get.offAll(() => const AppGround(),
+      Get.offAll(
+        () => const AppGround(),
         transition: Transition.rightToLeft,
         duration: const Duration(milliseconds: 350),
         curve: Curves.easeInOut,
       );
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ap.error ?? 'Login failed')),
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   SnackBar(content: Text(ap.error ?? 'Login failed')),
+      // );
+      Get.snackbar(
+        'Error',
+        ap.error ?? 'Login failed',
+        snackPosition: SnackPosition.TOP,
       );
     }
   }
@@ -72,7 +78,9 @@ class _LoginScreenViewState extends State<LoginScreenView> {
               const SizedBox(height: 40),
               Center(child: Text("Welcome Back", style: headingText)),
               const SizedBox(height: 10),
-              Center(child: Text("Sign in to access your account", style: bodyText1)),
+              Center(
+                child: Text("Sign in to access your account", style: bodyText1),
+              ),
               const SizedBox(height: 20),
 
               CustomTextField(
@@ -96,13 +104,17 @@ class _LoginScreenViewState extends State<LoginScreenView> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: () => Get.to(() => const ForgetPasswordView(),
+                      onPressed: () => Get.to(
+                        () => const ForgetPasswordView(),
                         transition: Transition.rightToLeft,
                         duration: const Duration(milliseconds: 350),
                         curve: Curves.easeInOut,
                       ),
-                      child: Text("Forget Password",
-                        style: bodyText1.copyWith(color: AppColors.bottomColor1),
+                      child: Text(
+                        "Forget Password",
+                        style: bodyText1.copyWith(
+                          color: AppColors.bottomColor1,
+                        ),
                       ),
                     ),
                   ],
@@ -126,9 +138,15 @@ class _LoginScreenViewState extends State<LoginScreenView> {
                 ),
               ),
 
-              const CustomOutlineContainer(name: 'Continue With Google', image: Images.googleIcon),
+              const CustomOutlineContainer(
+                name: 'Continue With Google',
+                image: Images.googleIcon,
+              ),
               const SizedBox(height: 10),
-              const CustomOutlineContainer(name: 'Continue With Apple', image: Images.macIcon),
+              const CustomOutlineContainer(
+                name: 'Continue With Apple',
+                image: Images.macIcon,
+              ),
             ],
           ),
         ),
@@ -144,12 +162,17 @@ class _LoginScreenViewState extends State<LoginScreenView> {
               const TextSpan(text: "Don’t have an account? "),
               TextSpan(
                 text: "Sign Up",
-                style: TextStyle(color: AppColors.bottomColor1, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  color: AppColors.bottomColor1,
+                  fontWeight: FontWeight.bold,
+                ),
                 recognizer: TapGestureRecognizer()
-                  ..onTap = () => Get.to(() => const SignUpScreenView(),
-                      transition: Transition.rightToLeft,
-                      duration: const Duration(milliseconds: 350),
-                      curve: Curves.easeInOut),
+                  ..onTap = () => Get.to(
+                    () => const SignUpScreenView(),
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 350),
+                    curve: Curves.easeInOut,
+                  ),
               ),
             ],
           ),

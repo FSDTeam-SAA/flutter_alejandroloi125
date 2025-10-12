@@ -1,3 +1,4 @@
+// lib/feature/profile/view/profile_screen_view.dart
 import 'package:alejandroloi/core/util/images.dart';
 import 'package:alejandroloi/core/util/styles.dart';
 import 'package:alejandroloi/feature/profile/view/about_view.dart';
@@ -8,58 +9,130 @@ import 'package:alejandroloi/feature/profile/view/terms_conditon.dart';
 import 'package:alejandroloi/feature/profile/view/upload_photos_view.dart';
 import 'package:alejandroloi/feature/profile/view/wishlist_view.dart';
 import 'package:alejandroloi/feature/profile/widgets/top_card.dart';
+import 'package:alejandroloi/constants/api_paths.dart';
+import 'package:alejandroloi/core/network/api_service/api_client.dart';
+import 'package:alejandroloi/feature/auth/providers/auth_provider.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:provider/provider.dart';
 
 import '../../auth/view/login_screen_view.dart';
 import '../../auth/view/personal_info_add_view.dart';
 
-class ProfileScreenView extends StatelessWidget {
+/// Pulls the latest name, address and avatar from server and updates UI.
+class ProfileScreenView extends StatefulWidget {
+  const ProfileScreenView({super.key});
 
-  const ProfileScreenView({
-    super.key,
-    this.name,
-    this.email,
-    this.address,
-    this.avatarUrl,
-    this.investCount = 0,
-    this.projectCount = 0,
-    this.auctionCount = 0,
-    this.loading = false,
-    this.errorMessage,
-    this.onRefresh,
-    this.onLogout,
-  });
+  @override
+  State<ProfileScreenView> createState() => _ProfileScreenViewState();
+}
 
-  /// Display fields (optional)
-  final String? name;
-  final String? email;
-  final String? address;
-  final String? avatarUrl;
+class _ProfileScreenViewState extends State<ProfileScreenView> {
+  late final Dio _dio;
 
-  /// Simple stats
-  final int investCount;
-  final int projectCount;
-  final int auctionCount;
+  bool _loading = true;
+  String? _error;
 
-  /// UI state
-  final bool loading;
-  final String? errorMessage;
+  // Displayed fields
+  String? _name;
+  String? _email;
+  String? _address;
+  String? _avatarUrl;
 
-  /// Optional hooks
-  final Future<void> Function()? onRefresh;
-  final Future<void> Function()? onLogout;
+  // Simple stats (you can update from API later if needed)
+  int _investCount = 0;
+  int _projectCount = 0;
+  int _auctionCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _dio = context.read<ApiClient>().dio;
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      // 1) Start with whatever we already have in AuthProvider
+      final me = context.read<AuthProvider>().user;
+      if (me != null) {
+        _name = (me.name ?? '').trim().isNotEmpty ? me.name : _name;
+        _email = me.email;
+        _address = (me.address ?? '').trim().isNotEmpty ? me.address : _address;
+
+        // Try multiple avatar fields
+        _avatarUrl = me.imageUrl ?? me.avatarUrl ?? me.avatar ?? _avatarUrl;
+      }
+
+      // 2) Fetch fresh user from backend (if id exists)
+      final userId = me?.id ?? context.read<AuthProvider>().user?.id;
+      if (userId != null && userId.isNotEmpty) {
+        final r = await _dio.get(ApiPaths.userGetOne(userId));
+        final map = (r.data is Map) ? r.data as Map : {};
+        final data = map['data'];
+
+        if (data is Map) {
+          final name = _text(data['name']);
+          if (name.isNotEmpty) _name = name;
+
+          final addr = _text(data['address'] ?? data['location'] ?? data['nationality']);
+          if (addr.isNotEmpty) _address = addr;
+
+          // avatar may be string or { url: ... }
+          final a = data['avatar'];
+          String? url;
+          if (a is String && a.trim().isNotEmpty) {
+            url = a.trim();
+          } else if (a is Map && a['url'] != null) {
+            url = a['url'].toString();
+          }
+          if (url != null && url.isNotEmpty) _avatarUrl = url;
+
+          // Optional counters if backend provides them
+          _investCount = _asInt(data['investCount'] ?? _investCount);
+          _projectCount = _asInt(data['projectCount'] ?? _projectCount);
+          _auctionCount = _asInt(data['auctionCount'] ?? _auctionCount);
+        }
+      }
+
+      setState(() => _loading = false);
+    } on DioException catch (e) {
+      final d = e.response?.data;
+      final msg = (d is Map && d['message'] is String)
+          ? d['message'] as String
+          : (e.message ?? 'Request failed');
+      setState(() {
+        _error = msg;
+        _loading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  static String _text(dynamic v) => v == null ? '' : v.toString().trim();
+  static int _asInt(dynamic v) =>
+      (v is num) ? v.toInt() : int.tryParse('$v') ?? 0;
 
   String get _displayName {
-    final n = (name ?? '').trim();
+    final n = (_name ?? '').trim();
     if (n.isNotEmpty) return n;
-    final e = (email ?? '').trim();
+    final e = (_email ?? '').trim();
     if (e.contains('@')) return e.split('@').first;
     return 'User';
   }
 
   String get _displayAddress {
-    final a = (address ?? '').trim();
+    final a = (_address ?? '').trim();
     return a.isNotEmpty ? a : 'No address yet';
   }
 
@@ -74,17 +147,13 @@ class ProfileScreenView extends StatelessWidget {
       body: RefreshIndicator(
         color: Colors.white,
         backgroundColor: Colors.black,
-        onRefresh: () async {
-          if (onRefresh != null) {
-            await onRefresh!();
-          }
-        },
+        onRefresh: _load,
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           children: [
-            if ((errorMessage ?? '').isNotEmpty) ...[
+            if ((_error ?? '').isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(errorMessage!, style: const TextStyle(color: Colors.redAccent)),
+              Text(_error!, style: const TextStyle(color: Colors.redAccent)),
               const SizedBox(height: 8),
             ],
 
@@ -94,10 +163,10 @@ class ProfileScreenView extends StatelessWidget {
                 CircleAvatar(
                   radius: 30,
                   backgroundColor: Colors.grey.shade700,
-                  backgroundImage: (avatarUrl != null && avatarUrl!.isNotEmpty)
-                      ? NetworkImage(avatarUrl!) as ImageProvider
+                  backgroundImage: (_avatarUrl != null && _avatarUrl!.isNotEmpty)
+                      ? NetworkImage(_avatarUrl!) as ImageProvider
                       : null,
-                  child: (avatarUrl == null || avatarUrl!.isEmpty)
+                  child: (_avatarUrl == null || _avatarUrl!.isEmpty)
                       ? const Icon(Icons.person, color: Colors.white70)
                       : null,
                 ),
@@ -110,7 +179,7 @@ class ProfileScreenView extends StatelessWidget {
                   ],
                 ),
                 const Spacer(),
-                if (loading)
+                if (_loading)
                   const SizedBox(
                     width: 22,
                     height: 22,
@@ -125,9 +194,9 @@ class ProfileScreenView extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  topCard(imagePath: Images.currency, value: "$investCount",  type: "Investments"),
-                  topCard(imagePath: Images.layout,   value: "$projectCount", type: "Project"),
-                  topCard(imagePath: Images.key,      value: "$auctionCount", type: "Auctions"),
+                  topCard(imagePath: Images.currency, value: "$_investCount",  type: "Investments"),
+                  topCard(imagePath: Images.layout,   value: "$_projectCount", type: "Project"),
+                  topCard(imagePath: Images.key,      value: "$_auctionCount", type: "Auctions"),
                 ],
               ),
             ),
@@ -137,24 +206,28 @@ class ProfileScreenView extends StatelessWidget {
               imagePath: Images.credit,
               name: "Personal Information",
               voidCallBack: () async {
-                final changed = await Get.to<bool>(() => const PersonalInfoAddView(),
-                    transition: Transition.rightToLeft,
-                    duration: const Duration(milliseconds: 320),
-                    curve: Curves.easeInOut);
-                // If the edit screen reported changes, refresh this page.
-                if (changed == true && onRefresh != null) {
-                  await onRefresh!();
+                final changed = await Get.to<bool>(
+                      () => const PersonalInfoAddView(),
+                  transition: Transition.rightToLeft,
+                  duration: const Duration(milliseconds: 320),
+                  curve: Curves.easeInOut,
+                );
+                // if user saved changes → reload profile
+                if (changed == true) {
+                  await _load();
                 }
               },
             ),
             profileBottom(
               imagePath: Images.terms,
               name: "Update Photos",
-              voidCallBack: () {
-                Get.to(() => const UploadProfileView(),
+              voidCallBack: () async {
+                await Get.to(() => const UploadProfileView(),
                     transition: Transition.rightToLeft,
                     duration: const Duration(milliseconds: 320),
                     curve: Curves.easeInOut);
+                // after photo update, refresh to get new avatar
+                await _load();
               },
             ),
             profileBottom(
@@ -224,7 +297,7 @@ class ProfileScreenView extends StatelessWidget {
               child: Column(
                 children: [
                   InkWell(
-                    onTap: loading
+                    onTap: _loading
                         ? null
                         : () async {
                       final ok = await showDialog<bool>(
@@ -247,11 +320,9 @@ class ProfileScreenView extends StatelessWidget {
                           false;
                       if (!ok) return;
 
-                      if (onLogout != null) {
-                        try {
-                          await onLogout!();
-                        } catch (_) {}
-                      }
+                      try {
+                        await context.read<AuthProvider>().logout();
+                      } catch (_) {}
 
                       Get.snackbar('Success', 'Logged Out Successfully',
                           snackPosition: SnackPosition.TOP);

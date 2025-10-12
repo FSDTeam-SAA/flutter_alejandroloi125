@@ -3,12 +3,12 @@ import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class InvestDeskCard extends StatelessWidget {
-  final String? imagePath;
+  final String? imagePath;  // can be asset path or http(s) url
   final String? title;
-  final String? type;     // "Agriculture" (NO brackets)
-  final String? percent;  // "45"
+  final String? type;       // e.g., "Agriculture"
+  final String? percent;    // e.g., "45"
   final Widget? progressBar;
-  final String? price;    // "25000"
+  final String? price;      // e.g., "25000"
 
   const InvestDeskCard({
     super.key,
@@ -20,6 +20,15 @@ class InvestDeskCard extends StatelessWidget {
     this.progressBar,
   });
 
+  // Reliable network placeholder so something ALWAYS shows
+  static const String _fallbackNetwork =
+      'https://via.placeholder.com/200x200.png?text=Image';
+
+  bool get _isNetwork {
+    final p = imagePath?.trim() ?? '';
+    return p.startsWith('http://') || p.startsWith('https://');
+  }
+
   @override
   Widget build(BuildContext context) {
     final percentText = (percent == null || percent!.isEmpty)
@@ -29,7 +38,6 @@ class InvestDeskCard extends StatelessWidget {
     final priceText = (price == null || price!.isEmpty) ? '\$ 0' : '\$ $price';
 
     return Container(
-      padding: const EdgeInsets.all(0),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
         color: AppColors.fieldColor,
@@ -37,20 +45,22 @@ class InvestDeskCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (imagePath != null && imagePath!.isNotEmpty)
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(10),
-                bottomLeft: Radius.circular(10),
-              ),
-              child: Image.asset(
-                imagePath!,
-                width: 100,
-                height: 100,
-                fit: BoxFit.cover,
-              ),
+          // ---- Image (asset or network) ----
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(10),
+              bottomLeft: Radius.circular(10),
             ),
+            child: SizedBox(
+              width: 100,
+              height: 100,
+              child: _buildImage(),
+            ),
+          ),
+
           const SizedBox(width: 15),
+
+          // ---- Text/content ----
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(8.0),
@@ -78,7 +88,6 @@ class InvestDeskCard extends StatelessWidget {
                         fontWeight: FontWeight.w400,
                       ),
                     ),
-                  const SizedBox(height: 6),
                   if (progressBar != null) ...[
                     const SizedBox(height: 8),
                     progressBar!,
@@ -87,7 +96,7 @@ class InvestDeskCard extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          percentText, // “45% funded”
+                          percentText,
                           style: const TextStyle(
                             fontSize: 13,
                             color: Color(0xffA8A8A8),
@@ -95,7 +104,7 @@ class InvestDeskCard extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          priceText,   // “$ 25,000”
+                          priceText,
                           style: const TextStyle(
                             fontSize: 14,
                             color: Colors.white,
@@ -113,4 +122,53 @@ class InvestDeskCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _buildImage() {
+    final src = (imagePath == null || imagePath!.trim().isEmpty)
+        ? _fallbackNetwork
+        : imagePath!.trim();
+
+    if (_isNetwork) {
+      return Image.network(
+        src,
+        fit: BoxFit.cover,
+        loadingBuilder: (ctx, child, progress) {
+          if (progress == null) return child;
+          return _loader();
+        },
+        errorBuilder: (_, __, ___) => _fallbackNet(),
+      );
+    }
+
+    // Asset path → if it fails, show network placeholder
+    return Image.asset(
+      src,
+      fit: BoxFit.cover,
+      errorBuilder: (_, __, ___) => _fallbackNet(),
+    );
+  }
+
+  Widget _loader() => Container(
+        color: const Color(0x11000000),
+        alignment: Alignment.center,
+        child: const SizedBox(
+          height: 18,
+          width: 18,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+
+  Widget _fallbackNet() => Image.network(
+        _fallbackNetwork,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => Container(
+          color: const Color(0x11000000),
+          alignment: Alignment.center,
+          child: const Icon(
+            Icons.image_not_supported_outlined,
+            size: 22,
+            color: Colors.white70,
+          ),
+        ),
+      );
 }

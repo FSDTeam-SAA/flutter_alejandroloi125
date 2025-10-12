@@ -80,8 +80,8 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
                   hintText: 'Current Password',
                   // If your CustomTextField supports it, uncomment:
                   // obscureText: true,
-                  // validator: (v) => v == null || v.isEmpty ? 'Enter current password' : null,
-                  validator: (v) => ap.validatePassword(v),
+                  validator: (v) => v == null || v.isEmpty ? 'Enter current password' : null,
+                  // validator: (v) => ap.validatePassword(v),
                 ),
                 const SizedBox(height: 15),
                 CustomTextField(

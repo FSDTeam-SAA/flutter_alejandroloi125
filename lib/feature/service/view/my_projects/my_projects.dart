@@ -7,6 +7,23 @@ import '../../../../providers/project_provider.dart';
 import '../../../models/project.dart';
 import 'my_project_details.dart';
 
+// ======= Design tokens (from the mock) =======
+const _pageBg        = Color(0xFF0D0F12);
+const _cardBg        = Color(0xFF1A1B1E);
+const _cardStroke    = Color(0xFF2B2C31);
+const _bodyText      = Colors.white;
+const _mutedText     = Colors.white70;
+const _accentOrange  = Color(0xFFFF8A34);
+
+// Status chips
+const _progressFg    = _accentOrange;         // label
+const _progressBg    = Color(0xFFFFE8D9);     // peach bg
+const _progressBd    = Color(0xFFFFD2B8);     // peach border
+
+const _successFg     = Color(0xFF34D6C3);     // teal label (completed)
+const _successBg     = Color(0xFFE8FAF6);     // light teal bg
+const _successBd     = Color(0xFFBFF3EA);     // light teal border
+
 class MyProjectScreen extends StatefulWidget {
   const MyProjectScreen({super.key});
 
@@ -59,11 +76,11 @@ class _MyProjectScreenState extends State<MyProjectScreen> {
     final items = prov.items;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0D0F12),
+      backgroundColor: _pageBg,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _refresh,
-          color: const Color(0xFFFF8A34),
+          color: _accentOrange,
           child: Builder(
             builder: (_) {
               // first load
@@ -115,8 +132,7 @@ class _MyProjectScreenState extends State<MyProjectScreen> {
 
               return ListView.separated(
                 controller: _scroll,
-                padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 itemCount: items.length + (prov.page < prov.pages ? 1 : 0),
                 separatorBuilder: (_, __) => const SizedBox(height: 14),
                 itemBuilder: (context, index) {
@@ -136,56 +152,54 @@ class _MyProjectScreenState extends State<MyProjectScreen> {
 
                   final p = items[index];
 
-                  // FIX 1: Don’t infer completed from days; only from API status
+                  // status derivation (API-driven only)
                   final apiStatus = (p.status ?? '').trim();
-                  final completed =
-                  apiStatus.toLowerCase().contains('complete');
-                  final status =
-                  apiStatus.isEmpty ? (completed ? 'Completed' : 'In Progress') : apiStatus;
+                  final lower = apiStatus.toLowerCase();
+                  final completed = lower.contains('complete');
+                  final cancelled = lower.contains('cancel');
 
-                  // FIX 2: Days text is '-' if API doesn't send it
+                  final statusLabel = apiStatus.isEmpty
+                      ? (completed ? 'Completed' : 'In Progress')
+                      : (apiStatus[0].toUpperCase() + apiStatus.substring(1));
+
+                  // graceful fallbacks
                   final int d = p.deadlineDays;
                   final daysText = d > 0 ? '$d Days' : '-';
 
-                  final statusColor = completed
-                      ? const Color(0xFF58D38C)
-                      : const Color(0xFFFF8A34);
-
-                  final proposalsText = '8 Proposals'; // placeholder
-
                   return _ProjectCard(
-                    status: status,
-                    statusColor: statusColor,
+                    // content
                     category: p.category,
                     title: p.title.isEmpty ? 'Untitled' : p.title,
                     description: p.description.isEmpty ? '—' : p.description,
                     budgetRange: _fmtBudget(p.minBudget, p.maxBudget),
                     days: daysText,
                     location: p.location.isEmpty ? '—' : p.location,
-                    proposals: proposalsText,
-                    completed: completed,
+                    proposals: '8 Proposals',
+                    // status visuals
+                    statusLabel: statusLabel,
+                    statusKind: completed
+                        ? _StatusKind.completed
+                        : (cancelled ? _StatusKind.cancelled : _StatusKind.progress),
+                    // actions
+                    showDelete: !completed,
                     onDelete: () async {
                       final ok = await showDialog<bool>(
                         context: context,
                         builder: (ctx) => AlertDialog(
                           title: const Text('Delete project?'),
-                          content:
-                          const Text('This action cannot be undone.'),
+                          content: const Text('This action cannot be undone.'),
                           actions: [
                             TextButton(
-                              onPressed: () =>
-                                  Navigator.pop(ctx, false),
+                              onPressed: () => Navigator.pop(ctx, false),
                               child: const Text('Cancel'),
                             ),
                             TextButton(
-                              onPressed: () =>
-                                  Navigator.pop(ctx, true),
+                              onPressed: () => Navigator.pop(ctx, true),
                               child: const Text('Delete'),
                             ),
                           ],
                         ),
-                      ) ??
-                          false;
+                      ) ?? false;
                       if (!ok) return;
 
                       await context.read<ProjectProvider>().delete(p.id);
@@ -254,26 +268,12 @@ class _MyProjectScreenState extends State<MyProjectScreen> {
   }
 }
 
-// ======= Card (visuals aligned to your mock) =======
+// ======= Card (pixel-matched to the mock) =======
+
+enum _StatusKind { progress, completed, cancelled }
 
 class _ProjectCard extends StatelessWidget {
-  final String status;
-  final Color statusColor;
-  final String category;
-  final String title;
-  final String description;
-  final String budgetRange;
-  final String days;
-  final String location;
-  final String proposals;
-  final bool completed;
-
-  final VoidCallback? onDelete;
-  final VoidCallback onView;
-
   const _ProjectCard({
-    required this.status,
-    required this.statusColor,
     required this.category,
     required this.title,
     required this.description,
@@ -281,24 +281,48 @@ class _ProjectCard extends StatelessWidget {
     required this.days,
     required this.location,
     required this.proposals,
-    required this.completed,
-    this.onDelete,
+    required this.statusLabel,
+    required this.statusKind,
+    required this.showDelete,
     required this.onView,
+    this.onDelete,
   });
+
+  final String category;
+  final String title;
+  final String description;
+  final String budgetRange;
+  final String days;
+  final String location;
+  final String proposals;
+
+  final String statusLabel;
+  final _StatusKind statusKind;
+
+  final bool showDelete;
+  final VoidCallback? onDelete;
+  final VoidCallback onView;
 
   @override
   Widget build(BuildContext context) {
-    const cardBg = Color(0xFF15181C);
-    const border = Color(0xFF242931);
-    const accent = Color(0xFFFF8A34);
+    final (fg, bg, bd) = switch (statusKind) {
+      _StatusKind.progress   => (_progressFg, _progressBg, _progressBd),
+      _StatusKind.completed  => (_successFg,  _successBg,  _successBd),
+      _StatusKind.cancelled  => (Colors.white70, const Color(0xFF2A2B30), _cardStroke),
+    };
 
     return Container(
       decoration: BoxDecoration(
-        color: cardBg,
+        color: _cardBg,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: border),
+        border: Border.all(color: _cardStroke),
         boxShadow: const [
-          BoxShadow(color: Colors.black54, blurRadius: 10, offset: Offset(0, 6))
+          BoxShadow(
+            color: Colors.black54,
+            offset: Offset(0, 6),
+            blurRadius: 12,
+            spreadRadius: -8,
+          ),
         ],
       ),
       child: Stack(
@@ -308,108 +332,127 @@ class _ProjectCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // top spacing for status chip overlay
                 const SizedBox(height: 26),
+
+                // Category
                 Text(
                   category,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
-                    fontSize: 12,
+                  style: const TextStyle(
+                    color: _accentOrange,
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 4),
+
+                // Title
                 Text(
                   title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: _bodyText,
                     fontSize: 16.5,
                     fontWeight: FontWeight.w800,
+                    height: 1.2,
                   ),
                 ),
                 const SizedBox(height: 6),
+
+                // Description
                 Text(
                   description,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.75),
+                  style: const TextStyle(
+                    color: _mutedText,
                     fontSize: 12.5,
                     height: 1.35,
                   ),
                 ),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    _InfoPill(icon: Icons.attach_money, text: budgetRange),
-                    const SizedBox(width: 12),
-                    _InfoPill(icon: Icons.schedule, text: days),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Row(
-                  children: [
-                    _InfoPill(icon: Icons.location_on_outlined, text: location),
-                    const SizedBox(width: 12),
-                    _InfoPill(icon: Icons.group_outlined, text: proposals),
-                  ],
-                ),
-                const SizedBox(height: 14),
 
-                if (!completed)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(
-                              color: Colors.white.withOpacity(0.15),
-                            ),
-                            foregroundColor:
-                            Colors.white.withOpacity(0.9),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding:
-                            const EdgeInsets.symmetric(vertical: 12),
+                // Info rows (exactly like mock: icon + text, two columns)
+                _TwoCols(
+                  leftIcon: Icons.attach_money_rounded,
+                  leftText: budgetRange,
+                  rightIcon: Icons.timelapse_rounded,
+                  rightText: days,
+                ),
+                const SizedBox(height: 8),
+                _TwoCols(
+                  leftIcon: Icons.place_rounded,
+                  leftText: location,
+                  rightIcon: Icons.group_rounded,
+                  rightText: proposals,
+                ),
+
+                const SizedBox(height: 12),
+                const Divider(color: _cardStroke, height: 1),
+                const SizedBox(height: 12),
+
+                // Buttons row
+                if (showDelete) Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: onDelete,
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: _accentOrange, width: 2),
+                          foregroundColor: _accentOrange,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          onPressed: onDelete,
-                          child: const Text('Delete'),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: accent,
-                            foregroundColor: Colors.black,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            padding:
-                            const EdgeInsets.symmetric(vertical: 12),
-                            elevation: 0,
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15,
                           ),
-                          onPressed: onView,
-                          child: const Text('View Details'),
                         ),
+                        child: const Text('Delete'),
                       ),
-                    ],
-                  )
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: onView,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _accentOrange,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                          ),
+                          elevation: 0,
+                        ),
+                        child: const Text('View Details'),
+                      ),
+                    ),
+                  ],
+                )
                 else
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
+                      onPressed: onView,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: accent,
+                        backgroundColor: _accentOrange,
                         foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
                         padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        textStyle: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                        ),
                         elevation: 0,
                       ),
-                      onPressed: onView,
                       child: const Text('View Details'),
                     ),
                   ),
@@ -417,33 +460,25 @@ class _ProjectCard extends StatelessWidget {
             ),
           ),
 
-          // top-right status chip
+          // Status chip (top-right)
           Positioned(
             top: 12,
             right: 12,
-            left: 14,
-            child: Row(
-              children: [
-                const Spacer(),
-                Container(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: statusColor.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: statusColor.withOpacity(0.7)),
-                  ),
-                  child: Text(
-                    status,
-                    style: TextStyle(
-                      color: statusColor,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                      letterSpacing: 0.2,
-                    ),
-                  ),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: bg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: bd),
+              ),
+              child: Text(
+                statusLabel,
+                style: TextStyle(
+                  color: fg,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
                 ),
-              ],
+              ),
             ),
           ),
         ],
@@ -452,41 +487,45 @@ class _ProjectCard extends StatelessWidget {
   }
 }
 
-class _InfoPill extends StatelessWidget {
-  final IconData icon;
-  final String text;
+// Two-column row with icons (exact like mock)
+class _TwoCols extends StatelessWidget {
+  const _TwoCols({
+    required this.leftIcon,
+    required this.leftText,
+    required this.rightIcon,
+    required this.rightText,
+  });
 
-  const _InfoPill({required this.icon, required this.text});
+  final IconData leftIcon;
+  final String leftText;
+  final IconData rightIcon;
+  final String rightText;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        height: 38,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A1F26),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFF2A313A)),
+    const labelStyle = TextStyle(color: _mutedText, fontSize: 13.5, height: 1.25);
+    return Row(
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              const Icon(Icons.attach_money_rounded, size: 18, color: _mutedText),
+              const SizedBox(width: 6),
+              Flexible(child: Text(leftText, style: labelStyle)),
+            ],
+          ),
         ),
-        child: Row(
-          children: [
-            Icon(icon, size: 16, color: Colors.white.withOpacity(0.85)),
-            const SizedBox(width: 8),
-            Flexible(
-              child: Text(
-                text,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.85),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
+        const SizedBox(width: 12),
+        Expanded(
+          child: Row(
+            children: [
+              Icon(rightIcon, size: 18, color: _mutedText),
+              const SizedBox(width: 6),
+              Flexible(child: Text(rightText, style: labelStyle)),
+            ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }

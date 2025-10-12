@@ -9,23 +9,24 @@ import '../../models/investment.dart';
 import '../invest.dart';
 
 // ===== Theme (match the mock) =====
-const _bg     = Color(0xFF0F0F12);
-const _card   = Color(0xFF1B1E23);
-const _inner  = Color(0xFF23262B);
+const _bg = Color(0xFF0F0F12);
+const _card = Color(0xFF1B1E23);
+const _inner = Color(0xFF23262B);
 const _accent = Color(0xFFFF7A1A);
 
-BoxDecoration _cardBox({Color color = _card, double radius = 12}) => BoxDecoration(
-  color: color,
-  borderRadius: BorderRadius.circular(radius),
-  border: Border.all(color: Colors.white.withOpacity(.06), width: 1),
-  boxShadow: [
-    BoxShadow(
-      color: Colors.black.withOpacity(.13),
-      blurRadius: 18,
-      offset: const Offset(0, 10),
-    ),
-  ],
-);
+BoxDecoration _cardBox({Color color = _card, double radius = 12}) =>
+    BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(radius),
+      border: Border.all(color: Colors.white.withOpacity(.06), width: 1),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(.13),
+          blurRadius: 18,
+          offset: const Offset(0, 10),
+        ),
+      ],
+    );
 
 class InvestmentDetailScreen extends StatefulWidget {
   final String investmentId;
@@ -53,17 +54,31 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
 
   Future<void> _load() async {
     if (widget.prefetched != null) {
-      setState(() { _inv = widget.prefetched; _loading = false; });
+      setState(() {
+        _inv = widget.prefetched;
+        _loading = false;
+      });
       return;
     }
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
-      final inv = await context.read<InvestmentProvider>().getById(widget.investmentId);
+      final inv = await context.read<InvestmentProvider>().getById(
+        widget.investmentId,
+      );
       if (!mounted) return;
-      setState(() { _inv = inv; _loading = false; });
+      setState(() {
+        _inv = inv;
+        _loading = false;
+      });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
     }
   }
 
@@ -81,57 +96,92 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              _TopBar(),
-              const SizedBox(height: 16),
-              Container(
-                decoration: _cardBox(),
-                padding: const EdgeInsets.all(16),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  const Text('Couldn’t load details', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: Colors.white)),
-                  const SizedBox(height: 8),
-                  Text(_error!, style: TextStyle(color: Colors.white.withOpacity(.75))),
-                  const SizedBox(height: 10),
-                  Align(alignment: Alignment.centerRight, child: TextButton(onPressed: _load, child: const Text('Retry'))),
-                ]),
-              ),
-            ]),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _TopBar(),
+                const SizedBox(height: 16),
+                Container(
+                  decoration: _cardBox(),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Couldn’t load details',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 16,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        _error!,
+                        style: TextStyle(color: Colors.white.withOpacity(.75)),
+                      ),
+                      const SizedBox(height: 10),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _load,
+                          child: const Text('Retry'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       );
     }
 
-    final inv       = _inv!;
-    final title     = inv.name.isNotEmpty ? inv.name : 'Urban Farming Initiative';
-    final category  = inv.category.isNotEmpty ? inv.category.join(', ') : 'Agriculture';
-    final rawDesc   = inv.description.isNotEmpty
+    final inv = _inv!;
+    final title = inv.name.isNotEmpty ? inv.name : 'Urban Farming Initiative';
+    final category = inv.category.isNotEmpty
+        ? inv.category.join(', ')
+        : 'Agriculture';
+    final rawDesc = inv.description.isNotEmpty
         ? inv.description
         : 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum metus eu egestas pharetra. Fusce bibendum odio et venenatis efficitur.';
-    final desc      = _scrubQuotes(rawDesc);
-    final loc       = inv.location;
-    final imageUrl  = inv.primaryImageUrl ??
+    final desc = _scrubQuotes(rawDesc);
+    final loc = inv.location;
+    final imageUrl =
+        inv.primaryImageUrl ??
         'https://images.unsplash.com/photo-1524404794195-0f93a1c1a5a5?q=80&w=1200&auto=format&fit=crop';
-    final goal      = inv.fundingGoal ?? 25000; // mock shows $25,000
-    final progress  = inv.progressPct.clamp(0, 100);
-    final daysLeft  = _daysLeft(inv.fundingDuration) == 0 ? 10 : _daysLeft(inv.fundingDuration);
-    final backers   = 28; // static for mock
+    final goal = inv.fundingGoal ?? 25000; // mock shows $25,000
+    final progress = inv.progressPct.clamp(0, 100);
+    final daysLeft = _daysLeft(inv.fundingDuration) == 0
+        ? 10
+        : _daysLeft(inv.fundingDuration);
+    final backers = 28; // static for mock
 
-    final gallery   = inv.images.map((e) => e.url).where((u) => u.isNotEmpty).toList();
-    final g1 = gallery.isNotEmpty ? gallery[0]
+    final gallery = inv.images
+        .map((e) => e.url)
+        .where((u) => u.isNotEmpty)
+        .toList();
+    final g1 = gallery.isNotEmpty
+        ? gallery[0]
         : 'https://images.unsplash.com/photo-1524404794195-0f93a1c1a5a5?q=80&w=1200&auto=format&fit=crop';
-    final g2 = gallery.length > 1 ? gallery[1]
+    final g2 = gallery.length > 1
+        ? gallery[1]
         : 'https://images.unsplash.com/photo-1509395176047-4a66953fd231?q=80&w=1200&auto=format&fit=crop';
 
     final bullets = inv.investmentTerms.trim().isNotEmpty
-        ? inv.investmentTerms.split(RegExp(r'\r?\n')).where((s) => s.trim().isNotEmpty).toList()
+        ? inv.investmentTerms
+              .split(RegExp(r'\r?\n'))
+              .where((s) => s.trim().isNotEmpty)
+              .toList()
         : const [
-      'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-      'Quisque tempus tortor nec pharetra viverra.',
-      'Fusce id metus at amet leo convallis convallis.',
-      'Duis mollis dolor sit amet tortor egestas, vel consectetur dui finibus.',
-      'Duis iaculis quam vel est sodales, sit amet tristique mauris fringilla.',
-      'Sed in mi eu velit ultrices dignissim.',
-    ];
+            'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+            'Quisque tempus tortor nec pharetra viverra.',
+            'Fusce id metus at amet leo convallis convallis.',
+            'Duis mollis dolor sit amet tortor egestas, vel consectetur dui finibus.',
+            'Duis iaculis quam vel est sodales, sit amet tristique mauris fringilla.',
+            'Sed in mi eu velit ultrices dignissim.',
+          ];
 
     return Scaffold(
       backgroundColor: _bg,
@@ -151,86 +201,109 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
             Container(
               decoration: _cardBox(),
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                // Category (uppercase like the mock)
-                Text(
-                  category.toUpperCase(),
-                  style: const TextStyle(
-                    color: _accent,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: .25,
-                  ),
-                ),
-                const SizedBox(height: 4),
-
-                // Title (explicit white so it never looks dim)
-                Text(
-                  title,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18),
-                ),
-                const SizedBox(height: 8),
-
-                // Short description (limited lines on card)
-                Text(
-                  desc,
-                  style: TextStyle(height: 1.38, color: Colors.white.withOpacity(.78), fontSize: 13),
-                  maxLines: 4,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 14),
-
-                // Location pill
-                if (loc.isNotEmpty) ...[
-                  _LocationPill(label: loc),
-                  const SizedBox(height: 16),
-                ],
-
-                // Progress block
-                Container(
-                  decoration: _cardBox(color: _inner, radius: 10),
-                  padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
-                  child: Column(children: [
-                    _ProgressBar(value: (progress / 100), color: _accent),
-                    const SizedBox(height: 12),
-                    Row(children: [
-                      _Metric(top: '$progress%', bottom: 'of \$${_fmt(goal)}'),
-                      _DividerV(),
-                      _Metric(top: '$backers', bottom: 'Backers'),
-                      _DividerV(),
-                      _Metric(top: '$daysLeft', bottom: 'Days left'),
-                    ]),
-                  ]),
-                ),
-
-                const SizedBox(height: 16),
-
-                // CTA
-                SizedBox(
-                  height: 46,
-                  width: double.infinity,
-                  child: TextButton(
-                    onPressed: () {
-                      Get.to(
-                            () => InvestScreen(
-                          investmentId: widget.investmentId,
-                          investmentTitle: title,
-                        ),
-                        transition: Transition.rightToLeft,
-                        duration: const Duration(milliseconds: 350),
-                        curve: Curves.easeInOut,
-                      );
-                    },
-                    style: TextButton.styleFrom(
-                      backgroundColor: _accent,
-                      foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      textStyle: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Category (uppercase like the mock)
+                  Text(
+                    category.toUpperCase(),
+                    style: const TextStyle(
+                      color: _accent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: .25,
                     ),
-                    child: const Text('Invest Now'),
                   ),
-                ),
-              ]),
+                  const SizedBox(height: 4),
+
+                  // Title (explicit white so it never looks dim)
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+
+                  // Short description (limited lines on card)
+                  Text(
+                    desc,
+                    style: TextStyle(
+                      height: 1.38,
+                      color: Colors.white.withOpacity(.78),
+                      fontSize: 13,
+                    ),
+                    maxLines: 4,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 14),
+
+                  // Location pill
+                  if (loc.isNotEmpty) ...[
+                    _LocationPill(label: loc),
+                    const SizedBox(height: 16),
+                  ],
+
+                  // Progress block
+                  Container(
+                    decoration: _cardBox(color: _inner, radius: 10),
+                    padding: const EdgeInsets.fromLTRB(14, 16, 14, 14),
+                    child: Column(
+                      children: [
+                        _ProgressBar(value: (progress / 100), color: _accent),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            _Metric(
+                              top: '$progress%',
+                              bottom: 'of \$${_fmt(goal)}',
+                            ),
+                            _DividerV(),
+                            _Metric(top: '$backers', bottom: 'Backers'),
+                            _DividerV(),
+                            _Metric(top: '$daysLeft', bottom: 'Days left'),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // CTA
+                  SizedBox(
+                    height: 46,
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: () {
+                        Get.to(
+                          () => InvestScreen(
+                            investmentId: widget.investmentId,
+                            investmentTitle: title,
+                          ),
+                          transition: Transition.rightToLeft,
+                          duration: const Duration(milliseconds: 350),
+                          curve: Curves.easeInOut,
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        backgroundColor: _accent,
+                        foregroundColor: Colors.black,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        textStyle: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                        ),
+                      ),
+                      child: const Text('Invest Now'),
+                    ),
+                  ),
+                ],
+              ),
             ),
 
             const SizedBox(height: 14),
@@ -238,17 +311,28 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
             // ===== About =====
             _SectionCard(
               title: 'About This Project',
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(
-                  desc,
-                  style: TextStyle(height: 1.45, fontSize: 13, color: Colors.white.withOpacity(.82)),
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  'Curabitur sed nunc vitae ex tincidunt porttitor blandit eget purus. Interdum et malesuada fames ac ante ipsum primis in faucibus. In a neque at neque convallis mollis eget sed velit. Fusce semper convallis dapibus. Integer sapien mi, vehicula in lorem non, blandit vestibulum augue. Aenean ac posuere quam. Nam dapibus est ut rutrum posuere.',
-                  style: TextStyle(height: 1.45, fontSize: 13, color: Colors.white.withOpacity(.82)),
-                ),
-              ]),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    desc,
+                    style: TextStyle(
+                      height: 1.45,
+                      fontSize: 13,
+                      color: Colors.white.withOpacity(.82),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Curabitur sed nunc vitae ex tincidunt porttitor blandit eget purus. Interdum et malesuada fames ac ante ipsum primis in faucibus. In a neque at neque convallis mollis eget sed velit. Fusce semper convallis dapibus. Integer sapien mi, vehicula in lorem non, blandit vestibulum augue. Aenean ac posuere quam. Nam dapibus est ut rutrum posuere.',
+                    style: TextStyle(
+                      height: 1.45,
+                      fontSize: 13,
+                      color: Colors.white.withOpacity(.82),
+                    ),
+                  ),
+                ],
+              ),
             ),
 
             const SizedBox(height: 14),
@@ -256,11 +340,13 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
             // ===== Gallery =====
             _SectionCard(
               title: 'Gallery',
-              child: Row(children: [
-                Expanded(child: _GalleryThumb(image: g1)),
-                const SizedBox(width: 10),
-                Expanded(child: _GalleryThumb(image: g2)),
-              ]),
+              child: Row(
+                children: [
+                  Expanded(child: _GalleryThumb(image: g1)),
+                  const SizedBox(width: 10),
+                  Expanded(child: _GalleryThumb(image: g2)),
+                ],
+              ),
             ),
 
             const SizedBox(height: 14),
@@ -268,11 +354,21 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
             // ===== Terms =====
             _SectionCard(
               title: 'Investment Terms',
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                for (final b in bullets) _Bullet(text: b),
-                const SizedBox(height: 8),
-                Opacity(opacity: .25, child: Container(height: 3, width: double.infinity, color: Colors.white)),
-              ]),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (final b in bullets) _Bullet(text: b),
+                  const SizedBox(height: 8),
+                  Opacity(
+                    opacity: .25,
+                    child: Container(
+                      height: 3,
+                      width: double.infinity,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -285,21 +381,34 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
 class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Row(children: [
-      _roundBackBtn(),
-      const SizedBox(width: 8),
-      const Text(
-        'Investments Details',
-        style: TextStyle(fontSize: 12.5, color: Colors.white70, fontWeight: FontWeight.w700, letterSpacing: .2),
-      ),
-    ]);
+    return Row(
+      children: [
+        _roundBackBtn(),
+        const SizedBox(width: 8),
+        const Text(
+          'Investments Details',
+          style: TextStyle(
+            fontSize: 12.5,
+            color: Colors.white70,
+            fontWeight: FontWeight.w700,
+            letterSpacing: .2,
+          ),
+        ),
+      ],
+    );
   }
 
   static Widget _roundBackBtn() => Container(
     decoration: BoxDecoration(
       shape: BoxShape.circle,
       color: const Color(0xFF2F6F80).withOpacity(0.35),
-      boxShadow: [BoxShadow(blurRadius: 6, offset: const Offset(0, 2), color: Colors.black.withOpacity(.10))],
+      boxShadow: [
+        BoxShadow(
+          blurRadius: 6,
+          offset: const Offset(0, 2),
+          color: Colors.black.withOpacity(.10),
+        ),
+      ],
     ),
     child: IconButton(
       icon: const Icon(CupertinoIcons.back),
@@ -324,80 +433,133 @@ class _HeroCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
-      child: Stack(children: [
-        AspectRatio(
-          aspectRatio: 16 / 9,
-          child: _isNetwork
-              ? Image.network(image, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _broken())
-              : Image.asset(image, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _broken()),
-        ),
-        // gradient overlay
-        Positioned.fill(
-          child: IgnorePointer(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withOpacity(.35),
-                    Colors.transparent,
-                    Colors.black.withOpacity(.60),
-                  ],
-                  stops: const [0.0, 0.45, 1.0],
+      child: Stack(
+        children: [
+          AspectRatio(
+            aspectRatio: 16 / 9,
+            child: _isNetwork
+                ? Image.network(
+                    image,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _broken(),
+                  )
+                : Image.asset(
+                    image,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _broken(),
+                  ),
+          ),
+          // gradient overlay
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withOpacity(.35),
+                      Colors.transparent,
+                      Colors.black.withOpacity(.60),
+                    ],
+                    stops: const [0.0, 0.45, 1.0],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        // top controls
-        Positioned(
-          left: 8,
-          right: 8,
-          top: 8,
-          child: Row(children: [
-            _roundBtn(const Icon(CupertinoIcons.back), onPressed: () => Get.back()),
-            const Spacer(),
-            _roundBtn(const Icon(CupertinoIcons.heart)),
-          ]),
-        ),
-        // author chip
-        Positioned(
-          left: 8,
-          bottom: 8,
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(.55), // slightly denser for contrast
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: Colors.white.withOpacity(.12), width: 1),
+          // top controls
+          Positioned(
+            left: 8,
+            right: 8,
+            top: 8,
+            child: Row(
+              children: [
+                // _roundBtn(const Icon(CupertinoIcons.back), onPressed: () => Get.back()),
+                const Spacer(),
+                _roundBtn(const Icon(CupertinoIcons.heart)),
+              ],
             ),
-            child: Row(children: [
-              const CircleAvatar(radius: 12, backgroundImage: NetworkImage('https://i.pravatar.cc/100?img=24')),
-              const SizedBox(width: 8),
-              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                const Text('Eleanor_Pen', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
-                Text('@eleanorp', style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(.9))),
-              ]),
-              const SizedBox(width: 8),
-              const _TinyPill(icon: CupertinoIcons.eye, label: '2.1k'),
-              const SizedBox(width: 6),
-              const _TinyPill(icon: CupertinoIcons.hand_thumbsup, label: '142'),
-            ]),
           ),
-        ),
-      ]),
+          // author chip
+          Positioned(
+            left: 8,
+            bottom: 8,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(
+                  .55,
+                ), // slightly denser for contrast
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: Colors.white.withOpacity(.12),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  const CircleAvatar(
+                    radius: 12,
+                    backgroundImage: NetworkImage(
+                      'https://i.pravatar.cc/100?img=24',
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Eleanor_Pen',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        '@eleanorp',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Colors.white.withOpacity(.9),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: 8),
+                  const _TinyPill(icon: CupertinoIcons.eye, label: '2.1k'),
+                  const SizedBox(width: 6),
+                  const _TinyPill(
+                    icon: CupertinoIcons.hand_thumbsup,
+                    label: '142',
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
-  Widget _broken() => Container(color: Colors.black26, alignment: Alignment.center, child: const Icon(Icons.broken_image_outlined));
+  Widget _broken() => Container(
+    color: Colors.black26,
+    alignment: Alignment.center,
+    child: const Icon(Icons.broken_image_outlined),
+  );
 
   Widget _roundBtn(Icon icon, {VoidCallback? onPressed}) {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: const Color(0xFF2F6F80).withOpacity(0.35),
-        boxShadow: [BoxShadow(blurRadius: 6, offset: const Offset(0, 2), color: Colors.black.withOpacity(0.10))],
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+            color: Colors.black.withOpacity(0.10),
+          ),
+        ],
       ),
       child: IconButton(
         icon: icon,
@@ -424,26 +586,30 @@ class _TinyPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(9),
         border: Border.all(color: Colors.white.withOpacity(.12), width: 1),
       ),
-      child: Row(children: [
-        Icon(icon, size: 12, color: Colors.white.withOpacity(.95)),
-        const SizedBox(width: 5),
-        const Text(
-          // label dynamic below via RichText to keep style strict
-          '',
-          style: TextStyle(fontSize: 0), // placeholder (we'll render with RichText)
-        ),
-        RichText(
-          text: TextSpan(
-            text: label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-              letterSpacing: .1,
+      child: Row(
+        children: [
+          Icon(icon, size: 12, color: Colors.white.withOpacity(.95)),
+          const SizedBox(width: 5),
+          const Text(
+            // label dynamic below via RichText to keep style strict
+            '',
+            style: TextStyle(
+              fontSize: 0,
+            ), // placeholder (we'll render with RichText)
+          ),
+          RichText(
+            text: TextSpan(
+              text: label,
+              style: const TextStyle(
+                fontSize: 11,
+                color: Colors.white,
+                fontWeight: FontWeight.w600,
+                letterSpacing: .1,
+              ),
             ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }
@@ -461,11 +627,25 @@ class _LocationPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         border: Border.all(color: Colors.white.withOpacity(.10), width: 1),
       ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(CupertinoIcons.location_solid, size: 14, color: Colors.white.withOpacity(.95)),
-        const SizedBox(width: 6),
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w600)),
-      ]),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            CupertinoIcons.location_solid,
+            size: 14,
+            color: Colors.white.withOpacity(.95),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -478,11 +658,26 @@ class _Metric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Column(children: [
-        Text(top, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
-        const SizedBox(height: 2),
-        Text(bottom, style: TextStyle(fontSize: 11, color: Colors.white.withOpacity(.74))),
-      ]),
+      child: Column(
+        children: [
+          Text(
+            top,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            bottom,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.white.withOpacity(.74),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -492,7 +687,13 @@ class _DividerV extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: 1,
-      child: Center(child: Container(width: 1, height: 22, color: Colors.white.withOpacity(.14))),
+      child: Center(
+        child: Container(
+          width: 1,
+          height: 22,
+          color: Colors.white.withOpacity(.14),
+        ),
+      ),
     );
   }
 }
@@ -509,10 +710,15 @@ class _ProgressBar extends StatelessWidget {
       height: 8, // a bit thicker like the mock
       child: ClipRRect(
         borderRadius: BorderRadius.circular(99),
-        child: Stack(children: [
-          Container(color: track),
-          FractionallySizedBox(widthFactor: value.clamp(0, 1), child: Container(color: color)),
-        ]),
+        child: Stack(
+          children: [
+            Container(color: track),
+            FractionallySizedBox(
+              widthFactor: value.clamp(0, 1),
+              child: Container(color: color),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -528,20 +734,23 @@ class _SectionCard extends StatelessWidget {
     return Container(
       decoration: _cardBox(),
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const SizedBox(height: 2),
-        Text(
-          title,
-          style: const TextStyle(
-            color: Colors.white, // crisp, not dim
-            fontWeight: FontWeight.w800,
-            fontSize: 16,
-            letterSpacing: .1,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 2),
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white, // crisp, not dim
+              fontWeight: FontWeight.w800,
+              fontSize: 16,
+              letterSpacing: .1,
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-        child,
-      ]),
+          const SizedBox(height: 12),
+          child,
+        ],
+      ),
     );
   }
 }
@@ -596,25 +805,35 @@ class _Bullet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
-      child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Padding(
-          padding: EdgeInsets.only(top: 7),
-          child: SizedBox(
-            width: 6,
-            height: 6,
-            child: DecoratedBox(
-              decoration: BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.only(top: 7),
+            child: SizedBox(
+              width: 6,
+              height: 6,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(height: 1.45, fontSize: 13, color: Colors.white.withOpacity(.85)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                height: 1.45,
+                fontSize: 13,
+                color: Colors.white.withOpacity(.85),
+              ),
+            ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }
@@ -638,12 +857,11 @@ int _daysLeft(String? fundingDuration) {
   final n = int.tryParse(m ?? '');
   if (n == null) return 10;
   if (s.contains('month')) return n * 30;
-  if (s.contains('week'))  return n * 7;
-  if (s.contains('day'))   return n;
+  if (s.contains('week')) return n * 7;
+  if (s.contains('day')) return n;
   return n;
 }
 
 // Removes leading/trailing quotes or smart quotes so text never shows stray “ or ”
 String _scrubQuotes(String s) =>
     s.trim().replaceAll(RegExp(r'''^[“"'`‘’]+|[”"'`‘’]+$'''), '');
-

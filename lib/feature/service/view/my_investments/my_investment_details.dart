@@ -1,6 +1,10 @@
 // lib/service/view/my_investments/my_investment_details.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+
+import '../../../app_ground.dart';
 
 /// Local-only detail screen (no Provider/API).
 /// Pass the [investmentId] for routing compatibility and optionally a
@@ -23,13 +27,14 @@ class MyInvestmentDetailScreen extends StatelessWidget {
     const accent = Color(0xFFFF8A34);
 
     // Fallback demo content if nothing is passed in.
-    final it = detail ??
+    final it =
+        detail ??
         InvestmentDetail(
           name: 'Urban Farming Initiative #$investmentId',
           category: 'Agriculture',
           location: 'San Francisco, CA',
           description:
-          'A pilot to retrofit unused rooftops into hydroponic farms, supplying local groceries.',
+              'A pilot to retrofit unused rooftops into hydroponic farms, supplying local groceries.',
           terms: 'Min ticket: \$100\nTarget ROI: 8–12%\nLock-up: 12 months',
           fundingGoal: 25000,
           progressPct: 45,
@@ -44,15 +49,17 @@ class MyInvestmentDetailScreen extends StatelessWidget {
     final category = (it.category ?? '').trim().isEmpty ? '—' : it.category!;
     final title = (it.name ?? '—').trim();
     final location = (it.location ?? '').trim().isEmpty ? '—' : it.location!;
-    final description =
-    (it.description ?? '').trim().isEmpty ? '—' : it.description!.trim();
-    final goalText =
-    it.fundingGoal != null ? '\$${_comma(it.fundingGoal!)}' : '—';
-    final daysLeftText =
-    it.daysLeft != null ? '${it.daysLeft} days left' : '—';
+    final description = (it.description ?? '').trim().isEmpty
+        ? '—'
+        : it.description!.trim();
+    final goalText = it.fundingGoal != null
+        ? '\$${_comma(it.fundingGoal!)}'
+        : '—';
+    final daysLeftText = it.daysLeft != null ? '${it.daysLeft} days left' : '—';
 
-    final progress =
-    ((it.progressPct ?? 0).toDouble() / 100).clamp(0, 1).toDouble();
+    final progress = ((it.progressPct ?? 0).toDouble() / 100)
+        .clamp(0, 1)
+        .toDouble();
 
     final heroImageUrl = it.imageUrl;
     final heroImageAsset = it.imageAsset;
@@ -67,9 +74,32 @@ class MyInvestmentDetailScreen extends StatelessWidget {
         : 'https://images.unsplash.com/photo-1509395176047-4a66953fd231?q=80&w=1200&auto=format&fit=crop');
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value:
-      SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
+      ),
       child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.black,
+          surfaceTintColor: Colors.black, // avoid Material3 light tint
+          elevation: 0,
+          systemOverlayStyle: SystemUiOverlayStyle.light, // white status-bar icons
+          iconTheme: const IconThemeData(color: Colors.white),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            onPressed: () {
+              if (Navigator.of(context).canPop()) {
+                Navigator.of(context).pop();
+              } else {
+                Get.offAll(() => const AppGround());
+              }
+            },
+          ),
+          title: const Text(
+            'Investment Details',
+            style: TextStyle(fontWeight: FontWeight.w800,color: Colors.white),
+          ),
+          centerTitle: false,
+        ),
         backgroundColor: bg,
         body: SafeArea(
           child: ListView(
@@ -83,9 +113,10 @@ class MyInvestmentDetailScreen extends StatelessWidget {
                   border: Border.all(color: border),
                   boxShadow: const [
                     BoxShadow(
-                        color: Colors.black54,
-                        blurRadius: 12,
-                        offset: Offset(0, 6))
+                      color: Colors.black54,
+                      blurRadius: 12,
+                      offset: Offset(0, 6),
+                    ),
                   ],
                 ),
                 child: Column(
@@ -95,30 +126,33 @@ class MyInvestmentDetailScreen extends StatelessWidget {
                     Stack(
                       children: [
                         ClipRRect(
-                          borderRadius:
-                          const BorderRadius.vertical(top: Radius.circular(14)),
+                          borderRadius: const BorderRadius.vertical(
+                            top: Radius.circular(14),
+                          ),
                           child: AspectRatio(
                             aspectRatio: 16 / 9,
                             child: heroImageAsset != null
                                 ? Image.asset(
-                              heroImageAsset,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => _brokenImage(),
-                            )
+                                    heroImageAsset,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (_, __, ___) =>
+                                        _brokenImage(),
+                                  )
                                 : (heroImageUrl != null
-                                ? Image.network(
-                              heroImageUrl,
-                              fit: BoxFit.cover,
-                              loadingBuilder: (c, w, ev) =>
-                              ev == null
-                                  ? w
-                                  : const Center(
-                                  child:
-                                  CircularProgressIndicator()),
-                              errorBuilder: (_, __, ___) =>
-                                  _brokenImage(),
-                            )
-                                : _brokenImage()),
+                                      ? Image.network(
+                                          heroImageUrl,
+                                          fit: BoxFit.cover,
+                                          loadingBuilder: (c, w, ev) =>
+                                              ev == null
+                                              ? w
+                                              : const Center(
+                                                  child:
+                                                      CircularProgressIndicator(),
+                                                ),
+                                          errorBuilder: (_, __, ___) =>
+                                              _brokenImage(),
+                                        )
+                                      : _brokenImage()),
                           ),
                         ),
                         Positioned(
@@ -127,10 +161,10 @@ class MyInvestmentDetailScreen extends StatelessWidget {
                           right: 8,
                           child: Row(
                             children: [
-                              _CircleIconButton(
-                                icon: Icons.arrow_back_ios_new,
-                                onTap: () => Navigator.pop(context),
-                              ),
+                              // _CircleIconButton(
+                              //   icon: Icons.arrow_back_ios_new,
+                              //   onTap: () => Navigator.pop(context),
+                              // ),
                               const Spacer(),
                             ],
                           ),
@@ -163,7 +197,9 @@ class MyInvestmentDetailScreen extends StatelessWidget {
                           _Para(description),
                           const SizedBox(height: 12),
                           _InfoBar(
-                              icon: Icons.location_on_outlined, label: location),
+                            icon: Icons.location_on_outlined,
+                            label: location,
+                          ),
                           const SizedBox(height: 16),
                           _ProgressBar(
                             value: progress,
@@ -238,8 +274,7 @@ class MyInvestmentDetailScreen extends StatelessWidget {
   Widget _brokenImage() => Container(
     color: Colors.black26,
     alignment: Alignment.center,
-    child:
-    const Icon(Icons.broken_image_outlined, color: Colors.white70),
+    child: const Icon(Icons.broken_image_outlined, color: Colors.white70),
   );
 }
 
@@ -248,6 +283,7 @@ class MyInvestmentDetailScreen extends StatelessWidget {
 class _CircleIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onTap;
+
   const _CircleIconButton({required this.icon, required this.onTap});
 
   @override
@@ -277,19 +313,27 @@ class _AuthorChip extends StatelessWidget {
         const CircleAvatar(
           radius: 14,
           backgroundImage: NetworkImage(
-              'https://images.unsplash.com/photo-1544005313-94ddf0286df2'),
+            'https://images.unsplash.com/photo-1544005313-94ddf0286df2',
+          ),
         ),
         const SizedBox(width: 8),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Eleanor Pena',
-                style: TextStyle(
-                    color: Colors.white.withOpacity(0.95),
-                    fontWeight: FontWeight.w600)),
-            Text('@eleanorp',
-                style: TextStyle(
-                    color: Colors.white.withOpacity(0.7), fontSize: 12)),
+            Text(
+              'Eleanor Pena',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.95),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            Text(
+              '@eleanorp',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 12,
+              ),
+            ),
           ],
         ),
         const SizedBox(width: 8),
@@ -303,7 +347,9 @@ class _AuthorChip extends StatelessWidget {
 
 class _TinyPill extends StatelessWidget {
   final String text;
+
   const _TinyPill({required this.text});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -313,9 +359,14 @@ class _TinyPill extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: Colors.white24),
       ),
-      child: Text(text,
-          style: const TextStyle(
-              color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }
@@ -323,6 +374,7 @@ class _TinyPill extends StatelessWidget {
 class _Badge extends StatelessWidget {
   final String text;
   final Color color;
+
   const _Badge({required this.text, required this.color});
 
   @override
@@ -334,9 +386,14 @@ class _Badge extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: color.withOpacity(0.7)),
       ),
-      child: Text(text,
-          style: TextStyle(
-              color: color, fontWeight: FontWeight.w700, fontSize: 12)),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: color,
+          fontWeight: FontWeight.w700,
+          fontSize: 12,
+        ),
+      ),
     );
   }
 }
@@ -344,7 +401,9 @@ class _Badge extends StatelessWidget {
 class _InfoBar extends StatelessWidget {
   final IconData icon;
   final String label;
+
   const _InfoBar({required this.icon, required this.label});
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -363,9 +422,10 @@ class _InfoBar extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                  color: Colors.white.withOpacity(0.85),
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w600),
+                color: Colors.white.withOpacity(0.85),
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -378,28 +438,38 @@ class _ProgressBar extends StatelessWidget {
   final double value;
   final Color background;
   final Color fill;
-  const _ProgressBar(
-      {required this.value, required this.background, required this.fill});
+
+  const _ProgressBar({
+    required this.value,
+    required this.background,
+    required this.fill,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, c) {
-      final width = c.maxWidth;
-      final filled = (width * value).clamp(0.0, width);
-      return Container(
-        height: 8,
-        decoration: BoxDecoration(
-            color: background, borderRadius: BorderRadius.circular(8)),
-        child: Align(
-          alignment: Alignment.centerLeft,
-          child: Container(
-            width: filled,
-            decoration: BoxDecoration(
-                color: fill, borderRadius: BorderRadius.circular(8)),
+    return LayoutBuilder(
+      builder: (context, c) {
+        final width = c.maxWidth;
+        final filled = (width * value).clamp(0.0, width);
+        return Container(
+          height: 8,
+          decoration: BoxDecoration(
+            color: background,
+            borderRadius: BorderRadius.circular(8),
           ),
-        ),
-      );
-    });
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              width: filled,
+              decoration: BoxDecoration(
+                color: fill,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -407,10 +477,11 @@ class _MetricsRow extends StatelessWidget {
   final String percentText; // e.g. "45%"
   final String goalText; // e.g. "$25,000"
   final String daysLeftText; // e.g. "10 days left"
-  const _MetricsRow(
-      {required this.percentText,
-        required this.goalText,
-        required this.daysLeftText});
+  const _MetricsRow({
+    required this.percentText,
+    required this.goalText,
+    required this.daysLeftText,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -420,10 +491,9 @@ class _MetricsRow extends StatelessWidget {
         _Metric(top: percentText, bottom: 'of $goalText'),
         const _Metric(top: '—', bottom: 'Backers'),
         _Metric(
-            top: daysLeftText == '—'
-                ? '—'
-                : daysLeftText.split(' ').first,
-            bottom: 'Days left'),
+          top: daysLeftText == '—' ? '—' : daysLeftText.split(' ').first,
+          bottom: 'Days left',
+        ),
       ],
     );
   }
@@ -432,6 +502,7 @@ class _MetricsRow extends StatelessWidget {
 class _Metric extends StatelessWidget {
   final String top;
   final String bottom;
+
   const _Metric({required this.top, required this.bottom});
 
   @override
@@ -439,13 +510,18 @@ class _Metric extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(top,
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.w800)),
+        Text(
+          top,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
         const SizedBox(height: 2),
-        Text(bottom,
-            style: TextStyle(
-                color: Colors.white.withOpacity(0.7), fontSize: 12)),
+        Text(
+          bottom,
+          style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12),
+        ),
       ],
     );
   }
@@ -453,40 +529,56 @@ class _Metric extends StatelessWidget {
 
 class _SectionTitle extends StatelessWidget {
   final String text;
+
   const _SectionTitle(this.text);
+
   @override
   Widget build(BuildContext context) {
-    return Text(text,
-        style: const TextStyle(
-            color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16));
+    return Text(
+      text,
+      style: const TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w800,
+        fontSize: 16,
+      ),
+    );
   }
 }
 
 class _Para extends StatelessWidget {
   final String text;
+
   const _Para(this.text);
+
   @override
   Widget build(BuildContext context) {
-    return Text(text,
-        style: TextStyle(color: Colors.white.withOpacity(0.78), height: 1.45));
+    return Text(
+      text,
+      style: TextStyle(color: Colors.white.withOpacity(0.78), height: 1.45),
+    );
   }
 }
 
 class _RoundedImage extends StatelessWidget {
   final String url;
+
   const _RoundedImage(this.url);
+
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
       child: AspectRatio(
         aspectRatio: 16 / 9,
-        child: Image.network(url, fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
-              color: Colors.black26,
-              alignment: Alignment.center,
-              child: const Icon(Icons.broken_image_outlined),
-            )),
+        child: Image.network(
+          url,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => Container(
+            color: Colors.black26,
+            alignment: Alignment.center,
+            child: const Icon(Icons.broken_image_outlined),
+          ),
+        ),
       ),
     );
   }
@@ -518,7 +610,11 @@ class InvestorTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: border),
         boxShadow: const [
-          BoxShadow(color: Colors.black54, blurRadius: 10, offset: Offset(0, 6))
+          BoxShadow(
+            color: Colors.black54,
+            blurRadius: 10,
+            offset: Offset(0, 6),
+          ),
         ],
       ),
       padding: const EdgeInsets.all(14),
@@ -533,15 +629,22 @@ class InvestorTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(name,
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 16)),
+                    Text(
+                      name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
+                    ),
                     const SizedBox(height: 2),
-                    Text(subtitle,
-                        style: TextStyle(
-                            color: Colors.white.withOpacity(0.7), fontSize: 12)),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                        fontSize: 12,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -550,15 +653,23 @@ class InvestorTile extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             children: [
-              const Text('Investment Amount:',
-                  style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600)),
+              const Text(
+                'Investment Amount:',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const Spacer(),
-              Text(amount,
-                  style: const TextStyle(
-                      color: accent, fontSize: 16, fontWeight: FontWeight.w800)),
+              Text(
+                amount,
+                style: const TextStyle(
+                  color: accent,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ],
           ),
         ],
@@ -569,6 +680,7 @@ class InvestorTile extends StatelessWidget {
 
 class _Bullet extends StatelessWidget {
   final String text;
+
   const _Bullet(this.text);
 
   @override
@@ -583,13 +695,20 @@ class _Bullet extends StatelessWidget {
             height: 6,
             margin: const EdgeInsets.only(top: 6),
             decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.85), shape: BoxShape.circle),
+              color: Colors.white.withOpacity(0.85),
+              shape: BoxShape.circle,
+            ),
           ),
           const SizedBox(width: 8),
           Expanded(
-              child: Text(text,
-                  style: TextStyle(
-                      color: Colors.white.withOpacity(0.78), height: 1.45))),
+            child: Text(
+              text,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.78),
+                height: 1.45,
+              ),
+            ),
+          ),
         ],
       ),
     );

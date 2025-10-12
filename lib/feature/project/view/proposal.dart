@@ -56,10 +56,8 @@ class _ProposalScreenState extends State<ProposalScreen> {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
 
-    final amount = int.tryParse(
-      _budgetCtrl.text.replaceAll(RegExp(r'[^0-9]'), ''),
-    ) ??
-        0;
+    final amount =
+        int.tryParse(_budgetCtrl.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
     final days = _extractDays(_daysCtrl.text);
     final cover = _coverCtrl.text.trim();
 
@@ -80,6 +78,11 @@ class _ProposalScreenState extends State<ProposalScreen> {
           behavior: SnackBarBehavior.floating,
         ),
       );
+      // Get.snackbar(
+      //   'Success',
+      //   'Proposal submitted successfully',
+      //   snackPosition: SnackPosition.TOP,
+      // );
       Get.back(result: true);
     } catch (e) {
       if (!mounted) return;
@@ -93,10 +96,7 @@ class _ProposalScreenState extends State<ProposalScreen> {
     }
   }
 
-  InputDecoration _decoration({
-    String? hint,
-    IconData? icon,
-  }) {
+  InputDecoration _decoration({String? hint, IconData? icon}) {
     return InputDecoration(
       hintText: hint,
       prefixIcon: icon == null ? null : Icon(icon),
@@ -104,8 +104,7 @@ class _ProposalScreenState extends State<ProposalScreen> {
       fillColor: _field,
       isDense: true,
       hintStyle: const TextStyle(color: Colors.white70),
-      contentPadding:
-      const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: _border),
@@ -129,7 +128,7 @@ class _ProposalScreenState extends State<ProposalScreen> {
         backgroundColor: _bg,
         foregroundColor: Colors.white,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Get.back(),
         ),
         titleTextStyle: const TextStyle(
@@ -152,8 +151,11 @@ class _ProposalScreenState extends State<ProposalScreen> {
               const _FieldLabel('Your Budget'),
               TextFormField(
                 controller: _budgetCtrl,
-                keyboardType:
-                const TextInputType.numberWithOptions(decimal: false),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: false,
+                ),
+                style: const TextStyle(color: Colors.white), // <- text color
+                cursorColor: Colors.white, // optional: white cursor
                 decoration: _decoration(
                   hint: 'Enter your Price',
                   icon: Icons.attach_money_rounded,
@@ -163,7 +165,8 @@ class _ProposalScreenState extends State<ProposalScreen> {
                     return 'Please enter a budget';
                   }
                   final value = int.tryParse(
-                      v.replaceAll(RegExp(r'[^0-9]'), ''));
+                    v.replaceAll(RegExp(r'[^0-9]'), ''),
+                  );
                   if (value == null || value <= 0) {
                     return 'Enter a valid amount';
                   }
@@ -176,6 +179,8 @@ class _ProposalScreenState extends State<ProposalScreen> {
               TextFormField(
                 controller: _daysCtrl,
                 keyboardType: TextInputType.text,
+                style: const TextStyle(color: Colors.white), // <- text color
+                cursorColor: Colors.white, // optional: white cursor
                 decoration: _decoration(
                   hint: 'e.g., 10 days',
                   icon: Icons.schedule_rounded,
@@ -197,9 +202,10 @@ class _ProposalScreenState extends State<ProposalScreen> {
                 minLines: 5,
                 maxLines: 8,
                 textInputAction: TextInputAction.newline,
+                style: const TextStyle(color: Colors.white), // <- text color
+                cursorColor: Colors.white, // optional: white cursor
                 decoration: _decoration(
-                  hint:
-                  'Explain why you are the best fit for this project.',
+                  hint: 'Explain why you are the best fit for this project.',
                 ),
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) {
@@ -220,23 +226,25 @@ class _ProposalScreenState extends State<ProposalScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _accent,
                     foregroundColor: Colors.black,
-                    padding:
-                    const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     elevation: 0,
                   ),
                   child: _submitting
                       ? const SizedBox(
-                    height: 18,
-                    width: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
+                          height: 18,
+                          width: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
                       : const Text(
-                    'Submit',
-                    style: TextStyle(
-                        fontWeight: FontWeight.w800, fontSize: 16),
-                  ),
+                          'Submit',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                          ),
+                        ),
                 ),
               ),
             ],

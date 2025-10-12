@@ -31,12 +31,7 @@ class _MyEventAuctionState extends State<MyEventAuction> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: _bg,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text('Auctions', style: TextStyle(color: Colors.white)),
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
+
       body: FutureBuilder<AuctionListResponse>(
         future: _future,
         builder: (context, snap) {

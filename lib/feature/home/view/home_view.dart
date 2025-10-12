@@ -8,7 +8,9 @@ import 'package:alejandroloi/feature/home/widgets/project_card.dart';
 import 'package:alejandroloi/feature/investments/view/investment_screen.dart';
 import 'package:alejandroloi/feature/investments/widgets/progrees.dart';
 import 'package:alejandroloi/feature/auctions/view/auction_screen.dart';
+import 'package:alejandroloi/feature/auctions/view/auction_detail.dart';
 import 'package:alejandroloi/feature/project/view/project.dart';
+import 'package:alejandroloi/feature/project/view/project_detail.dart'; // ⬅️ NEW
 
 import 'package:alejandroloi/constants/api_paths.dart';
 import 'package:alejandroloi/core/network/api_service/api_client.dart';
@@ -18,6 +20,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
+
+import '../../investments/view/investment_detail.dart';
 
 class HomeScreenView extends StatefulWidget {
   const HomeScreenView({super.key});
@@ -34,12 +38,17 @@ class _HomeScreenViewState extends State<HomeScreenView> {
   // Greeting fallbacks (match your mock)
   String _helloName = 'Alex';
   String _helloLocation = 'NY,USA';
-  String? _avatarUrl; // NEW: dynamic avatar
+  String? _avatarUrl;
 
   // Lists for sections
   final List<Auctions> _auctions = [];
+  final List<String> _auctionIds = []; // keep ids in same order as _auctions
+
   final List<_InvestItem> _invests = [];
+  final List<String> _investIds = []; // keep ids in same order as _invests
+
   final List<_ProjectMini> _projects = [];
+  final List<String> _projectIds = []; // ⬅️ NEW: keep ids aligned with _projects
 
   @override
   void initState() {
@@ -57,7 +66,6 @@ class _HomeScreenViewState extends State<HomeScreenView> {
     try {
       // ---------- 1) Header (name/address/avatar) ----------
       try {
-        // Use what we already have first
         final me = context.read<AuthProvider>().user;
         if (me != null) {
           if ((me.name ?? '').trim().isNotEmpty) _helloName = me.name!.trim();
@@ -67,7 +75,6 @@ class _HomeScreenViewState extends State<HomeScreenView> {
           _avatarUrl = me.imageUrl ?? me.avatarUrl ?? me.avatar ?? _avatarUrl;
         }
 
-        // Then confirm with server
         final userId = me?.id ?? context.read<AuthProvider>().user?.id;
         if (userId != null && userId.isNotEmpty) {
           final rUser = await _dio.get(ApiPaths.userGetOne(userId));
@@ -77,13 +84,11 @@ class _HomeScreenViewState extends State<HomeScreenView> {
             final name = _textize(data['name']).trim();
             if (name.isNotEmpty) _helloName = name;
 
-            // Prefer "address", otherwise try "location" or "nationality"
             final addrRaw =
                 data['address'] ?? data['location'] ?? data['nationality'];
             final addr = _textize(addrRaw).trim();
             if (addr.isNotEmpty) _helloLocation = addr;
 
-            // avatar: could be string or { url: "..."}
             final a = data['avatar'];
             String? url;
             if (a is String && a.trim().isNotEmpty) {
@@ -95,18 +100,19 @@ class _HomeScreenViewState extends State<HomeScreenView> {
           }
         }
       } catch (_) {
-        // ignore header failures, keep fallbacks
+        // ignore header failures; keep fallbacks
       }
 
       // ---------- 2) Lists in parallel ----------
       final res = await Future.wait([
-        _dio.get(ApiPaths.allAuction), // /auction/all-auction
-        _dio.get(ApiPaths.allInvestment), // /investment/all-investment
-        _dio.get(ApiPaths.allProject), // /project/all-project
+        _dio.get(ApiPaths.allAuction),     // /auction/all-auction
+        _dio.get(ApiPaths.allInvestment),  // /investment/all-investment
+        _dio.get(ApiPaths.allProject),     // /project/all-project
       ]);
 
       // ---------- Auctions ----------
       _auctions.clear();
+      _auctionIds.clear();
       final auctionsList = _pickList(
         res[0].data,
         keys: const ['auctions', 'data', 'items', 'results'],
@@ -114,15 +120,13 @@ class _HomeScreenViewState extends State<HomeScreenView> {
       if (auctionsList != null) {
         for (final raw in auctionsList) {
           final m = Map<String, dynamic>.from(raw as Map);
+          _auctionIds.add((m['id'] ?? m['_id'] ?? '').toString());
           _auctions.add(
             Auctions(
-              imageUrl: _textize(
-                m['image'] ?? m['cover'] ?? 'assets/images/tree.jpg',
-              ),
+              imageUrl: resolveImage(m['image'] ?? m['cover'] ?? m['thumbnail']),
               title: _textize(m['title'] ?? m['name'] ?? 'Live Auction'),
-              currentPrice: _asDouble(
-                m['currentPrice'] ?? m['price'] ?? m['amount'] ?? 0,
-              ),
+              currentPrice:
+              _asDouble(m['currentPrice'] ?? m['price'] ?? m['amount'] ?? 0),
               viewers: _asInt(m['viewers'] ?? m['watchers'] ?? 0),
             ),
           );
@@ -131,6 +135,7 @@ class _HomeScreenViewState extends State<HomeScreenView> {
 
       // ---------- Invest Desk ----------
       _invests.clear();
+      _investIds.clear();
       final investsList = _pickList(
         res[1].data,
         keys: const ['invests', 'investments', 'data', 'items', 'results'],
@@ -138,17 +143,19 @@ class _HomeScreenViewState extends State<HomeScreenView> {
       if (investsList != null) {
         for (final raw in investsList.take(5)) {
           final m = Map<String, dynamic>.from(raw as Map);
+
+          _investIds.add((m['id'] ?? m['_id'] ?? '').toString());
+
           _invests.add(
             _InvestItem(
               type: _textize(m['category'] ?? m['type'] ?? 'Agriculture'),
-              title: _textize(
-                m['name'] ?? m['title'] ?? 'Urban Farming Initiative',
-              ),
+              title:
+              _textize(m['name'] ?? m['title'] ?? 'Urban Farming Initiative'),
               percent: _asInt(m['progressPct'] ?? m['fundedPercent'] ?? 0),
-              price: _asNum(
-                m['target'] ?? m['amount'] ?? m['price'] ?? 0,
-              ).toString(),
-              assetImage: 'assets/images/tree.jpg', // keep your mock look
+              price:
+              _asNum(m['target'] ?? m['amount'] ?? m['price'] ?? 0).toString(),
+              assetImage:
+              resolveImage(m['image'] ?? m['cover'] ?? m['thumbnail']),
             ),
           );
         }
@@ -156,6 +163,7 @@ class _HomeScreenViewState extends State<HomeScreenView> {
 
       // ---------- Projects ----------
       _projects.clear();
+      _projectIds.clear(); // ⬅️ NEW
       final projectsList = _pickList(
         res[2].data,
         keys: const ['projects', 'data', 'items', 'results'],
@@ -163,6 +171,7 @@ class _HomeScreenViewState extends State<HomeScreenView> {
       if (projectsList != null) {
         for (final raw in projectsList.take(5)) {
           final m = Map<String, dynamic>.from(raw as Map);
+          _projectIds.add((m['id'] ?? m['_id'] ?? '').toString()); // ⬅️ NEW
           _projects.add(
             _ProjectMini(
               category: _textize(m['category'] ?? 'Design'),
@@ -208,8 +217,6 @@ class _HomeScreenViewState extends State<HomeScreenView> {
   }
 
   // ---------------- helpers ----------------
-  /// Accepts shapes like:
-  /// {data:[...]}, {data:{projects:[...]}}, {data:{results:[...]}} etc.
   static List? _pickList(dynamic root, {required List<String> keys}) {
     if (root is! Map) return null;
     final data = root['data'];
@@ -225,14 +232,13 @@ class _HomeScreenViewState extends State<HomeScreenView> {
 
   static String _textize(dynamic v) {
     if (v == null) return '';
-    if (v is List) return v.join(', '); // removes [brackets] in UI
+    if (v is List) return v.join(', ');
     return v.toString();
   }
 
   static double _asDouble(dynamic v) =>
       (v is num) ? v.toDouble() : double.tryParse('$v') ?? 0.0;
-  static int _asInt(dynamic v) =>
-      (v is num) ? v.toInt() : int.tryParse('$v') ?? 0;
+  static int _asInt(dynamic v) => (v is num) ? v.toInt() : int.tryParse('$v') ?? 0;
   static num _asNum(dynamic v) => (v is num) ? v : num.tryParse('$v') ?? 0;
 
   static String _priceRange(Map<String, dynamic> m) {
@@ -241,7 +247,29 @@ class _HomeScreenViewState extends State<HomeScreenView> {
     return '\$ ${low.toStringAsFixed(0)} - ${high.toStringAsFixed(0)}';
   }
 
-  // ---------------- UI ----------------
+  /// Resolves image from various shapes (string/map/list).
+  String resolveImage(dynamic raw) {
+    const fallback = 'assets/images/tree.jpg';
+    if (raw == null) return fallback;
+    if (raw is List && raw.isNotEmpty) return resolveImage(raw.first);
+    if (raw is Map) {
+      final u = raw['url'] ?? raw['secure_url'] ?? raw['src'] ?? raw['path'];
+      if (u is String && u.trim().isNotEmpty) return u.trim();
+      return fallback;
+    }
+    if (raw is String) {
+      final s = raw.trim();
+      if (s.isEmpty) return fallback;
+      if (s.startsWith('http://') || s.startsWith('https://')) return s;
+      if (s.startsWith('assets/')) return s;
+      final m = RegExp(r'(https?://[^\s,}]+)').firstMatch(s);
+      if (m != null) return m.group(0)!;
+      return fallback;
+    }
+    return fallback;
+  }
+  // --------------- end helpers ---------------
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -262,10 +290,10 @@ class _HomeScreenViewState extends State<HomeScreenView> {
                     : null,
                 child: (_avatarUrl == null || _avatarUrl!.isEmpty)
                     ? const Icon(
-                        Icons.account_circle_outlined,
-                        color: Colors.white,
-                        size: 38,
-                      )
+                  Icons.account_circle_outlined,
+                  color: Colors.white,
+                  size: 38,
+                )
                     : null,
               ),
               const SizedBox(width: 10),
@@ -316,10 +344,10 @@ class _HomeScreenViewState extends State<HomeScreenView> {
                 imagePath: Images.currency,
                 title: "Investments",
                 subtitle:
-                    "Develop Investment Strategy and Engage with Potential Funders.",
+                "Develop Investment Strategy and Engage with Potential Funders.",
                 onTap: () {
                   Get.to(
-                    () => const InvestmentsScreen(),
+                        () => const InvestmentsScreen(),
                     transition: Transition.rightToLeft,
                     duration: const Duration(milliseconds: 300),
                   );
@@ -330,10 +358,10 @@ class _HomeScreenViewState extends State<HomeScreenView> {
                 imagePath: Images.layout,
                 title: "Project",
                 subtitle:
-                    "Post a need or offer to complete someone else's project",
+                "Post a need or offer to complete someone else's project",
                 onTap: () {
                   Get.to(
-                    () => const ProjectScreen(),
+                        () => const ProjectScreen(),
                     transition: Transition.rightToLeft,
                     duration: const Duration(milliseconds: 300),
                   );
@@ -344,10 +372,10 @@ class _HomeScreenViewState extends State<HomeScreenView> {
                 imagePath: Images.key,
                 title: "Auctions",
                 subtitle:
-                    "Participate in the live product auction by placing your bid.",
+                "Participate in the live product auction by placing your bid.",
                 onTap: () {
                   Get.to(
-                    () => const AuctionScreen(),
+                        () => const AuctionScreen(),
                     transition: Transition.rightToLeft,
                     duration: const Duration(milliseconds: 300),
                   );
@@ -357,7 +385,17 @@ class _HomeScreenViewState extends State<HomeScreenView> {
               const SizedBox(height: 20),
 
               // -------- Live Auctions --------
-              const SectionHeader(title: 'Live Auctions'),
+              SectionHeader(
+                title: 'Live Auctions',
+                onSeeAll: () {
+                  // If your AuctionScreen supports an `initialIndex` (0 = Live)
+                  Get.to(
+                        () => const AuctionScreen(initialIndex: 0),
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 300),
+                  );
+                },
+              ),
               const SizedBox(height: 10),
               SizedBox(
                 height: 200,
@@ -369,16 +407,39 @@ class _HomeScreenViewState extends State<HomeScreenView> {
                     final a = _auctions.isNotEmpty
                         ? _auctions[index]
                         : Auctions(
-                            imageUrl: "assets/images/tree.jpg",
-                            title: "Gaming Console",
-                            currentPrice: 450,
-                            viewers: 25,
-                          );
+                      imageUrl: "assets/images/tree.jpg",
+                      title: "Gaming Console",
+                      currentPrice: 450,
+                      viewers: 25,
+                    );
+
+                    final id = (_auctionIds.length > index)
+                        ? _auctionIds[index]
+                        : '';
+
                     return Padding(
                       padding: const EdgeInsets.only(right: 12),
                       child: SizedBox(
                         width: 160,
-                        child: LiveAuctionCards(auction: a, onTap: () {}),
+                        child: LiveAuctionCards(
+                          auction: a,
+                          onTap: () {
+                            if (id.isNotEmpty) {
+                              Get.to(
+                                    () => AuctionDetailScreen(auctionId: id),
+                                transition: Transition.rightToLeft,
+                                duration: const Duration(milliseconds: 300),
+                              );
+                            } else {
+                              // fallback: open list screen (Live tab)
+                              Get.to(
+                                    () => const AuctionScreen(initialIndex: 0),
+                                transition: Transition.rightToLeft,
+                                duration: const Duration(milliseconds: 300),
+                              );
+                            }
+                          },
+                        ),
                       ),
                     );
                   },
@@ -388,7 +449,16 @@ class _HomeScreenViewState extends State<HomeScreenView> {
               const SizedBox(height: 20),
 
               // -------- Invest Desk --------
-              const SectionHeader(title: 'Invest Desk'),
+              SectionHeader(
+                title: 'Invest Desk',
+                onSeeAll: () {
+                  Get.to(
+                        () => const InvestmentsScreen(),
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 300),
+                  );
+                },
+              ),
               const SizedBox(height: 10),
               SizedBox(
                 height: 300,
@@ -398,16 +468,35 @@ class _HomeScreenViewState extends State<HomeScreenView> {
                     final it = _invests.isNotEmpty
                         ? _invests[index]
                         : _InvestItem(
-                            type: 'Agriculture',
-                            title: 'Urban Farming Initiative',
-                            percent: 45,
-                            price: '25000',
-                            assetImage: 'assets/images/tree.jpg',
-                          );
+                      type: 'Agriculture',
+                      title: 'Urban Farming Initiative',
+                      percent: 45,
+                      price: '25000',
+                      assetImage: 'assets/images/tree.jpg',
+                    );
+
+                    final id = (_investIds.length > index)
+                        ? _investIds[index]
+                        : '';
+
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 8),
                       child: InkWell(
-                        onTap: () => Get.to(const InvestmentsScreen()),
+                        onTap: () {
+                          if (id.isNotEmpty) {
+                            Get.to(
+                                  () => InvestmentDetailScreen(investmentId: id),
+                              transition: Transition.rightToLeft,
+                              duration: const Duration(milliseconds: 300),
+                            );
+                          } else {
+                            Get.to(
+                                  () => const InvestmentsScreen(),
+                              transition: Transition.rightToLeft,
+                              duration: const Duration(milliseconds: 300),
+                            );
+                          }
+                        },
                         child: InvestDeskCard(
                           type: it.type,
                           imagePath: it.assetImage,
@@ -426,7 +515,16 @@ class _HomeScreenViewState extends State<HomeScreenView> {
               ),
 
               // -------- Project Proposal --------
-              const SectionHeader(title: 'Project Proposal'),
+              SectionHeader(
+                title: 'Project Proposal',
+                onSeeAll: () {
+                  Get.to(
+                        () => const ProjectScreen(),
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 300),
+                  );
+                },
+              ),
               const SizedBox(height: 10),
               SizedBox(
                 height: 300,
@@ -438,21 +536,26 @@ class _HomeScreenViewState extends State<HomeScreenView> {
                     final p = _projects.isNotEmpty
                         ? _projects[index]
                         : _ProjectMini(
-                            category: 'Design',
-                            title: 'Website Redesign for Local Business',
-                            blurb:
-                                'Looking for an experienced web designer to revamp our company website. Need',
-                            priceRange: '\$ 1,500 - 3,000',
-                            duration: '15 Days',
-                            location: 'Brooklyn, NY',
-                            proposals: '8 Proposals',
-                            avatars: const [
-                              'https://i.pravatar.cc/60?img=12',
-                              'https://i.pravatar.cc/60?img=22',
-                              'https://i.pravatar.cc/60?img=32',
-                              'https://i.pravatar.cc/60?img=42',
-                            ],
-                          );
+                      category: 'Design',
+                      title: 'Website Redesign for Local Business',
+                      blurb:
+                      'Looking for an experienced web designer to revamp our company website. Need',
+                      priceRange: '\$ 1,500 - 3,000',
+                      duration: '15 Days',
+                      location: 'Brooklyn, NY',
+                      proposals: '8 Proposals',
+                      avatars: const [
+                        'https://i.pravatar.cc/60?img=12',
+                        'https://i.pravatar.cc/60?img=22',
+                        'https://i.pravatar.cc/60?img=32',
+                        'https://i.pravatar.cc/60?img=42',
+                      ],
+                    );
+
+                    // ⬅️ NEW: get id aligned with this card
+                    final id = (_projectIds.length > index)
+                        ? _projectIds[index]
+                        : '';
 
                     return Padding(
                       padding: const EdgeInsets.only(right: 12),
@@ -465,7 +568,23 @@ class _HomeScreenViewState extends State<HomeScreenView> {
                         location: p.location,
                         proposals: p.proposals,
                         avatars: p.avatars,
-                        onTap: () {},
+                        onTap: () {
+                          if (id.isNotEmpty) {
+                            Get.to(
+                                  () => ProjectDetailScreen(projectId: id),
+                              transition: Transition.rightToLeft,
+                              duration: const Duration(milliseconds: 300),
+                              curve: Curves.easeInOut,
+                            );
+                          } else {
+                            // fallback: open list screen
+                            Get.to(
+                                  () => const ProjectScreen(),
+                              transition: Transition.rightToLeft,
+                              duration: const Duration(milliseconds: 300),
+                            );
+                          }
+                        },
                       ),
                     );
                   },
@@ -488,7 +607,7 @@ class _HomeScreenViewState extends State<HomeScreenView> {
   }
 }
 
-// Small header row for "See all" style sections (kept simple)
+// Small header row for "See all" style sections
 class SectionHeader extends StatelessWidget {
   const SectionHeader({super.key, required this.title, this.onSeeAll});
   final String title;

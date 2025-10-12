@@ -87,7 +87,7 @@ class ProjectProvider extends ChangeNotifier {
         category: category.trim(),
         minBudget: minB,
         maxBudget: maxB,
-        deadlineDays: days,
+        durationDays: days,
         location: location.trim(),
         skills: skills,
       );
