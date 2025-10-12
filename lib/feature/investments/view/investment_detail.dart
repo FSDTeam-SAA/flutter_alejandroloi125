@@ -388,7 +388,7 @@ class _TopBar extends StatelessWidget {
         const Text(
           'Investments Details',
           style: TextStyle(
-            fontSize: 12.5,
+            fontSize: 20,
             color: Colors.white70,
             fontWeight: FontWeight.w700,
             letterSpacing: .2,

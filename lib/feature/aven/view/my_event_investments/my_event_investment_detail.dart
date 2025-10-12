@@ -212,11 +212,11 @@ class _CoverHeader extends StatelessWidget {
                 : Image.network(url!, fit: BoxFit.cover),
           ),
         ),
-        Positioned(
-          top: 8,
-          left: 8,
-          child: _round(ActionIcon.back, () => Get.back()),
-        ),
+        // Positioned(
+        //   top: 8,
+        //   left: 8,
+        //   child: _round(ActionIcon.back, () => Get.back()),
+        // ),
         Positioned(
           top: 8,
           right: 8,

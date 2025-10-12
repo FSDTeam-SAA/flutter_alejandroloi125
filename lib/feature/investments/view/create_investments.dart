@@ -146,7 +146,7 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
                 Text('Category', style: bodyText1),
                 const SizedBox(height: 6),
                 CustomTextField(
-                  hintText: 'Enter your Category Name',
+                  hintText: 'Enter your Category Name(e.g: Invest,Done)',
                   onChanged: (v) => _category = v,
                   validator: (v) => _requiredField(v, 'Category'),
                 ),
@@ -194,7 +194,7 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
                 const SizedBox(height: 8),
                 Text('Funding Duration', style: bodyText1),
                 CustomTextField(
-                  hintText: 'Number of day',
+                  hintText: 'Number of day(e.g: 30)',
                   prefixIcon: Icons.watch_later_outlined,
                   keyboardType: TextInputType.number,
                   onChanged: (v) => _durationDays = v,

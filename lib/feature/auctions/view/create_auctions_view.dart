@@ -232,7 +232,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                 Text("Category", style: bodyText1),
                 CustomTextField(
                   controller: _categoryCtrl,
-                  hintText: 'Enter your Category Name (comma separated for multiple)',
+                  hintText: 'Enter your Category Name (e.g: Auction,Done)',
                   validator: (v) => _req(v, 'Category'),
                 ),
 

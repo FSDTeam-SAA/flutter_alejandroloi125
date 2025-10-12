@@ -131,7 +131,11 @@ class _UploadProfileViewState extends State<UploadProfileView> {
       appBar: AppBar(
         backgroundColor: bg,
         elevation: 0,
-        leading: _RoundBack(onTap: () => Navigator.pop(context)),
+        // leading: _RoundBack(onTap: () => Navigator.pop(context)),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
+          onPressed: () => Get.back(),
+        ),
         title: const Text(
           'Upload Profile',
           style: TextStyle(color: textMain, fontSize: 22, fontWeight: FontWeight.w700),
