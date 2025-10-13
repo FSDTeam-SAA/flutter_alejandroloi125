@@ -72,39 +72,45 @@ class _MyAuctionScreenState extends State<MyAuctionScreen> {
         'limit': limit,
       };
 
-      final res = await _dio.get(
-        ApiPaths.allAuction,
-        queryParameters: q,
-      );
+      final res = await _dio.get(ApiPaths.allAuction, queryParameters: q);
 
       final list = _pickList(
         res.data,
         keys: const ['auctions', 'data', 'items', 'results'],
       );
 
-      _totalPages =
-          _inferTotalPages(res.data, fallback: (_page == 1) ? 1 : _totalPages);
+      _totalPages = _inferTotalPages(
+        res.data,
+        fallback: (_page == 1) ? 1 : _totalPages,
+      );
 
       final parsed = <_Auction>[];
       if (list != null) {
         for (final raw in list) {
           final m = Map<String, dynamic>.from(raw as Map);
-          final sched =
-          (m['schedule'] is Map) ? Map<String, dynamic>.from(m['schedule']) : null;
+          final sched = (m['schedule'] is Map)
+              ? Map<String, dynamic>.from(m['schedule'])
+              : null;
 
           parsed.add(
             _Auction(
               id: (m['id'] ?? m['_id'] ?? '').toString(),
               name: _text(m['name'] ?? m['title'] ?? 'Auction'),
-              startingBid:
-              _asInt(m['startingBid'] ?? m['starting_price'] ?? m['price'] ?? 0),
-              fundingDuration: _text(m['fundingDuration'] ?? m['duration'] ?? ''),
+              startingBid: _asInt(
+                m['startingBid'] ?? m['starting_price'] ?? m['price'] ?? 0,
+              ),
+              fundingDuration: _text(
+                m['fundingDuration'] ?? m['duration'] ?? '',
+              ),
               scheduleDate: _text(sched?['date'] ?? m['date'] ?? ''),
               scheduleTime: _text(sched?['time'] ?? m['time'] ?? ''),
               cover: _absolute(
-                  _resolveImage(m['image'] ?? m['cover'] ?? m['thumbnail'])),
+                _resolveImage(m['image'] ?? m['cover'] ?? m['thumbnail']),
+              ),
               status: _text(m['status'] ?? ''),
-              isCompleted: _text(m['status'] ?? '').toLowerCase().contains('complete'),
+              isCompleted: _text(
+                m['status'] ?? '',
+              ).toLowerCase().contains('complete'),
             ),
           );
         }
@@ -164,7 +170,8 @@ class _MyAuctionScreenState extends State<MyAuctionScreen> {
       if (root is Map) {
         final meta = root['meta'] ?? root['pagination'] ?? root['page'];
         if (meta is Map) {
-          final totalPages = meta['totalPages'] ?? meta['pages'] ?? meta['total_pages'];
+          final totalPages =
+              meta['totalPages'] ?? meta['pages'] ?? meta['total_pages'];
           if (totalPages is num) return totalPages.toInt();
           final total = meta['total'] ?? meta['count'];
           final limit = meta['limit'] ?? meta['perPage'] ?? meta['per_page'];
@@ -212,14 +219,19 @@ class _MyAuctionScreenState extends State<MyAuctionScreen> {
     if (u.startsWith('http://') || u.startsWith('https://')) return u;
     final base = AppEnv.baseUrl;
     if (base.isEmpty) return u;
-    if (base.endsWith('/') && u.startsWith('/')) return '$base${u.substring(1)}';
+    if (base.endsWith('/') && u.startsWith('/'))
+      return '$base${u.substring(1)}';
     if (!base.endsWith('/') && !u.startsWith('/')) return '$base/$u';
     return '$base$u';
   }
 
   Future<void> _delete(String id) async {
     setState(() => _items.removeWhere((a) => a.id == id));
-    Get.snackbar('Deleted', 'Auction removed', snackPosition: SnackPosition.TOP);
+    Get.snackbar(
+      'Deleted',
+      'Auction removed',
+      snackPosition: SnackPosition.TOP,
+    );
   }
 
   @override
@@ -239,15 +251,19 @@ class _MyAuctionScreenState extends State<MyAuctionScreen> {
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
-                  child:
-                  Text(_error!, style: const TextStyle(color: Colors.white70)),
+                  child: Text(
+                    _error!,
+                    style: const TextStyle(color: Colors.white70),
+                  ),
                 ),
               );
             }
             if (items.isEmpty) {
               return const Center(
-                child:
-                Text('No auctions found', style: TextStyle(color: Colors.white70)),
+                child: Text(
+                  'No auctions found',
+                  style: TextStyle(color: Colors.white70),
+                ),
               );
             }
 
@@ -271,16 +287,21 @@ class _MyAuctionScreenState extends State<MyAuctionScreen> {
                 }
 
                 final a = items[i];
-                final price =
-                (a.startingBid == null) ? '-' : '\$${_comma(a.startingBid!)}';
-                final time =
-                _timeLabel(a.scheduleDate, a.scheduleTime, a.fundingDuration);
+                final price = (a.startingBid == null)
+                    ? '-'
+                    : '\$${_comma(a.startingBid!)}';
+                final time = _timeLabel(
+                  a.scheduleDate,
+                  a.scheduleTime,
+                  a.fundingDuration,
+                );
 
                 final statusLower = a.status.toLowerCase();
                 final isCompleted =
                     a.isCompleted || statusLower.contains('complete');
                 final inProgress =
-                    statusLower.contains('progress') || statusLower.contains('live');
+                    statusLower.contains('progress') ||
+                    statusLower.contains('live');
 
                 final statusText = isCompleted
                     ? 'Completed'
@@ -288,8 +309,9 @@ class _MyAuctionScreenState extends State<MyAuctionScreen> {
                     ? 'In Progress'
                     : (a.status.isEmpty ? 'In Progress' : a.status);
 
-                final statusColor =
-                isCompleted ? const Color(0xFF5CD7B0) : const Color(0xFFFF8A34);
+                final statusColor = isCompleted
+                    ? const Color(0xFF5CD7B0)
+                    : const Color(0xFFFF8A34);
 
                 return _AuctionCard.dynamic(
                   imageUrl: a.cover ?? 'assets/images/watch.jpg',
@@ -301,29 +323,32 @@ class _MyAuctionScreenState extends State<MyAuctionScreen> {
                   completed: isCompleted,
                   onView: () {
                     Get.to(
-                          () => MyAuctionDetailScreen(auctionId: a.id),
+                      () => MyAuctionDetailScreen(auctionId: a.id),
                       transition: Transition.rightToLeft,
                       duration: const Duration(milliseconds: 300),
                     );
                   },
                   onDelete: () async {
-                    final ok = await showDialog<bool>(
-                      context: context,
-                      builder: (_) => AlertDialog(
-                        title: const Text('Delete auction?'),
-                        content: const Text('This action cannot be undone.'),
-                        actions: [
-                          TextButton(
-                              onPressed: () =>
-                                  Navigator.pop(context, false),
-                              child: const Text('Cancel')),
-                          TextButton(
-                              onPressed: () =>
-                                  Navigator.pop(context, true),
-                              child: const Text('Delete')),
-                        ],
-                      ),
-                    ) ??
+                    final ok =
+                        await showDialog<bool>(
+                          context: context,
+                          builder: (_) => AlertDialog(
+                            title: const Text('Delete auction?'),
+                            content: const Text(
+                              'This action cannot be undone.',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          ),
+                        ) ??
                         false;
                     if (!ok) return;
                     await _delete(a.id);
@@ -413,7 +438,11 @@ class _AuctionCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: border),
         boxShadow: const [
-          BoxShadow(color: Colors.black54, blurRadius: 12, offset: Offset(0, 6))
+          BoxShadow(
+            color: Colors.black54,
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
         ],
       ),
       child: Column(
@@ -427,27 +456,27 @@ class _AuctionCard extends StatelessWidget {
                 aspectRatio: 16 / 9,
                 child: imageUrl.startsWith('http')
                     ? Image.network(
-                  imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _broken(),
-                  loadingBuilder: (ctx, child, progress) {
-                    if (progress == null) return child;
-                    return Container(
-                      color: const Color(0x11000000),
-                      alignment: Alignment.center,
-                      child: const SizedBox(
-                        height: 22,
-                        width: 22,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      ),
-                    );
-                  },
-                )
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _broken(),
+                        loadingBuilder: (ctx, child, progress) {
+                          if (progress == null) return child;
+                          return Container(
+                            color: const Color(0x11000000),
+                            alignment: Alignment.center,
+                            child: const SizedBox(
+                              height: 22,
+                              width: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          );
+                        },
+                      )
                     : Image.asset(
-                  imageUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _broken(),
-                ),
+                        imageUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _broken(),
+                      ),
               ),
             ),
           ),
@@ -456,74 +485,95 @@ class _AuctionCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Expanded(
-                    child: Column(
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(title,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16.5,
-                                  fontWeight: FontWeight.w700)),
+                          Text(
+                            title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
                           const SizedBox(height: 4),
-                          Text(priceLabel,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14.5,
-                                  fontWeight: FontWeight.w600)),
-                        ]),
-                  ),
-                  Container(
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: statusColor.withOpacity(0.14),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: statusColor.withOpacity(0.7)),
+                          Text(
+                            priceLabel,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14.5,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    child: Text(status,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor.withOpacity(0.14),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: statusColor.withOpacity(0.7)),
+                      ),
+                      child: Text(
+                        status,
                         style: TextStyle(
-                            color: statusColor,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600)),
-                  ),
-                ]),
+                          color: statusColor,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 10),
                 _InfoBar(icon: Icons.access_time, label: timeLabel),
                 const SizedBox(height: 12),
-                Row(children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Colors.white.withOpacity(0.15)),
-                        foregroundColor: Colors.white.withOpacity(0.9),
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(
+                            color: Colors.white.withOpacity(0.15),
+                          ),
+                          foregroundColor: Colors.white.withOpacity(0.9),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        onPressed: onDelete,
+                        child: const Text('Delete'),
                       ),
-                      onPressed: onDelete,
-                      child: const Text('Delete'),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: accent,
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12)),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        elevation: 0,
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: accent,
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          elevation: 0,
+                        ),
+                        onPressed: onView,
+                        child: const Text('View Details'),
                       ),
-                      onPressed: onView,
-                      child: const Text('View Details'),
                     ),
-                  ),
-                ]),
+                  ],
+                ),
               ],
             ),
           ),
@@ -535,8 +585,7 @@ class _AuctionCard extends StatelessWidget {
   Widget _broken() => Container(
     color: Colors.black26,
     alignment: Alignment.center,
-    child:
-    const Icon(Icons.broken_image_outlined, color: Colors.white70),
+    child: const Icon(Icons.broken_image_outlined, color: Colors.white70),
   );
 }
 
@@ -554,21 +603,23 @@ class _InfoBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFF2A313A)),
       ),
-      child: Row(children: [
-        Icon(icon, size: 16, color: Colors.white.withOpacity(0.85)),
-        const SizedBox(width: 8),
-        Flexible(
-          child: Text(
-            label,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.85),
-              fontSize: 12.5,
-              fontWeight: FontWeight.w600,
+      child: Row(
+        children: [
+          Icon(icon, size: 16, color: Colors.white.withOpacity(0.85)),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              label,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.85),
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-        ),
-      ]),
+        ],
+      ),
     );
   }
 }
