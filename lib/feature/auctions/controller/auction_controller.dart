@@ -8,13 +8,7 @@ import '../repo/auction_repo.dart';
 class AuctionController extends GetxController {
   final AuctionRepository repository;
   AuctionController(this.repository){
-
-    print("AuctionController created with repository: $repository");
-
-        // if (currentAuctionId.isNotEmpty) {
-    //   loadAuctionChat(currentAuctionId.value);
-    // }
-
+    
   }
 
   var allAuctions = <AuctionItem>[].obs;

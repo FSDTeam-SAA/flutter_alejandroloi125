@@ -209,6 +209,7 @@ class AuctionsRepository {
     'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1600&auto=format&fit=crop',
   ];
 
+
   Future<List<Auction>> fetch({
     required AuctionStatus status,
     required int page,
