@@ -129,9 +129,9 @@ class _MyInvestmentScreenState extends State<MyInvestmentScreen> {
                       await context.read<InvestmentProvider>().delete(it.id);
                       final err = context.read<InvestmentProvider>().error;
                       if (err != null) {
-                        Get.snackbar('Error', err, snackPosition: SnackPosition.BOTTOM);
+                        Get.snackbar('Error', err, snackPosition: SnackPosition.TOP);
                       } else {
-                        Get.snackbar('Deleted', 'Investment removed', snackPosition: SnackPosition.BOTTOM);
+                        Get.snackbar('Deleted', 'Investment removed', snackPosition: SnackPosition.TOP);
                       }
                     },
                     onView: () {

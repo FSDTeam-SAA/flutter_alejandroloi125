@@ -11,6 +11,8 @@ final TextStyle typeStyle = TextStyle(fontSize: 16, color: Colors.white, fontWei
         iconTheme: IconThemeData(color: Colors.white),
         backgroundColor: Colors.black,
       ),
+
+
     body: Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(crossAxisAlignment: CrossAxisAlignment.start,children: [
