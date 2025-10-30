@@ -51,12 +51,17 @@ class _CreateNewPasswordScreenState extends State<CreateNewPasswordScreen> {
 
     if (ok) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password reset successfully')),
+        const SnackBar(
+            backgroundColor: Colors.white,
+
+            content: Text('Password reset successfully', style: TextStyle(color: Colors.black))),
       );
       Get.offAll(() => LoginScreenView());
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ap.error ?? 'Reset failed')),
+        SnackBar(content: Text(ap.error ?? 'Reset failed',style: TextStyle(color: Colors.black),),
+        backgroundColor: Colors.white,
+        ),
       );
     }
 

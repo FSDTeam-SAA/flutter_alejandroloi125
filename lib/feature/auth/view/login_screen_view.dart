@@ -47,12 +47,26 @@ class _LoginScreenViewState extends State<LoginScreenView> {
         transition: Transition.rightToLeft,
         duration: const Duration(milliseconds: 350),
         curve: Curves.easeInOut,
+
+      );
+      Get.snackbar(
+        backgroundColor: Colors.white,
+        colorText: Colors.black,
+        'Success',
+        'Login successful',
+        snackPosition: SnackPosition.TOP,
       );
     } else {
+
+      print("NOT Login==========================");
+      print("NOT Login==========================${ap.error}");
+
       // ScaffoldMessenger.of(context).showSnackBar(
       //   SnackBar(content: Text(ap.error ?? 'Login failed')),
       // );
       Get.snackbar(
+        backgroundColor: Colors.white,
+        colorText: Colors.black,
         'Error',
         ap.error ?? 'Login failed',
         snackPosition: SnackPosition.TOP,
@@ -95,6 +109,7 @@ class _LoginScreenViewState extends State<LoginScreenView> {
                 controller: passwordController,
                 hintText: "Password",
                 prefixIcon: Icons.lock_outline,
+                isPassword: true,
                 validator: ap.validatePassword,
               ),
 
@@ -143,10 +158,10 @@ class _LoginScreenViewState extends State<LoginScreenView> {
                 image: Images.googleIcon,
               ),
               const SizedBox(height: 10),
-              const CustomOutlineContainer(
+           /*   const CustomOutlineContainer(
                 name: 'Continue With Apple',
                 image: Images.macIcon,
-              ),
+              ),*/
             ],
           ),
         ),

@@ -22,7 +22,7 @@ android {
 //        targetSdk = flutter.targetSdkVersion
 //        versionCode = flutter.versionCode
 //        versionName = flutter.versionName
-        applicationId = "com.example.alejandroloi"
+        applicationId = "com.nver.alejandroloi"
         minSdk = flutter.minSdkVersion.toInt()
         targetSdk = flutter.targetSdkVersion.toInt()
         versionCode = flutter.versionCode.toInt()

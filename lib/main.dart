@@ -39,6 +39,7 @@ void main() async{
 
   runApp(
     MultiProvider(
+
       providers: [
         Provider<TokenStore>(create: (_) => TokenStore()),
         ProxyProvider<TokenStore, ApiClient>(

@@ -69,8 +69,10 @@ class _CreateProjectViewState extends State<CreateProjectView> {
       //   const SnackBar(content: Text('Please fix the errors above')),
       // );
 
-      Get.snackbar('Success', 'Please fix the errors above',
-          snackPosition: SnackPosition.TOP);
+      Get.snackbar(
+      backgroundColor: Colors.white,
+      colorText: Colors.black,
+      'Success', 'Please fix the errors above', snackPosition: SnackPosition.TOP);
       return;
     }
 
@@ -94,7 +96,10 @@ class _CreateProjectViewState extends State<CreateProjectView> {
     if (!mounted) return;
 
     if (ok) {
-      Get.snackbar('Success', 'Project created successfully',
+      Get.snackbar(
+          backgroundColor:  Colors.white,
+          colorText: Colors.black,
+          'Success', 'Project created successfully',
           snackPosition: SnackPosition.TOP);
 
       // Go to bottom-tab "Services" and the inner "Project" tab selected
@@ -106,7 +111,11 @@ class _CreateProjectViewState extends State<CreateProjectView> {
       );
     } else {
       final err = prov.error ?? 'Create failed';
-      Get.snackbar('Error', err, snackPosition: SnackPosition.TOP);
+      Get.snackbar(
+          backgroundColor: Colors.white,
+          colorText: Colors.black,
+
+          'Error', err, snackPosition: SnackPosition.TOP);
     }
   }
 

@@ -32,8 +32,8 @@ class AuthRepository {
       final ok = res['success'] == true;
       if (!ok) throw Exception(res['message'] ?? 'Register failed');
 
-      final Map<String, dynamic> data =
-          (res['data'] as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
+
+      final Map<String, dynamic> data = (res['data'] as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
 
       // If backend returns refresh token on register, store it (optional)
       final refresh = data['refreshToken'] ?? res['refreshToken'];
@@ -84,7 +84,10 @@ class AuthRepository {
     try {
       final res = await service.login(email: email, password: password);
       final ok = res['success'] == true;
+      if(!ok) print("NOT Login==========================");
+      if(!ok) print("NOT Login==========================${res['message']}");
       if (!ok) throw Exception(res['message'] ?? 'Login failed');
+
 
       // Safely unwrap the payload your backend returns
       final Map<String, dynamic> data =

@@ -195,12 +195,16 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
       }
       Get.back(result: true);
       Get.snackbar(
+        backgroundColor: Colors.white,
+        colorText: Colors.black,
         'Success',
         'Profile updated successfully',
         snackPosition: SnackPosition.TOP,
       );
     } else {
       Get.snackbar(
+        backgroundColor: Colors.white,
+        colorText: Colors.black,
         'Error',
         pp.error ?? 'Update failed',
         snackPosition: SnackPosition.TOP,

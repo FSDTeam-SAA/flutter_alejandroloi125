@@ -35,7 +35,10 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
 
     if (!(_formKey.currentState?.validate() ?? false)) return;
     if (_newCtrl.text.trim() != _confirmCtrl.text.trim()) {
-      Get.snackbar('Mismatch', 'Passwords do not match', snackPosition: SnackPosition.TOP);
+      Get.snackbar(
+          backgroundColor: Colors.white,
+          colorText: Colors.black,
+          'Mismatch', 'Passwords do not match', snackPosition: SnackPosition.TOP);
       return;
     }
 
@@ -46,7 +49,10 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
 
     if (!mounted) return;
     if (ok) {
-      Get.snackbar('Success', 'Password changed', snackPosition: SnackPosition.TOP);
+      Get.snackbar(
+          backgroundColor: Colors.white,
+          colorText: Colors.black,
+          'Success', 'Password changed', snackPosition: SnackPosition.TOP);
       Get.back();
     } else {
       Get.snackbar('Error', ap.error ?? 'Change failed', snackPosition: SnackPosition.TOP);

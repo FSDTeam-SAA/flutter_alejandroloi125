@@ -296,7 +296,10 @@ class _DetailBodyState extends State<_DetailBody> {
                         curve: Curves.easeInOut,
                       );
                     } else {
-                      Get.snackbar('Missing ID', 'Cannot submit proposal for this project');
+                      Get.snackbar(
+                      backgroundColor: Colors.white,
+                      colorText: Colors.white
+                      ,'Missing ID', 'Cannot submit proposal for this project');
                     }
                   },
                   child: const Text('Submit a Proposal',

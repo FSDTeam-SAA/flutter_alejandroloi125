@@ -58,6 +58,8 @@ class _ResetPasswordSecurityCodeState extends State<ResetPasswordSecurityCode> {
     if (err != null) {
       // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
       Get.snackbar(
+        backgroundColor: Colors.white,
+        colorText: Colors.black,
         'Error',
         err, // err is a String
         snackPosition: SnackPosition.TOP,
@@ -80,6 +82,8 @@ class _ResetPasswordSecurityCodeState extends State<ResetPasswordSecurityCode> {
       if (ok) {
         _startTimer();
         Get.snackbar(
+          backgroundColor: Colors.white,
+          colorText: Colors.black,
           'Success',
           'OTP resent',
           snackPosition: SnackPosition.TOP,
@@ -91,6 +95,8 @@ class _ResetPasswordSecurityCodeState extends State<ResetPasswordSecurityCode> {
         //   context,
         // ).showSnackBar(SnackBar(content: Text(ap.error ?? 'Resend failed')));
         Get.snackbar(
+          backgroundColor: Colors.white,
+          colorText: Colors.black,
           'Error',
           ap.error ?? 'Resend failed',
           snackPosition: SnackPosition.TOP,

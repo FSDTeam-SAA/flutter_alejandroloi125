@@ -13,8 +13,8 @@ class ApiClient {
     dio = Dio(BaseOptions(
       baseUrl: AppEnv.baseUrl,
       contentType: 'application/json',
-      connectTimeout: const Duration(seconds: 25),
-      receiveTimeout: const Duration(seconds: 25),
+      connectTimeout: const Duration(seconds: 60),
+      receiveTimeout: const Duration(seconds: 60),
     ));
     //dio.interceptors.add(PrettyDioLogger(requestBody: true, responseBody: true));
     dio.interceptors.add(_AuthInterceptor(_store));
@@ -64,9 +64,12 @@ class _AuthInterceptor extends Interceptor {
           queryParameters: o.queryParameters,
           options: Options(method: o.method, headers: headers),
         );
+        print('==============================refreshed token: ${res.data}');
         return h.resolve(res);
       } catch (_) {
+        print('==============================refreshed token: ${err.response?.data}');
         return h.next(err);
+
       } finally {
         _refreshing = false;
       }

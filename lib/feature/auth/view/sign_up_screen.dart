@@ -79,14 +79,16 @@ class _SignUpScreenViewState extends State<SignUpScreenView> {
     final okForm = _formKey.currentState?.validate() ?? false;
     if (!okForm) {
       setState(() => _auto = AutovalidateMode.onUserInteraction);
-      Get.snackbar('Fix errors', 'Please correct the highlighted fields',
+      Get.snackbar(
+        colorText: Colors.black,
+          backgroundColor: Colors.white,'Fix errors', 'Please correct the highlighted fields',
           snackPosition: SnackPosition.TOP);
       return;
     }
 
     final ap = context.read<AuthProvider>();
     final email = emailController.text.trim();
-    final pass = passwordController.text;
+    final pass = passwordController.text.trim();
 
     // Autogenerate the extra fields the backend requires
     final extras = _generateFromEmail(email);
@@ -102,15 +104,17 @@ class _SignUpScreenViewState extends State<SignUpScreenView> {
     if (!mounted) return;
 
     if (ok) {
-      Get.off(
-            () => OtpCodeViewScreen(email: email),
+      Get.off(() => OtpCodeViewScreen(email: email),
         transition: Transition.rightToLeft,
         duration: const Duration(milliseconds: 350),
         curve: Curves.easeInOut,
       );
     } else {
+      print("**************Sign Up errorap.error${ap.error}");
       final msg = ap.error ?? 'Registration failed';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          backgroundColor: Colors.white,
+          content: Text(msg,style: TextStyle(color: Colors.black),)));
     }
   }
 
@@ -151,6 +155,7 @@ class _SignUpScreenViewState extends State<SignUpScreenView> {
                 hintText: "Password",
                 prefixIcon: Icons.lock_outline,
                 validator: _passwordValidator,
+              isPassword: true,
               ),
               const SizedBox(height: 15),
 
@@ -160,6 +165,7 @@ class _SignUpScreenViewState extends State<SignUpScreenView> {
                 hintText: "Confirm Password",
                 prefixIcon: Icons.lock_outline,
                 validator: _confirmValidator,
+                isPassword: true,
               ),
               const SizedBox(height: 12),
 

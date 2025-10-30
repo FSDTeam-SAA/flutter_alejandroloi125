@@ -8,6 +8,7 @@ import 'my_event_investments/my_event_investment.dart';
 import 'my_event_project/my_event_project.dart';
 import 'my_event_auctions/my_event_auction.dart';
 
+
 enum EventTab { investments, project, auctions }
 
 class EventView extends StatefulWidget {

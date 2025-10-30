@@ -203,6 +203,8 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
     final amount = int.tryParse(raw) ?? 0;
     if (amount <= 0) {
       Get.snackbar(
+        backgroundColor: Colors.white,
+        colorText: Colors.black,
         'Invalid bid',
         'Please enter a number greater than 0',
         snackPosition: SnackPosition.TOP,
@@ -231,12 +233,17 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
       });
 
       Get.snackbar(
+        backgroundColor: Colors.white,
+        colorText: Colors.black,
         'Success',
         'Bid placed successfully',
         snackPosition: SnackPosition.TOP,
       );
     } catch (e) {
-      Get.snackbar('Error', e.toString(), snackPosition: SnackPosition.TOP);
+      Get.snackbar(
+          backgroundColor: Colors.white,
+          colorText: Colors.black,
+          'Error', e.toString(), snackPosition: SnackPosition.TOP);
     } finally {
       if (mounted) setState(() => _placingBid = false);
     }
@@ -246,6 +253,8 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
     final text = msgCtrl.text.trim();
     if (text.isEmpty) {
       Get.snackbar(
+        backgroundColor: Colors.white,
+        colorText: Colors.black,
         'Empty message',
         'Type something to send',
         snackPosition: SnackPosition.TOP,
@@ -273,9 +282,16 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
       });
       msgCtrl.clear();
 
-      Get.snackbar('Success', 'Message sent', snackPosition: SnackPosition.TOP);
+      Get.snackbar(
+        backgroundColor: Colors.white,
+          colorText: Colors.black,
+          'Success', 'Message sent', snackPosition: SnackPosition.TOP);
     } catch (e) {
-      Get.snackbar('Error', e.toString(), snackPosition: SnackPosition.TOP);
+      Get.snackbar(
+          backgroundColor: Colors.white,
+          colorText: Colors.black,
+
+          'Error', e.toString(), snackPosition: SnackPosition.TOP);
     } finally {
       if (mounted) setState(() => _sendingMsg = false);
     }
@@ -353,8 +369,7 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
                 children: [
                   Image.network(
                     imageUrl.isEmpty
-                        ? 'https://via.placeholder.com/1600x900.png?text=Auction'
-                        : imageUrl,
+                        ? 'https://via.placeholder.com/1600x900.png?text=Auction' : imageUrl,
                     fit: BoxFit.cover,
                   ),
                   Container(

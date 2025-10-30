@@ -193,7 +193,10 @@ class _MyEventAuctionPurchaseState extends State<MyEventAuctionPurchase> {
         //   const SnackBar(content: Text('Please sign in to continue')),
         // );
 
-        Get.snackbar('Error','Please sign in to continue',
+        Get.snackbar(
+            backgroundColor: Colors.white,
+            colorText: Colors.black,
+            'Error','Please sign in to continue',
             snackPosition: SnackPosition.TOP);
 
         return;
@@ -228,7 +231,10 @@ class _MyEventAuctionPurchaseState extends State<MyEventAuctionPurchase> {
       //   const SnackBar(content: Text('Payment successful')),
       // );
 
-      Get.snackbar('success','Payment successful',
+      Get.snackbar(
+          backgroundColor: Colors.white,
+          colorText: Colors.white,
+          'success','Payment successful',
           snackPosition: SnackPosition.TOP);
 
       Navigator.of(context, rootNavigator: true).pop();

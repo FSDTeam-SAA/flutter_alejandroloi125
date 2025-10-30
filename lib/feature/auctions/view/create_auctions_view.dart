@@ -130,17 +130,27 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
     final ok = _formKey.currentState?.validate() ?? false;
     if (!ok) {
       setState(() => _auto = AutovalidateMode.onUserInteraction);
-      Get.snackbar('Fix errors', 'Please correct the highlighted fields',
+      Get.snackbar(
+          backgroundColor: Colors.white,
+          colorText: Colors.white,
+          'Fix errors', 'Please correct the highlighted fields',
           snackPosition: SnackPosition.TOP);
       return;
     }
     if (_image == null) {
-      Get.snackbar('Image required', 'Please add a photo',
+      Get.snackbar(
+        backgroundColor: Colors.white,
+          colorText: Colors.white,
+
+          'Image required', 'Please add a photo',
           snackPosition: SnackPosition.TOP);
       return;
     }
     if (_auctionMinutes == null) {
-      Get.snackbar('Duration required', 'Please choose a duration',
+      Get.snackbar(
+          backgroundColor: Colors.white,
+          colorText: Colors.white,
+          'Duration required', 'Please choose a duration',
           snackPosition: SnackPosition.TOP);
       return;
     }
@@ -176,9 +186,15 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
         duration: const Duration(milliseconds: 350),
         curve: Curves.easeInOut,
       );
-      Get.snackbar('Success', res.message, snackPosition: SnackPosition.TOP);
+      Get.snackbar(
+          backgroundColor: Colors.white,
+          colorText: Colors.white,
+          'Success', res.message, snackPosition: SnackPosition.TOP);
     } catch (e) {
-      Get.snackbar('Failed', e.toString(), snackPosition: SnackPosition.TOP);
+      Get.snackbar(
+          backgroundColor: Colors.white,
+          colorText: Colors.white,
+          'Failed', e.toString(), snackPosition: SnackPosition.TOP);
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

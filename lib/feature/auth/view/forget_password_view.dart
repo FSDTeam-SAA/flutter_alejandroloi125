@@ -40,18 +40,23 @@ class _ForgetPasswordViewState extends State<ForgetPasswordView> {
         curve: Curves.easeInOut,
       );
       Get.snackbar(
+        backgroundColor: Colors.white,
+        colorText: Colors.black,
         'Success',
         'OTP sent to your email',
         snackPosition: SnackPosition.TOP, // like your other example
         duration: const Duration(seconds: 3),
-        colorText: Colors.white,
+
       );
     } else {
       Get.snackbar(
+        backgroundColor: Colors.white,
+
         'Error',
         ap.error ?? 'Failed to send OTP',
         snackPosition: SnackPosition.TOP,
         duration: const Duration(seconds: 3),
+        colorText: Colors.white,
       );
     }
   }

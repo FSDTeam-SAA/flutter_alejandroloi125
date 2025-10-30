@@ -7,7 +7,7 @@ class ApiConstants {
   static String get baseUrl =>
       // dotenv.get('BACKEND_API_URL', fallback: 'http://74.118.168.218:5004/api/v1/');
       // dotenv.get('BACKEND_API_URL', fallback: 'https://alejandroloi125-backend.onrender.com/api/v1/');
-      dotenv.get('BACKEND_API_URL', fallback: 'http://10.10.5.89:5004/api/v1');
+      dotenv.get('BACKEND_API_URL', fallback: 'http://31.220.50.99/api/v1');
 
   static String get defaultBearer =>
       dotenv.get('BEARER_TOKEN', fallback: '');

@@ -31,7 +31,7 @@ class AuctionController extends GetxController {
 
       allAuctions.assignAll(auctionModel.data.auctions);
 
-      // status অনুযায়ী filter
+
       liveAuctions.assignAll(
         allAuctions.where((a) => a.status.toLowerCase() == 'live').toList(),
       );

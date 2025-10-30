@@ -57,7 +57,10 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
     final okForm = _formKey.currentState?.validate() ?? false;
     if (!okForm) {
       setState(() => _auto = AutovalidateMode.onUserInteraction);
-      Get.snackbar('Fix errors', 'Please correct the highlighted fields', snackPosition: SnackPosition.TOP);
+      Get.snackbar(
+          backgroundColor: Colors.white,
+          colorText: Colors.black,
+          'Fix errors', 'Please correct the highlighted fields', snackPosition: SnackPosition.TOP);
       return;
     }
     if (_submitting) return;
@@ -90,7 +93,10 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
     if (created) {
       Get.back(result: true);
 
-      Get.snackbar('Success', 'Investment created successfully', snackPosition: SnackPosition.TOP);
+      Get.snackbar(
+          backgroundColor: Colors.white,
+          colorText: Colors.black,
+          'Success', 'Investment created successfully', snackPosition: SnackPosition.TOP);
 
       // RIGHT: go to AppGround, select Services bottom tab + Investments inner tab
       Get.offAll(
@@ -104,7 +110,7 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
       );
 
     } else {
-      Get.snackbar('Error', inv.error ?? 'Create failed', snackPosition: SnackPosition.TOP);
+      Get.snackbar(backgroundColor: Colors.white,'Error', inv.error ?? 'Create failed', snackPosition: SnackPosition.TOP,colorText: Colors.black);
     }
   }
 

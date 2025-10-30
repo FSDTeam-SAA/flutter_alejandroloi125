@@ -324,7 +324,10 @@ class _ProfileScreenViewState extends State<ProfileScreenView> {
                         await context.read<AuthProvider>().logout();
                       } catch (_) {}
 
-                      Get.snackbar('Success', 'Logged Out Successfully',
+                      Get.snackbar(
+                          backgroundColor: Colors.white,
+                          colorText: Colors.black,
+                          'Success', 'Logged Out Successfully',
                           snackPosition: SnackPosition.TOP);
 
                       Get.offAll(() => LoginScreenView(),

@@ -82,7 +82,12 @@ class _UploadProfileViewState extends State<UploadProfileView> {
 
   Future<void> _submit() async {
     if (_selectedFile == null) {
-      Get.snackbar('Oops', 'Please select a photo first', snackPosition: SnackPosition.TOP);
+      Get.snackbar(
+
+      backgroundColor: Colors.white,
+      colorText: Colors.black,
+
+      'Oops', 'Please select a photo first', snackPosition: SnackPosition.TOP);
       return;
     }
 
@@ -105,17 +110,21 @@ class _UploadProfileViewState extends State<UploadProfileView> {
 
       if (!mounted) return;
 
-      Get.snackbar('Success', 'Profile photo updated', snackPosition: SnackPosition.TOP);
+      Get.snackbar(
+          backgroundColor: Colors.white,
+          colorText: Colors.black,
+          'Success', 'Profile photo updated', snackPosition: SnackPosition.TOP);
 
       // Stay on page so buttons remain visible (no Navigator.pop here).
     } catch (e) {
       if (!mounted) return;
       Get.snackbar(
+        backgroundColor: Colors.white,
+        colorText: Colors.black,
         'Error',
         e.toString().replaceFirst('Exception: ', ''),
         snackPosition: SnackPosition.TOP,
-        colorText: Colors.white,
-        backgroundColor: Colors.redAccent.withOpacity(.7),
+
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
