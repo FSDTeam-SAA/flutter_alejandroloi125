@@ -129,7 +129,9 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
                       onSelected: (val) => setState(() => _image = val),
                     ),
                     const SizedBox(width: 15),
-                    const ImagePickerSlot(), // extra visual slot (not submitted)
+                    ImagePickerSlot(
+                      onSelected: (val) => setState(() => _image = val),
+                    ), // extra visual slot (not submitted)
                   ],
                 ),
 

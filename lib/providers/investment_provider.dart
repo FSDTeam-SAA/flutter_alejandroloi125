@@ -120,6 +120,7 @@ class InvestmentProvider extends ChangeNotifier {
     required String location,
     required String investmentTerms,
     required File imageFile,
+    // required List<File> imageFiles, // <-- multiple images
   }) async {
     final errs = <String?>[
       vRequired(name, 'Title'),
