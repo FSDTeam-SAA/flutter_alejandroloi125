@@ -188,16 +188,18 @@ class _SignUpScreenViewState extends State<SignUpScreenView> {
                 ),
               ),
 
+              const SizedBox(height: 10),
+
               // Social buttons (stubs)
               const CustomOutlineContainer(
                 name: 'Continue With Google',
                 image: Images.googleIcon,
               ),
               const SizedBox(height: 10),
-              const CustomOutlineContainer(
-                name: 'Continue With Apple',
-                image: Images.macIcon,
-              ),
+              // const CustomOutlineContainer(
+              //   name: 'Continue With Apple',
+              //   image: Images.macIcon,
+              // ),
             ],
           ),
         ),

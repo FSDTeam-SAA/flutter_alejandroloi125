@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/styles.dart';
 import 'package:flutter/material.dart';
@@ -22,12 +24,26 @@ class _OtpCodeViewScreenState extends State<OtpCodeViewScreen> {
   @override
   void initState() {
     super.initState();
+    _startTimer();
     // Ensure provider knows which email we are verifying
     final ap = context.read<AuthProvider>();
     if (ap.pendingEmail == null) {
       // if user refreshed this page, set the email from route
       // (this does not persist server-side state; it's just for resend/verify convenience)
     }
+  }
+
+  int _seconds = 45;
+  Timer? _t;
+
+  void _startTimer() {
+    _t?.cancel();
+    setState(() => _seconds = 45);
+    _t = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) return;
+      setState(() => _seconds--);
+      if (_seconds <= 0) t.cancel();
+    });
   }
 
   @override
@@ -62,12 +78,35 @@ class _OtpCodeViewScreenState extends State<OtpCodeViewScreen> {
   }
 
   Future<void> _resend() async {
-    final ap = context.read<AuthProvider>();
-    await ap.resendOtp();
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Code resent')),
-    );
+    // _resend()
+    if (_seconds == 0) {
+      final ok = await context.read<AuthProvider>().sendResetOtp(widget.email);
+      if (ok) {
+        _startTimer();
+        Get.snackbar(
+          backgroundColor: Colors.white,
+          colorText: Colors.black,
+          'Success',
+          'OTP resent',
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 3),
+        );
+      } else {
+        final ap = context.read<AuthProvider>();
+        // ScaffoldMessenger.of(
+        //   context,
+        // ).showSnackBar(SnackBar(content: Text(ap.error ?? 'Resend failed')));
+        Get.snackbar(
+          backgroundColor: Colors.white,
+          colorText: Colors.black,
+          'Error',
+          ap.error ?? 'Resend failed',
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 3),
+
+        );
+      }
+    }
   }
 
   @override
@@ -124,25 +163,36 @@ class _OtpCodeViewScreenState extends State<OtpCodeViewScreen> {
 
           const SizedBox(height: 15),
 
+          const SizedBox(height: 10),
+          // Center(
+          //   child: Text(
+          //     _seconds > 0
+          //         ? 'Resend code in ${_seconds}s'
+          //         : 'You can resend now',
+          //     style: bodyText1.copyWith(color: const Color(0xFFB5B7BA)),
+          //   ),
+          // ),
+          const SizedBox(height: 20),
+
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 15.0),
             child: Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-              const Text(
-                "Didn't get a code? ",
-                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: Colors.white),
-              ),
-              GestureDetector(
-                onTap: loading ? null : _resend,
-                child: Text(
-                  "Resend",
-                  style: TextStyle(
-                    color: AppColors.bottomColor1,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    decoration: loading ? TextDecoration.lineThrough : TextDecoration.none,
-                  ),
-                ),
-              ),
+              // const Text(
+              //   "Didn't get a code? ",
+              //   style: TextStyle(fontSize: 14, fontWeight: FontWeight.w400, color: Colors.white),
+              // ),
+              // GestureDetector(
+              //   onTap: loading ? null : _resend,
+              //   child: Text(
+              //     "Resend",
+              //     style: TextStyle(
+              //       color: AppColors.bottomColor1,
+              //       fontSize: 14,
+              //       fontWeight: FontWeight.w400,
+              //       decoration: loading ? TextDecoration.lineThrough : TextDecoration.none,
+              //     ),
+              //   ),
+              // ),
             ]),
           ),
         ]),

@@ -52,11 +52,12 @@ class _ForgetPasswordViewState extends State<ForgetPasswordView> {
       Get.snackbar(
         backgroundColor: Colors.white,
 
+
         'Error',
         ap.error ?? 'Failed to send OTP',
         snackPosition: SnackPosition.TOP,
         duration: const Duration(seconds: 3),
-        colorText: Colors.white,
+        colorText: Colors.black,
       );
     }
   }
