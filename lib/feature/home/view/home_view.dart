@@ -1,20 +1,42 @@
-import 'package:alejandroloi/core/common/widgets/live_action_card.dart';
-import 'package:alejandroloi/core/util/app_colors.dart';
-import 'package:alejandroloi/core/util/images.dart';
-import 'package:alejandroloi/core/util/styles.dart';
-import 'package:alejandroloi/feature/home/widgets/botton_card.dart';
-import 'package:alejandroloi/feature/home/widgets/investdesk_card.dart';
-import 'package:alejandroloi/feature/home/widgets/project_card.dart';
-import 'package:alejandroloi/feature/investments/view/investment_screen.dart';
-import 'package:alejandroloi/feature/investments/widgets/progrees.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/common/widgets/live_action_card.dart';
+import '../../../core/language/language_controller.dart';
+import '../../../core/util/app_colors.dart';
+import '../../../core/util/images.dart';
+import '../../../core/util/styles.dart';
 import '../../auctions/view/auction_screen.dart';
+import '../../investments/view/investment_screen.dart';
+import '../../investments/widgets/progrees.dart';
 import '../../project/view/project.dart';
+import '../widgets/botton_card.dart';
+import '../widgets/investdesk_card.dart';
 
-class HomeScreenView extends StatelessWidget {
+class HomeScreenView extends StatefulWidget {
   const HomeScreenView({super.key});
+
+  @override
+  State<HomeScreenView> createState() => _HomeScreenViewState();
+}
+
+class _HomeScreenViewState extends State<HomeScreenView> {
+  final LanguageController langController = Get.put(LanguageController());
+  String productName = "Fresh Organic Apple";
+  String productDesc = "Crisp, juicy apples straight from the farm.";
+  RxString translatedName = "".obs;
+  RxString translatedDesc = "".obs;
+
+  Future<void> translateProduct() async {
+    translatedName.value = await langController.translate(productName);
+    translatedDesc.value = await langController.translate(productDesc);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    translateProduct();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,25 +44,44 @@ class HomeScreenView extends StatelessWidget {
       backgroundColor: Colors.black,
       appBar: AppBar(
         backgroundColor: Colors.black,
-       toolbarHeight: 80,
-        title: Padding(
-          padding: const EdgeInsets.only(top: 0),
-          child: Row(
-            children: const [
-              Icon(Icons.account_circle_outlined, color: Colors.white, size: 60),
-              SizedBox(width: 10),
-              Expanded(
-                child: Column(
+        toolbarHeight: 80,
+        title: Row(
+          children: [
+            const Icon(Icons.account_circle_outlined, color: Colors.white, size: 60),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Obx(
+                    () => Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text("Profile", style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700),),
-                    Text("Location", style: TextStyle(color: Colors.white70)),
+                    Text(
+                      translatedName.value.isNotEmpty ? translatedName.value : productName,
+                      style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+
+                    const Text("Location", style: TextStyle(color: Colors.white70)),
                   ],
                 ),
               ),
-              Icon(Icons.notifications_on_outlined, color: Colors.white, size: 30),
-            ],
-          ),
+            ),
+            const Icon(Icons.language, color: Colors.white, size: 30),
+            Obx(() => DropdownButton<String>(
+                value: langController.selectedLang.value,
+                icon: const Icon(Icons.arrow_drop_down, color: Colors.white), dropdownColor: Colors.black,
+                style: const TextStyle(color: Colors.white),
+                items: const [
+                  DropdownMenuItem(value: 'en', child: Text('English')),
+                  DropdownMenuItem(value: 'bn', child: Text('বাংলা')),
+                  DropdownMenuItem(value: 'hi', child: Text('हिन्दी')),
+                  DropdownMenuItem(value: 'fr', child: Text('Français')),
+                ],
+                onChanged: (lang) async {
+                  langController.changeLanguage(lang!);
+                  await translateProduct();
+                },
+              ),
+            ),
+          ],
         ),
       ),
       body: SingleChildScrollView(   // <-- scrollable parent
@@ -49,7 +90,7 @@ class HomeScreenView extends StatelessWidget {
           children: [
             BottomCard(
               imagePath: Images.currency, title: "Investments",
-              subtitle: "Develop Investment Strategy and Engage with Potential Funders.",
+              subtitle: translatedName.value.isNotEmpty ? translatedDesc.value : productDesc,
               onTap: () {
                 Get.to(() => const InvestmentsScreen(),
                   transition: Transition.rightToLeft,
@@ -70,14 +111,14 @@ class HomeScreenView extends StatelessWidget {
               },
 
             ),
+
             const SizedBox(height: 15),
             BottomCard(
               imagePath: Images.key,
               title: "Action",
               subtitle: "Participate in the live product auction by placing your bid.",
               onTap: () {
-                Get.to(
-                      () => const AuctionScreen(),
+                Get.to(() => const AuctionScreen(),
                   transition: Transition.rightToLeft,
                   duration: const Duration(milliseconds: 300),
                 );
@@ -86,6 +127,7 @@ class HomeScreenView extends StatelessWidget {
             const SizedBox(height: 20),
             rowText(leadingText: "Live Action", trailingText: "See all"),
             const SizedBox(height: 10),
+
             SizedBox(
               height: 200, // ListView height
               child: ListView.builder(
@@ -122,9 +164,7 @@ class HomeScreenView extends StatelessWidget {
             return  Padding(
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: InkWell(
-                onTap: (){
-                  Get.to(InvestmentsScreen());
-                },
+                onTap: (){Get.to(InvestmentsScreen());},
                 child: InvestDeskCard(
                     type: "Agriculture",
                     imagePath: "assets/images/tree.jpg",
@@ -137,8 +177,7 @@ class HomeScreenView extends StatelessWidget {
               ),
             );
             }),
-          ),
-            rowText(leadingText: "Project Proposal", trailingText: "See all"),
+          ), rowText(leadingText: "Project Proposal", trailingText: "See all"),
 
             SizedBox(
               height: 300,
@@ -171,12 +210,7 @@ class HomeScreenView extends StatelessWidget {
                   );
                 },
               ),
-            )
-
-
-
-
-
+            ),
 
           ],
         ),
@@ -229,51 +263,29 @@ class ProjectMiniCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: borderCol),
           boxShadow: const [
-            BoxShadow(
-              color: Color(0x33000000),
-              blurRadius: 10,
-              offset: Offset(0, 4),
-            ),
+            BoxShadow(color: Color(0x33000000), blurRadius: 10, offset: Offset(0, 4),),
           ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Category (small orange text)
-            Text(
-              category,
-              style: const TextStyle(
-                color: _orange,
-                fontSize: 12.5,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
+            Text(category, style: const TextStyle(color: _orange, fontSize: 12.5, fontWeight: FontWeight.w600,),),
             const SizedBox(height: 6),
 
             // Title
-            Text(
-              title,
+            Text(title,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16.5,
-                fontWeight: FontWeight.w700,
-                height: 1.2,
-              ),
+              style: const TextStyle(color: Colors.white, fontSize: 16.5, fontWeight: FontWeight.w700, height: 1.2,),
             ),
             const SizedBox(height: 6),
 
             // Blurb
-            Text(
-              blurb,
-              maxLines: 2,
+            Text(blurb, maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: Colors.white70,
-                fontSize: 12.5,
-                height: 1.25,
-              ),
+              style: const TextStyle(color: Colors.white70, fontSize: 12.5, height: 1.25,),
+
             ),
             const SizedBox(height: 12),
 
