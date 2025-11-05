@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 
 import '../../../app_ground.dart';
 
@@ -36,27 +35,32 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
     const border = Color(0xFF242931);
     const accent = Color(0xFFFF8A34);
 
-    final title = pr.title ?? '';
-    final category = pr.category ?? '';
+    final title       = pr.title ?? '';
+    final category    = pr.category ?? '';
     final description = pr.description ?? '';
-    final budget = _fmtBudget(pr.budgetMin, pr.budgetMax);
-    final days = pr.durationDays != null ? '${pr.durationDays} Days' : '-';
-    final location = (pr.location ?? '').isEmpty ? '-' : pr.location!;
-    final proposals = '${pr.proposalsCount ?? 0} Proposals';
-    final created = _fmtDate(pr.createdAt);
-    final due = _fmtDate(_dueDate(pr.createdAt, pr.durationDays));
-    final skills = pr.skills?.isNotEmpty == true ? pr.skills! : const ['-'];
+    final budget      = _fmtBudget(pr.budgetMin, pr.budgetMax);
+    final days        = pr.durationDays != null ? '${pr.durationDays} Days' : '-';
+    final location    = (pr.location ?? '').isEmpty ? '-' : pr.location!;
+    final proposals   = '${pr.proposals.length} Proposals';
+    final created     = _fmtDate(pr.createdAt);
+    final due         = _fmtDate(_dueDate(pr.createdAt, pr.durationDays));
+    final skills      = pr.skills?.isNotEmpty == true ? pr.skills! : const ['-'];
+
+    final ownerName = (pr.ownerName?.trim().isNotEmpty ?? false)
+        ? pr.ownerName!.trim()
+        : 'Anonymous';
+    final ownerAvatar = (pr.ownerAvatarUrl?.trim().isNotEmpty ?? false)
+        ? pr.ownerAvatarUrl!.trim()
+        : 'https://i.pravatar.cc/100?img=12';
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle.light.copyWith(
-        statusBarColor: Colors.transparent,
-      ),
+      value: SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.black,
-          surfaceTintColor: Colors.black, // avoid Material3 light tint
+          surfaceTintColor: Colors.black,
           elevation: 0,
-          systemOverlayStyle: SystemUiOverlayStyle.light, // white status-bar icons
+          systemOverlayStyle: SystemUiOverlayStyle.light,
           iconTheme: const IconThemeData(color: Colors.white),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded),
@@ -70,7 +74,7 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
           ),
           title: const Text(
             'Project Details',
-            style: TextStyle(fontWeight: FontWeight.w800,color: Colors.white),
+            style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
           ),
           centerTitle: false,
         ),
@@ -86,35 +90,21 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: border),
                   boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black54,
-                      blurRadius: 12,
-                      offset: Offset(0, 6),
-                    )
+                    BoxShadow(color: Colors.black54, blurRadius: 12, offset: Offset(0, 6)),
                   ],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // header row
+                    // header row (actions)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(10, 10, 10, 0),
                       child: Row(
-                        children: [
-                          // _CircleIconButton(
-                          //   icon: Icons.arrow_back_ios_new,
-                          //   onTap: () => Navigator.pop(context),
-                          // ),
-                          const Spacer(),
-                          _CircleIconButton(
-                            icon: Icons.favorite_border,
-                            onTap: () {},
-                          ),
-                          const SizedBox(width: 8),
-                          _CircleIconButton(
-                            icon: Icons.more_horiz,
-                            onTap: () {},
-                          ),
+                        children: const [
+                          Spacer(),
+                          _CircleIconButton(icon: Icons.favorite_border, onTap: null),
+                          SizedBox(width: 8),
+                          _CircleIconButton(icon: Icons.more_horiz, onTap: null),
                         ],
                       ),
                     ),
@@ -138,13 +128,8 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            description.isEmpty
-                                ? 'No description provided.'
-                                : description,
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.75),
-                              height: 1.35,
-                            ),
+                            description.isEmpty ? 'No description provided.' : description,
+                            style: TextStyle(color: Colors.white.withOpacity(0.75), height: 1.35),
                           ),
                           const SizedBox(height: 12),
                         ],
@@ -159,7 +144,7 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
                           _StatRow(
                             leadingLabel: 'Posted on',
                             leadingValue: created,
-                            trailingLabel: 'Posted on',
+                            trailingLabel: 'Due',
                             trailingValue: due == '-' ? created : due,
                           ),
                           const SizedBox(height: 12),
@@ -176,45 +161,32 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
                       ),
                     ),
 
-                    // client line (static to match mock)
+                    // owner line (dynamic)
                     Padding(
                       padding: const EdgeInsets.fromLTRB(14, 14, 14, 0),
                       child: Row(
                         children: [
-                          const CircleAvatar(
-                            radius: 16,
-                            backgroundImage: NetworkImage(
-                              'https://images.unsplash.com/photo-1544005313-94ddf0286df2',
-                            ),
-                          ),
+                          CircleAvatar(radius: 16, backgroundImage: NetworkImage(ownerAvatar)),
                           const SizedBox(width: 10),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Eleanor Pena',
+                              Text(ownerName,
                                   style: TextStyle(
                                     color: Colors.white.withOpacity(0.95),
                                     fontWeight: FontWeight.w700,
                                   )),
                               Text('Success Rate 100%',
-                                  style: TextStyle(
-                                    color: Colors.white.withOpacity(0.7),
-                                    fontSize: 12,
-                                  )),
+                                  style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
                             ],
                           ),
                           const Spacer(),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
-                              const Text('Posted on',
-                                  style: TextStyle(
-                                      color: Colors.white70, fontSize: 12)),
+                              const Text('Posted on', style: TextStyle(color: Colors.white70, fontSize: 12)),
                               const SizedBox(height: 2),
-                              Text(created,
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w700)),
+                              Text(created, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
                             ],
                           ),
                         ],
@@ -226,9 +198,7 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
                     const _SectionHeader('Project Description'),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 14),
-                      child: _Para(description.isEmpty
-                          ? 'No description provided.'
-                          : description),
+                      child: _Para(description.isEmpty ? 'No description provided.' : description),
                     ),
                     const SizedBox(height: 12),
 
@@ -244,30 +214,36 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // proposals (static demo cards — bind real data later)
-                    const _SectionHeader('Project Proposal'),
+                    // proposals
+                    const _SectionHeader('Project Proposals'),
                     const SizedBox(height: 8),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 14),
-                      child: _ProposalCard(
-                        name: 'Eleanor Pena',
-                        summary:
-                        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum metus eu egestas pharetra. Fusce bibendum odio et venenatis efficitur.',
-                        budgetText: '\$1200',
-                        deliveryText: '14 days',
+                    if (pr.proposals.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Text('No proposals yet',
+                            style: TextStyle(color: Colors.white.withOpacity(0.65))),
+                      )
+                    else
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        child: Column(
+                          children: pr.proposals.map((pp) {
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: _ProposalCard(
+                                name: pp.name ?? 'Anonymous',
+                                avatarUrl: (pp.avatarUrl?.isNotEmpty ?? false)
+                                    ? pp.avatarUrl!
+                                    : 'https://i.pravatar.cc/120?img=15',
+                                summary: pp.coverLetter ?? '',
+                                budgetText: pp.budget != null ? '\$${pp.budget}' : '-',
+                                deliveryText: pp.deliveryDays != null ? '${pp.deliveryDays} days' : '-',
+                              ),
+                            );
+                          }).toList(),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 14),
-                      child: _ProposalCard(
-                        name: 'Eleanor Pena',
-                        summary:
-                        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum metus eu egestas pharetra.',
-                        budgetText: '\$1200',
-                        deliveryText: '14 days',
-                      ),
-                    ),
+
                     const SizedBox(height: 16),
                   ],
                 ),
@@ -280,7 +256,24 @@ class _MyProjectDetailScreenState extends State<MyProjectDetailScreen> {
   }
 }
 
-// ====== local data type (no API hit here) ======
+// ====== local data types (no API hit here) ======
+
+class ProposalMini {
+  final String? name;
+  final String? avatarUrl;
+  final String? coverLetter;
+  final int? budget;
+  final int? deliveryDays;
+
+  const ProposalMini({
+    this.name,
+    this.avatarUrl,
+    this.coverLetter,
+    this.budget,
+    this.deliveryDays,
+  });
+}
+
 class MyProjectData {
   final String id;
   final String? category;
@@ -290,9 +283,14 @@ class MyProjectData {
   final int? budgetMax;
   final int? durationDays;
   final String? location;
-  final int? proposalsCount;
+  final int? proposalsCount; // optional legacy field
   final DateTime? createdAt;
   final List<String>? skills;
+
+  // NEW: owner + proposals to render dynamically
+  final String? ownerName;
+  final String? ownerAvatarUrl;
+  final List<ProposalMini> proposals;
 
   const MyProjectData({
     required this.id,
@@ -306,9 +304,13 @@ class MyProjectData {
     this.proposalsCount,
     this.createdAt,
     this.skills,
+    this.ownerName,
+    this.ownerAvatarUrl,
+    this.proposals = const [],
   });
 }
 
+// sample for previewing UI
 MyProjectData _sampleProject(String id) => MyProjectData(
   id: id,
   category: 'Design',
@@ -319,9 +321,31 @@ MyProjectData _sampleProject(String id) => MyProjectData(
   budgetMax: 3000,
   durationDays: 15,
   location: 'Brooklyn, NY',
-  proposalsCount: 8,
+  proposalsCount: 2,
   createdAt: DateTime.now().subtract(const Duration(days: 5)),
+  ownerName: 'abu sayed',
+  ownerAvatarUrl:
+  'https://res.cloudinary.com/ddtuyxcsl/image/upload/v1762136470/uploads/u51fqfrxj3qjw5ef8zib.jpg',
   skills: const ['Web Design', 'Ecommerce', 'Shopify', 'WordPress', 'UI/UX'],
+  proposals: const [
+    ProposalMini(
+      name: 'Abu Sayed',
+      avatarUrl:
+      'https://res.cloudinary.com/ddtuyxcsl/image/upload/v1762136470/uploads/u51fqfrxj3qjw5ef8zib.jpg',
+      coverLetter:
+      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum metus eu egestas pharetra.',
+      budget: 1200,
+      deliveryDays: 14,
+    ),
+    ProposalMini(
+      name: 'Eleanor Pena',
+      avatarUrl: 'https://i.pravatar.cc/120?img=15',
+      coverLetter:
+      'Another proposal text showing how multi-line content will be rendered inside the card.',
+      budget: 900,
+      deliveryDays: 10,
+    ),
+  ],
 );
 
 // ====== helpers & UI atoms ======
@@ -360,8 +384,8 @@ DateTime? _dueDate(DateTime? start, int? days) {
 
 class _CircleIconButton extends StatelessWidget {
   final IconData icon;
-  final VoidCallback onTap;
-  const _CircleIconButton({required this.icon, required this.onTap});
+  final VoidCallback? onTap;
+  const _CircleIconButton({required this.icon, this.onTap});
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -393,8 +417,7 @@ class _Badge extends StatelessWidget {
         border: Border.all(color: color.withOpacity(0.7)),
       ),
       child: Text(text,
-          style: TextStyle(
-              color: color, fontWeight: FontWeight.w700, fontSize: 12)),
+          style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 12)),
     );
   }
 }
@@ -408,8 +431,7 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 8),
       child: Text(
         text,
-        style: const TextStyle(
-            color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16),
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16),
       ),
     );
   }
@@ -420,10 +442,7 @@ class _Para extends StatelessWidget {
   const _Para(this.text);
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: TextStyle(color: Colors.white.withOpacity(0.78), height: 1.45),
-    );
+    return Text(text, style: TextStyle(color: Colors.white.withOpacity(0.78), height: 1.45));
   }
 }
 
@@ -455,14 +474,11 @@ class _LabeledText extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment:
-      alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: alignEnd ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
         Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
         const SizedBox(height: 2),
-        Text(value,
-            style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.w700)),
+        Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
       ],
     );
   }
@@ -530,21 +546,22 @@ class _SkillChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: const Color(0xFF2A313A)),
       ),
-      child: Text(label,
-          style: const TextStyle(
-              color: Colors.white, fontWeight: FontWeight.w600)),
+      child: Text(label, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
     );
   }
 }
 
 class _ProposalCard extends StatelessWidget {
   final String name;
+  final String avatarUrl;
   final String summary;
   final String budgetText;
   final String deliveryText;
 
   const _ProposalCard({
+    super.key,
     required this.name,
+    required this.avatarUrl,
     required this.summary,
     required this.budgetText,
     required this.deliveryText,
@@ -568,46 +585,28 @@ class _ProposalCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const CircleAvatar(
-                radius: 18,
-                backgroundImage: NetworkImage(
-                  'https://images.unsplash.com/photo-1527980965255-d3b416303d12',
-                ),
-              ),
+              CircleAvatar(radius: 18, backgroundImage: NetworkImage(avatarUrl)),
               const SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(name,
-                      style: const TextStyle(
-                          color: Colors.white, fontWeight: FontWeight.w700)),
-                  Text(
-                    '3 Projects · Success Rate 100%',
-                    style: TextStyle(
-                        color: Colors.white.withOpacity(0.7), fontSize: 12),
-                  ),
+                  Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                  Text('3 Projects · Success Rate 100%',
+                      style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
                 ],
               ),
             ],
           ),
           const SizedBox(height: 10),
-          Text(
-            summary,
-            style: TextStyle(color: Colors.white.withOpacity(0.78), height: 1.45),
-          ),
+          Text(summary, style: TextStyle(color: Colors.white.withOpacity(0.78), height: 1.45)),
           const SizedBox(height: 12),
           Row(
             children: [
               const _LabeledText(label: 'Budget', value: ''),
-              Text(budgetText,
-                  style: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.w700)),
+              Text(budgetText, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
               const Spacer(),
-              const _LabeledText(
-                  label: 'Delivery Time', value: '', alignEnd: true),
-              Text(deliveryText,
-                  style: const TextStyle(
-                      color: Colors.white, fontWeight: FontWeight.w700)),
+              const _LabeledText(label: 'Delivery Time', value: '', alignEnd: true),
+              Text(deliveryText, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
             ],
           ),
           const SizedBox(height: 12),
@@ -618,9 +617,7 @@ class _ProposalCard extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: Colors.white.withOpacity(0.15)),
                     foregroundColor: Colors.white.withOpacity(0.9),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                   onPressed: () {},
@@ -633,9 +630,7 @@ class _ProposalCard extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: accent,
                     foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     elevation: 0,
                   ),

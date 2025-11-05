@@ -161,8 +161,8 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
                         progressPct: _progress(inv),
                         goalUsd: inv.fundingGoal ?? 0,
                         daysLeft: _daysLeft(inv),
-                        ownerAvatar: 'https://i.pravatar.cc/100?img=13',
-                        ownerName: 'John Smith', // replace when backend adds owner
+                        ownerAvatar: inv.ownerAvatarUrl ?? 'https://i.pravatar.cc/100?img=13', // fallback
+                        ownerName:   inv.ownerName ?? 'Unknown user',                           // fallback
                       ),
                     ),
                     const SizedBox(height: 14),
@@ -245,7 +245,7 @@ class _InvestmentCard extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(category, style: TextStyle(color: Colors.white.withOpacity(.65), fontSize: 12)),
+            Text(category, style: TextStyle(color: Color(0xFFFF6A00), fontSize: 12)),
             const SizedBox(height: 2),
             Text(title, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
             const SizedBox(height: 4),
@@ -263,7 +263,7 @@ class _InvestmentCard extends StatelessWidget {
                   Text('$progressPct% of \$${_fmt(goalUsd)}',
                       style: TextStyle(color: Colors.white.withOpacity(.75), fontSize: 12)),
                   const Spacer(),
-                  Text('${daysLeft}d left',
+                  Text('${daysLeft} days left',
                       style: TextStyle(color: Colors.white.withOpacity(.75), fontSize: 12)),
                 ]),
               ]),
@@ -273,7 +273,7 @@ class _InvestmentCard extends StatelessWidget {
             Row(children: [
               CircleAvatar(radius: 14, backgroundImage: NetworkImage(ownerAvatar)),
               const SizedBox(width: 8),
-              Expanded(child: Text(ownerName, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13))),
+              Expanded(child: Text(toTitleCase(ownerName), style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),),),
               Container(
                 height: 36, width: 36, alignment: Alignment.center,
                 decoration: BoxDecoration(color: inner, borderRadius: BorderRadius.circular(10)),
@@ -358,4 +358,13 @@ String _fmt(int n) {
     if (left % 3 == 0 && left != 0) buf.write(',');
   }
   return buf.toString();
+}
+
+String toTitleCase(String input) {
+  return input
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((w) => w.isNotEmpty)
+      .map((w) => w[0].toUpperCase() + (w.length > 1 ? w.substring(1).toLowerCase() : ''))
+      .join(' ');
 }

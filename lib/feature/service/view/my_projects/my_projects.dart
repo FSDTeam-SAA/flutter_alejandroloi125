@@ -244,7 +244,7 @@ class _MyProjectScreenState extends State<MyProjectScreen> {
     budgetMax: p.maxBudget,
     durationDays: p.deadlineDays,
     location: p.location,
-    proposalsCount: 8,
+    // proposalsCount: 8,
     createdAt: DateTime.now(),
     skills: p.skills,
   );
