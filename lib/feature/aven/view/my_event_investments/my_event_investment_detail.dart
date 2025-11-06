@@ -98,7 +98,7 @@ class _InvestmentDetailsState extends State<InvestmentDetails> {
             _CoverHeader(i.primaryImageUrl),
 
             const SizedBox(height: 10),
-            const Text('Agriculture',
+            Text(i.name,
                 style: TextStyle(color: _accent, fontSize: 12, fontWeight: FontWeight.w700)),
             const SizedBox(height: 6),
 
@@ -212,11 +212,7 @@ class _CoverHeader extends StatelessWidget {
                 : Image.network(url!, fit: BoxFit.cover),
           ),
         ),
-        // Positioned(
-        //   top: 8,
-        //   left: 8,
-        //   child: _round(ActionIcon.back, () => Get.back()),
-        // ),
+
         Positioned(
           top: 8,
           right: 8,

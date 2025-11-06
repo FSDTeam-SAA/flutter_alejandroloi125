@@ -30,6 +30,7 @@ class Investment {
   final String? ownerUsername;     // NEW
   final int? likeCount;            // NEW
   final int? viewCount;            // NEW
+  final bool isFavorite; // NEW
 
   const Investment({
     required this.id,
@@ -46,8 +47,46 @@ class Investment {
     this.ownerUsername,            // NEW
     this.likeCount,                // NEW
     this.viewCount,                // NEW
+    this.isFavorite = false, // default
 
   });
+
+  // ---- ADD THIS: copyWith ----
+  Investment copyWith({
+    String? id,
+    String? name,
+    String? description,
+    List<String>? category,
+    int? fundingGoal,
+    String? fundingDuration,
+    String? location,
+    String? investmentTerms,
+    List<InvestmentImage>? images,
+    String? ownerName,
+    String? ownerAvatarUrl,
+    String? ownerUsername,
+    int? likeCount,
+    int? viewCount,
+    bool? isFavorite,
+  }) {
+    return Investment(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      category: category ?? this.category,
+      fundingGoal: fundingGoal ?? this.fundingGoal,
+      fundingDuration: fundingDuration ?? this.fundingDuration,
+      location: location ?? this.location,
+      investmentTerms: investmentTerms ?? this.investmentTerms,
+      images: images ?? this.images,
+      ownerName: ownerName ?? this.ownerName,
+      ownerAvatarUrl: ownerAvatarUrl ?? this.ownerAvatarUrl,
+      ownerUsername: ownerUsername ?? this.ownerUsername,
+      likeCount: likeCount ?? this.likeCount,
+      viewCount: viewCount ?? this.viewCount,
+      isFavorite: isFavorite ?? this.isFavorite,
+    );
+  }
 
   factory Investment.fromJson(Map<String, dynamic> j) {
 
@@ -55,6 +94,8 @@ class Investment {
     String? ownerName;
     String? ownerAvatarUrl;
     String? ownerUsername;
+
+
     final createdBy = j['createdBy'];
     if (createdBy is Map) {
       ownerName = (createdBy['name'] ?? '').toString().trim().isEmpty
@@ -114,6 +155,7 @@ class Investment {
       images: imgs(j['imageLink'] ?? j['image'] ?? j['images']),
       ownerName: ownerName,                 // NEW
       ownerAvatarUrl: ownerAvatarUrl,       // NEW
+      isFavorite: j['isFavorite'] == true, // server optional
     );
   }
 

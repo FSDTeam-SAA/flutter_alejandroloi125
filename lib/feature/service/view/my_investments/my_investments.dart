@@ -311,7 +311,7 @@ class _InvestmentCard extends StatelessWidget {
                 Text(
                   category,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
+                    color: const Color(0xFFFF6A00),
                     fontSize: 12,
                   ),
                 ),

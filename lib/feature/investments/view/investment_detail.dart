@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:alejandroloi/providers/investment_provider.dart';
 import '../../models/investment.dart';
 import '../invest.dart';
+import '../providers/investment_detail_provider.dart';
 
 // ===== Theme (match the mock) =====
 const _bg = Color(0xFF0F0F12);
@@ -82,8 +83,26 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
     }
   }
 
+
+
   @override
   Widget build(BuildContext context) {
+
+    final p = context.watch<InvestmentDetailProvider>();
+
+    if (p.state == LoadState.loading) {
+      return const Scaffold(
+        backgroundColor: _bg,
+        body: Center(child: CircularProgressIndicator(color: _accent)),
+      );
+    }
+    if (p.state == LoadState.error) {
+      // keep your same error UI; just show p.error and call init() on Retry
+    }
+
+    // final inv = p.inv!; // from provider
+
+
     if (_loading) {
       return const Scaffold(
         backgroundColor: _bg,
@@ -210,6 +229,9 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
               authorAvatar: authorAvatar,
               likeCount: likeCount,
               // viewCount: viewCount,
+              isFav: inv.isFavorite,
+              favBusy: p.favBusy,
+              onTapHeart: p.favBusy ? null : () => p.toggleFavorite(widget.investmentId),
             ),
             const SizedBox(height: 14),
 
@@ -446,6 +468,10 @@ class _HeroCard extends StatelessWidget {
   // final int viewCount;
   // const _HeroCard({required this.image});
 
+  final VoidCallback? onTapHeart; // NEW
+  final bool isFav;               // NEW
+  final bool favBusy;             // NEW
+
   const _HeroCard({
     required this.image,
     required this.authorName,
@@ -453,6 +479,12 @@ class _HeroCard extends StatelessWidget {
     required this.authorUsername,
     required this.likeCount,
     // required this.viewCount,
+
+    this.onTapHeart,
+    this.isFav = false,
+    this.favBusy = false,
+
+
   });
 
   bool get _isNetwork {
@@ -508,7 +540,11 @@ class _HeroCard extends StatelessWidget {
               children: [
                 // _roundBtn(const Icon(CupertinoIcons.back), onPressed: () => Get.back()),
                 const Spacer(),
-                _roundBtn(const Icon(CupertinoIcons.heart)),
+                // _roundBtn(const Icon(CupertinoIcons.heart)),
+                _roundBtn(
+                  Icon(isFav ? CupertinoIcons.heart_fill : CupertinoIcons.heart),
+                  onPressed: favBusy ? null : onTapHeart,
+                ),
               ],
             ),
           ),

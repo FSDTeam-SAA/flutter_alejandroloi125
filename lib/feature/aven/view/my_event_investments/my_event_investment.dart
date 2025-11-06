@@ -143,7 +143,7 @@ class _InvestmentCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Agriculture',
+                  Text(title,
                       style: TextStyle(color: _accent, fontSize: 12, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 6),
 

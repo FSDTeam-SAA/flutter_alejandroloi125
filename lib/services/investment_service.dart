@@ -143,4 +143,13 @@ class InvestmentService {
     final res = await _dio.delete(ApiPaths.deleteInvestment(id));
     return Map<String, dynamic>.from(res.data ?? const {});
   }
+
+  // POST /user/favorite/project/{id}/favourite
+  Future<void> toggleFavorite(String projectId) async {
+    await _dio.post('/user/favorite/project/$projectId/favourite');
+  }
+
+
+
+
 }

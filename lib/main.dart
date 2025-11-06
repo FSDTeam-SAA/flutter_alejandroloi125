@@ -14,6 +14,7 @@ import 'package:provider/provider.dart';
 
 import 'core/env/env.dart';
 import 'core/network/api_service/api_client.dart';
+import 'core/network/api_service/app_di.dart';
 import 'core/network/api_service/token_store.dart';
 
 import 'core/network/payment_service.dart';
@@ -21,6 +22,7 @@ import 'feature/auth/providers/auth_provider.dart';
 import 'feature/auth/repository/auth_repository.dart';
 
 import 'feature/auth/services/auth_service.dart';
+import 'feature/investments/providers/investment_detail_provider.dart';
 import 'feature/profile/providers/profile_provider.dart';
 import 'feature/profile/repository/profile_repository.dart';
 import 'feature/profile/service/profile_service.dart';
@@ -107,6 +109,8 @@ void main() async{
         ProxyProvider<ApiClient, PaymentService>(
           update: (_, client, __) => PaymentService(client.dio),
         ),
+
+        ChangeNotifierProvider(create: (_) => InvestmentDetailProvider(AppDI.investmentRepo())),
 
 
 

@@ -102,7 +102,8 @@ class MyInvestmentDetailScreen extends StatelessWidget {
         ? gallery[1]
         : 'https://images.unsplash.com/photo-1509395176047-4a66953fd231?q=80&w=1200&auto=format&fit=crop';
 
-    final termsBullets = _splitBullets(investment?.investmentTerms ?? it.terms);
+    // ---- with this ----
+    final termsText = ((investment?.investmentTerms ?? it.terms) ?? '').trim();
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
@@ -182,7 +183,7 @@ class MyInvestmentDetailScreen extends StatelessWidget {
                             name: authorName,
                             username: authorUsername,
                             avatarUrl: authorAvatar,
-                            viewsText: '21k', // investors count (e.g. 21k)
+                            // viewsText: '21k', // investors count (e.g. 21k)
                             likesText: likesText, // likeCount   (e.g. 142)
                           ),
                         ),
@@ -235,10 +236,13 @@ class MyInvestmentDetailScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
 
-                          // Terms
+
+                          // ---- with this ----
                           const _SectionTitle('Investment Terms'),
                           const SizedBox(height: 6),
-                          for (final b in termsBullets) _Bullet(b),
+                          _Para(termsText.isNotEmpty
+                              ? termsText
+                              : '—'),
 
                           const SizedBox(height: 16),
 
@@ -280,7 +284,7 @@ class _AuthorChip extends StatelessWidget {
   final String name;
   final String username;  // without '@'
   final String avatarUrl;
-  final String viewsText; // left pill: investors count
+  // final String viewsText; // left pill: investors count
   final String likesText; // right pill: like count
 
   const _AuthorChip({
@@ -288,7 +292,7 @@ class _AuthorChip extends StatelessWidget {
     required this.name,
     required this.username,
     required this.avatarUrl,
-    required this.viewsText,
+    // required this.viewsText,
     required this.likesText,
   });
 
@@ -318,7 +322,7 @@ class _AuthorChip extends StatelessWidget {
           ],
         ),
         const SizedBox(width: 8),
-        _TinyPill(text: viewsText),
+        // _TinyPill(text: viewsText),
         const SizedBox(width: 6),
         _TinyPill(text: likesText),
       ],
@@ -327,51 +331,6 @@ class _AuthorChip extends StatelessWidget {
 }
 
 
-// class _AuthorChip extends StatelessWidget {
-//   final String name;
-//   final String username;  // without '@'
-//   final String avatarUrl;
-//   final String viewsText; // e.g. "21k"
-//   final String likesText; // e.g. "142"
-//
-//   const _AuthorChip({
-//     super.key,
-//     required this.name,
-//     required this.username,
-//     required this.avatarUrl,
-//     required this.viewsText,
-//     required this.likesText,
-//   });
-//
-//   @override
-//   Widget build(BuildContext context) {
-//     return Row(
-//       children: [
-//         CircleAvatar(radius: 14, backgroundImage: NetworkImage(avatarUrl)),
-//         const SizedBox(width: 8),
-//         Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Text(name,
-//                 style: TextStyle(
-//                   color: Colors.white.withOpacity(0.95),
-//                   fontWeight: FontWeight.w600,
-//                 )),
-//             Text('@$username',
-//                 style: TextStyle(
-//                   color: Colors.white.withOpacity(0.7),
-//                   fontSize: 12,
-//                 )),
-//           ],
-//         ),
-//         const SizedBox(width: 8),
-//         _TinyPill(text: viewsText),
-//         const SizedBox(width: 6),
-//         _TinyPill(text: likesText),
-//       ],
-//     );
-//   }
-// }
 
 class _TinyPill extends StatelessWidget {
   final String text;
@@ -725,4 +684,12 @@ String _abbr(int? n) {
   if (v >= 1000000) return '${(v / 1000000).toStringAsFixed(v % 1000000 == 0 ? 0 : 1)}M';
   if (v >= 1000) return '${(v / 1000).toStringAsFixed(v % 1000 == 0 ? 0 : 1)}k';
   return v.toString();
+}
+
+// helper
+String _firstNonEmpty(List<String?> opts, String fallback) {
+  for (final s in opts) {
+    if (s != null && s.trim().isNotEmpty) return s.trim();
+  }
+  return fallback;
 }

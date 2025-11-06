@@ -418,13 +418,13 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
                           children: [
                             Icon(Icons.circle, size: 10, color: Colors.white),
                             SizedBox(width: 6),
-                            Text(
-                              'LIVE',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 12,
-                              ),
-                            ),
+                            // Text(
+                            //   'LIVE',
+                            //   style: TextStyle(
+                            //     fontWeight: FontWeight.w800,
+                            //     fontSize: 12,
+                            //   ),
+                            // ),
                           ],
                         ),
                       ),

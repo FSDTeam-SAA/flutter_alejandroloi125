@@ -132,7 +132,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
       setState(() => _auto = AutovalidateMode.onUserInteraction);
       Get.snackbar(
           backgroundColor: Colors.white,
-          colorText: Colors.white,
+          colorText: Colors.black,
           'Fix errors', 'Please correct the highlighted fields',
           snackPosition: SnackPosition.TOP);
       return;
@@ -140,7 +140,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
     if (_image == null) {
       Get.snackbar(
         backgroundColor: Colors.white,
-          colorText: Colors.white,
+          colorText: Colors.black,
 
           'Image required', 'Please add a photo',
           snackPosition: SnackPosition.TOP);
@@ -149,7 +149,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
     if (_auctionMinutes == null) {
       Get.snackbar(
           backgroundColor: Colors.white,
-          colorText: Colors.white,
+          colorText: Colors.black,
           'Duration required', 'Please choose a duration',
           snackPosition: SnackPosition.TOP);
       return;
@@ -188,12 +188,12 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
       );
       Get.snackbar(
           backgroundColor: Colors.white,
-          colorText: Colors.white,
+          colorText: Colors.black,
           'Success', res.message, snackPosition: SnackPosition.TOP);
     } catch (e) {
       Get.snackbar(
           backgroundColor: Colors.white,
-          colorText: Colors.white,
+          colorText: Colors.black,
           'Failed', e.toString(), snackPosition: SnackPosition.TOP);
     } finally {
       if (mounted) setState(() => _submitting = false);

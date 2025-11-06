@@ -73,6 +73,9 @@ class ApiPaths {
   static const String createPayment  = '/payment/create-payment';
   static const String confirmPayment = '/payment/confirm-payment';
 
+  //===================favourite
+  static String favorite(String id) => '/user/favorite/project/$id';
+
 
 
 
