@@ -1,5 +1,6 @@
 // lib/feature/auction/view/create_auctions_view.dart
 import 'dart:io';
+import 'package:alejandroloi/core/language/language_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -9,7 +10,7 @@ import 'package:alejandroloi/core/common/widgets/save_botton.dart';
 import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/styles.dart';
 
-import 'package:image_picker/image_picker.dart';
+
 import 'package:provider/provider.dart';
 
 import '../../../providers/auction_provider.dart';
@@ -132,7 +133,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
       setState(() => _auto = AutovalidateMode.onUserInteraction);
       Get.snackbar(
           backgroundColor: Colors.white,
-          colorText: Colors.white,
+          colorText: Colors.black,
           'Fix errors', 'Please correct the highlighted fields',
           snackPosition: SnackPosition.TOP);
       return;
@@ -140,7 +141,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
     if (_image == null) {
       Get.snackbar(
         backgroundColor: Colors.white,
-          colorText: Colors.white,
+          colorText: Colors.black,
 
           'Image required', 'Please add a photo',
           snackPosition: SnackPosition.TOP);
@@ -149,7 +150,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
     if (_auctionMinutes == null) {
       Get.snackbar(
           backgroundColor: Colors.white,
-          colorText: Colors.white,
+          colorText: Colors.black,
           'Duration required', 'Please choose a duration',
           snackPosition: SnackPosition.TOP);
       return;
@@ -212,6 +213,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
 
   @override
   Widget build(BuildContext context) {
+    final langController = Get.put(LanguageController());
     return Scaffold(
       backgroundColor: Colors.black,
       body: Padding(
@@ -223,7 +225,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Images", style: bodyText1),
+                Text(langController.t('images'), style: bodyText1),
                 Row(
                   children: [
                     ImagePickerSlot(
@@ -238,6 +240,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                 ),
 
                 const SizedBox(height: 15),
+                Text(langController.t('auction_title'), style: bodyText1),
                 CustomTextField(
                   controller: _titleCtrl,
                   hintText: "Enter your Auction title",
@@ -245,7 +248,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                 ),
 
                 const SizedBox(height: 10),
-                Text("Category", style: bodyText1),
+                Text(langController.t('category'), style: bodyText1),
                 CustomTextField(
                   controller: _categoryCtrl,
                   hintText: 'Enter your Category Name (e.g: Auction,Done)',
@@ -253,7 +256,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                 ),
 
                 const SizedBox(height: 8),
-                Text("Description", style: bodyText1),
+                Text(langController.t('description'), style: bodyText1),
                 Container(
                   decoration: BoxDecoration(
                     color: AppColors.fieldColor,
@@ -280,7 +283,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                 ),
 
                 const SizedBox(height: 8),
-                Text("Starting Bid", style: bodyText1),
+                Text(langController.t('starting_bid'), style: bodyText1),
                 CustomTextField(
                   controller: _startingBidCtrl,
                   hintText: "Enter amount",
@@ -290,7 +293,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                 ),
 
                 const SizedBox(height: 8),
-                Text("Auction Duration", style: bodyText1),
+                Text(langController.t('auction_duration'), style: bodyText1),
                 Row(
                   children: [
                     Expanded(
@@ -336,7 +339,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                 ),
 
                 const SizedBox(height: 10),
-                Text("Location", style: bodyText1),
+                Text(langController.t('location'), style: bodyText1),
                 CustomTextField(
                   controller: _locationCtrl,
                   hintText: "Enter location",
@@ -381,7 +384,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
 
                 const SizedBox(height: 15),
                 bottomWidget(
-                  text: _submitting ? "Creating..." : "Create Auctions",
+                  text: _submitting ? "${langController.t('creating')}..." : langController.t('create_auction'),
                   onTap: _submitting ? null : _submit,
                 ),
                 const SizedBox(height: 10),

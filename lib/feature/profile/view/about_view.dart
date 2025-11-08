@@ -1,12 +1,16 @@
+import 'package:alejandroloi/core/language/language_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 
 class AboutView extends StatelessWidget {
   const AboutView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final languageController = Get.put(LanguageController());
     return Scaffold(backgroundColor: Colors.black,
-      appBar: AppBar(title: Text("About App",style: TextStyle(color: Colors.white,fontSize: 24,fontWeight: FontWeight.w700),),
+      appBar: AppBar(title: Text(languageController.t('about_app'),style: TextStyle(color: Colors.white,fontSize: 24,fontWeight: FontWeight.w700),),
       iconTheme: IconThemeData(color: Colors.white),
       backgroundColor: Colors.black,
 

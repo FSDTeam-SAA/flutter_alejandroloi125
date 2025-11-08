@@ -5,10 +5,14 @@ import 'package:alejandroloi/feature/home/view/home_view.dart';
 import 'package:alejandroloi/feature/profile/view/profile_screen_view.dart';
 import 'package:alejandroloi/feature/service/view/service_view.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 
+import '../core/language/language_controller.dart';
 import 'create_service/view/create_services_view.dart';
 
 class AppGround extends StatefulWidget {
+
   const AppGround({
     super.key,
     this.initialIndex = 0,      // 0=Home, 1=Services, 2=Create, 3=Event, 4=Profile
@@ -25,6 +29,7 @@ class AppGround extends StatefulWidget {
 class _AppGroundState extends State<AppGround> {
   late int _selectedIndex;
   late List<Widget> _pages;
+  final langController = Get.put(LanguageController());
 
   @override
   void initState() {
@@ -73,11 +78,11 @@ class _AppGroundState extends State<AppGround> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildNavItem(Images.nv1, 'Home', 0),
-            _buildNavItem(Images.nv2, 'Services', 1),
+            _buildNavItem(Images.nv1, langController.t('home'), 0),
+            _buildNavItem(Images.nv2, langController.t('services'), 1),
             const SizedBox(width: 40), // space for FAB
-            _buildNavItem(Images.nb3, 'Event', 3),
-            _buildNavItem(Images.personIcon, 'Profile', 4),
+            _buildNavItem(Images.nb3, langController.t('event'), 3),
+            _buildNavItem(Images.personIcon, langController.t('profile'), 4),
           ],
         ),
       ),

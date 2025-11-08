@@ -3,6 +3,7 @@ import 'package:alejandroloi/core/util/styles.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/language/language_controller.dart';
 import '../../app_ground.dart';
 import 'my_event_investments/my_event_investment.dart';
 import 'my_event_project/my_event_project.dart';
@@ -42,12 +43,14 @@ class _EventViewState extends State<EventView>
 
   @override
   Widget build(BuildContext context) {
+    
+    final langController = Get.put(LanguageController());
 
 
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('My Event', style: headingText),
+        title:  Text(langController.t('my_event'), style: headingText),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
@@ -63,7 +66,7 @@ class _EventViewState extends State<EventView>
         children: [
           PillTabBar(
             tabController: _tabController,
-            tabNames: const ['Investments', 'Project', 'Auctions'],
+            tabNames:  [(langController.t('investments')), (langController.t('project')), (langController.t('auctions'))],
           ),
           Expanded(
 

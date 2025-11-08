@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/language/language_controller.dart';
 import '../../app_ground.dart';
 import '../../models/auction.dart' as api; // DTOs
 import '../../../providers/auction_provider.dart';
@@ -121,9 +122,10 @@ class _AuctionsScreenState extends State<AuctionsScreen>
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final langController = Get.put(LanguageController());
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Auctions'),
+        title:  Text(langController.t('auctions')),
         leading: IconButton(
           onPressed: () => Get.offAll(
             () => const AppGround(),
@@ -145,8 +147,8 @@ class _AuctionsScreenState extends State<AuctionsScreen>
                     controller: _queryCtrl,
                     textInputAction: TextInputAction.search,
                     onSubmitted: (_) => setState(() {}),
-                    decoration: const InputDecoration(
-                      hintText: 'Search auctions',
+                    decoration:  InputDecoration(
+                      hintText: langController.t('search'),
                       prefixIcon: Icon(Icons.search_rounded),
                     ),
                   ),
@@ -207,6 +209,7 @@ class _PillTabs extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final border = Theme.of(context).dividerColor;
+    final langController = Get.put(LanguageController());
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -245,10 +248,10 @@ class _PillTabs extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  tabs: const [
-                    Tab(text: 'Live Now'),
-                    Tab(text: 'Upcoming'),
-                    Tab(text: 'Ended'),
+                  tabs:  [
+                    Tab(text:langController.t('live') ),
+                    Tab(text: langController.t('upcoming')),
+                    Tab(text:langController.t('ended')),
                   ],
                 ),
               ),

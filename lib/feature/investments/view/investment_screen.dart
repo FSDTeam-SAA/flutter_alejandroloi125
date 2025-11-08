@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/language/language_controller.dart';
 import '../../../providers/investment_provider.dart';
 import '../../models/investment.dart';
 import '../../app_ground.dart';
@@ -17,6 +18,7 @@ class InvestmentsScreen extends StatefulWidget {
 
 class _InvestmentsScreenState extends State<InvestmentsScreen> {
   final _searchCtl = TextEditingController();
+  final langController = Get.put(LanguageController());
 
   @override
   void initState() {
@@ -52,7 +54,7 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Investments',
+      //title: langController.t('investments'),
       theme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
@@ -84,7 +86,7 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
                       child: const Icon(CupertinoIcons.back, size: 20),
                     ),
                     const SizedBox(width: 12),
-                    const Text('Investments',
+                     Text(langController.t('investments'),
                         style: TextStyle(fontWeight: FontWeight.w800, fontSize: 20)),
                     const Spacer(),
                   ],
@@ -108,7 +110,7 @@ class _InvestmentsScreenState extends State<InvestmentsScreen> {
                                 controller: _searchCtl,
                                 onChanged: (_) => setState(() {}),
                                 decoration: InputDecoration(
-                                  hintText: 'Search name or location',
+                                  hintText: langController.t('search'),
                                   hintStyle: TextStyle(color: Colors.white.withOpacity(.6), fontSize: 14),
                                   border: InputBorder.none,
                                   isDense: true,

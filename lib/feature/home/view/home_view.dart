@@ -21,6 +21,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/language/language_controller.dart';
 import '../../investments/view/investment_detail.dart';
 
 class HomeScreenView extends StatefulWidget {
@@ -49,6 +50,7 @@ class _HomeScreenViewState extends State<HomeScreenView> {
 
   final List<_ProjectMini> _projects = [];
   final List<String> _projectIds = [];
+  final  langController = Get.put(LanguageController());
 
   // ---------- NEW: Invest Desk carousel state ----------
   late final PageController _investPage;
@@ -318,14 +320,14 @@ class _HomeScreenViewState extends State<HomeScreenView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "Hello, $_helloName ",
+            Obx(()=>Text(
+                      "${langController.t('hello')}, $_helloName ",
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
                       ),
-                    ),
+                    )),
                     Text(
                       _helloLocation,
                       style: const TextStyle(
@@ -359,9 +361,9 @@ class _HomeScreenViewState extends State<HomeScreenView> {
             children: [
               BottomCard(
                 imagePath: Images.currency,
-                title: "Investments",
+                title: langController.t('investments'),
                 subtitle:
-                "Develop Investment Strategy and Engage with Potential Funders.",
+                langController.t('invest_subtitle'),
                 onTap: () {
                   Get.to(
                         () => const InvestmentsScreen(),
@@ -373,9 +375,9 @@ class _HomeScreenViewState extends State<HomeScreenView> {
               const SizedBox(height: 15),
               BottomCard(
                 imagePath: Images.layout,
-                title: "Project",
+                title: langController.t('project'),
                 subtitle:
-                "Post a need or offer to complete someone else's project",
+                langController.t('event_subtitle'),
                 onTap: () {
                   Get.to(
                         () => const ProjectScreen(),
@@ -387,9 +389,9 @@ class _HomeScreenViewState extends State<HomeScreenView> {
               const SizedBox(height: 15),
               BottomCard(
                 imagePath: Images.key,
-                title: "Auctions",
+                title: langController.t('auctions'),
                 subtitle:
-                "Participate in the live product auction by placing your bid.",
+                langController.t('auction_subtitle'),
                 onTap: () {
                   Get.to(
                         () => const AuctionScreen(),
@@ -403,7 +405,7 @@ class _HomeScreenViewState extends State<HomeScreenView> {
 
               // -------- Live Auctions --------
               SectionHeader(
-                title: 'Live Auctions',
+                title: langController.t('live_action'),
                 onSeeAll: () {
                   Get.to(
                         () => const AuctionScreen(initialIndex: 0),
@@ -465,7 +467,7 @@ class _HomeScreenViewState extends State<HomeScreenView> {
 
               // -------- Invest Desk (Carousel) --------
               SectionHeader(
-                title: 'Invest Desk',
+                title: langController.t('invest_desk'),
                 onSeeAll: () {
                   Get.to(
                         () => const InvestmentsScreen(),
@@ -575,7 +577,7 @@ class _HomeScreenViewState extends State<HomeScreenView> {
               // -------- Project Proposal --------
               const SizedBox(height: 20),
               SectionHeader(
-                title: 'Project Proposal',
+                title: langController.t('project_proposal'),
                 onSeeAll: () {
                   Get.to(
                         () => const ProjectScreen(),
@@ -628,8 +630,7 @@ class _HomeScreenViewState extends State<HomeScreenView> {
                         avatars: p.avatars,
                         onTap: () {
                           if (id.isNotEmpty) {
-                            Get.to(
-                                  () => ProjectDetailScreen(projectId: id),
+                            Get.to(() => ProjectDetailScreen(projectId: id),
                               transition: Transition.rightToLeft,
                               duration:
                               const Duration(milliseconds: 300),
@@ -668,35 +669,27 @@ class _HomeScreenViewState extends State<HomeScreenView> {
 
 // Small header row for "See all" style sections
 class SectionHeader extends StatelessWidget {
-  const SectionHeader({super.key, required this.title, this.onSeeAll});
+   SectionHeader({super.key, required this.title, this.onSeeAll});
   final String title;
   final VoidCallback? onSeeAll;
-
+  final  langController = Get.put(LanguageController());
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
         Text(
           title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-          ),
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16,),
         ),
         const Spacer(),
         InkWell(
           onTap: onSeeAll,
-          child: const Text(
-            'See all',
-            style: TextStyle(
-              color: Color(0xFFFF8C3B),
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-            ),
+          child:  Obx(()=>
+            Text(langController.t('see_all'),
+            style: TextStyle(color: Color(0xFFFF8C3B), fontWeight: FontWeight.w600, fontSize: 12,),
           ),
-        ),
-      ],
+  ),
+        )  ],
     );
   }
 }
@@ -704,10 +697,10 @@ class SectionHeader extends StatelessWidget {
 // ---------- local mapping models ----------
 class _InvestItem {
   final String type;
-  final String title;
-  final int percent;
-  final String price;
-  final String assetImage;
+   String title;
+   int percent;
+   String price;
+   String assetImage;
   _InvestItem({
     required this.type,
     required this.title,
@@ -739,6 +732,7 @@ class _ProjectMini {
 }
 
 
+/*
 
 // // lib/feature/home/view/home_screen_view.dart
 // import 'package:alejandroloi/core/common/widgets/live_action_card.dart';
@@ -1419,4 +1413,4 @@ class _ProjectMini {
 //     required this.proposals,
 //     required this.avatars,
 //   });
-// }
+// }*/

@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
 import 'package:alejandroloi/providers/investment_provider.dart';
+import '../../../core/language/language_controller.dart';
 import '../../models/investment.dart';
 import '../invest.dart';
 
@@ -84,6 +85,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final langController = Get.put(LanguageController());
     if (_loading) {
       return const Scaffold(
         backgroundColor: _bg,
@@ -299,7 +301,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
                           fontSize: 15,
                         ),
                       ),
-                      child: const Text('Invest Now'),
+                      child:  Text(langController.t('invest_now')),
                     ),
                   ),
                 ],
@@ -310,7 +312,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
 
             // ===== About =====
             _SectionCard(
-              title: 'About This Project',
+              title: langController.t('about_the_project'),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -339,7 +341,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
 
             // ===== Gallery =====
             _SectionCard(
-              title: 'Gallery',
+              title: langController.t('gallery'),
               child: Row(
                 children: [
                   Expanded(child: _GalleryThumb(image: g1)),
@@ -353,7 +355,7 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
 
             // ===== Terms =====
             _SectionCard(
-              title: 'Investment Terms',
+              title: langController.t('investment_terms'),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -381,12 +383,13 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
 class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final langController = Get.put(LanguageController());
     return Row(
       children: [
         _roundBackBtn(),
         const SizedBox(width: 8),
-        const Text(
-          'Investments Details',
+         Text(
+          langController.t('investment_details'),
           style: TextStyle(
             fontSize: 20,
             color: Colors.white70,

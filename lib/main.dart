@@ -9,6 +9,7 @@ import 'package:alejandroloi/services/auction_service.dart';
 import 'package:alejandroloi/services/investment_service.dart';
 import 'package:alejandroloi/services/project_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
@@ -28,12 +29,15 @@ import 'feature/profile/service/profile_service.dart';
 import 'feature/splash/view/splash_view.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
 
-void main() async{
+Future<void> main() async{
   WidgetsFlutterBinding.ensureInitialized();
 
+  await dotenv.load(fileName: ".env");
   Stripe.publishableKey = AppEnv.stripePublishableKey;   // pk_live_xxx / pk_test_xxx
   Stripe.merchantIdentifier = 'merchant.com.your.bundle';
   await Stripe.instance.applySettings();
+
+
 
 
 

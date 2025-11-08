@@ -17,6 +17,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/language/language_controller.dart';
+import '../../../core/language/translationManager.dart';
 import '../../auth/view/login_screen_view.dart';
 import '../../auth/view/personal_info_add_view.dart';
 
@@ -30,6 +32,9 @@ class ProfileScreenView extends StatefulWidget {
 
 class _ProfileScreenViewState extends State<ProfileScreenView> {
   late final Dio _dio;
+
+  final  langController = Get.put(LanguageController());
+  //final langController = Get.find<LanguageController>();
 
   bool _loading = true;
   String? _error;
@@ -141,8 +146,72 @@ class _ProfileScreenViewState extends State<ProfileScreenView> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: Text("My Profile", style: headingText),
+        //title: Text("My Profile", style: headingText),
+        title: Obx(()=>Text(langController.t('profile'), style: headingText),),
         backgroundColor: Colors.transparent,
+        actions: [
+          const Icon(Icons.language, color: Colors.white, size: 30),
+          const SizedBox(width: 10),
+    /*      Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Obx(() => DropdownButton<String>(
+              value: langController.selectedLang.value,
+              icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+
+              dropdownColor: Colors.black,
+              style: const TextStyle(color: Colors.white),
+              items: const [
+                DropdownMenuItem(value: 'en', child: Text('English')),
+                DropdownMenuItem(value: 'bn', child: Text('বাংলা')),
+                DropdownMenuItem(value: 'es', child: Text('Español')),
+                //  DropdownMenuItem(value: 'hi', child: Text('हिन्दी')),
+              ],
+              onChanged: (lang) async {
+                if (lang != null) {
+                  // 1️ Language change
+                  await langController.changeLanguageAndRefreshUI(lang);
+                  //await TranslationManager.translateAll();
+
+                  // 2️ Translate all app data
+                  //await homeController.translateAllData();
+                }
+              },
+            )),
+          ),*/
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Obx(() => DropdownButton<String>(
+              value: langController.selectedLang.value,
+              icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+              dropdownColor: Colors.black,
+              style: const TextStyle(color: Colors.white),
+              items: const [
+                DropdownMenuItem(value: 'en', child: Text('English')),
+                DropdownMenuItem(value: 'bn', child: Text('বাংলা')),
+                DropdownMenuItem(value: 'es', child: Text('Español')),
+                DropdownMenuItem(value: 'hi', child: Text('हिन्दी')),
+                DropdownMenuItem(value: 'ar', child: Text('العربية')),
+                DropdownMenuItem(value: 'de', child: Text('Deutsch')),
+                DropdownMenuItem(value: 'fr', child: Text('Français')),
+                DropdownMenuItem(value: 'ja', child: Text('日本語')),
+                DropdownMenuItem(value: 'ko', child: Text('한국어')),
+                DropdownMenuItem(value: 'pt', child: Text('Português')),
+                DropdownMenuItem(value: 'ru', child: Text('Русский')),
+                DropdownMenuItem(value: 'zh', child: Text('中文')),
+
+
+              ],
+              onChanged: (lang) async {
+                if (lang != null) {
+                  await TranslationManager.translateAll();
+                  await langController.changeLanguageAndRefreshUI(lang);
+                  await _load(); // Refresh dynamic data too
+                }
+              },
+            )),
+          ),
+
+        ],
       ),
       body: RefreshIndicator(
         color: Colors.white,
@@ -194,102 +263,87 @@ class _ProfileScreenViewState extends State<ProfileScreenView> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  topCard(imagePath: Images.currency, value: "$_investCount",  type: "Investments"),
-                  topCard(imagePath: Images.layout,   value: "$_projectCount", type: "Project"),
-                  topCard(imagePath: Images.key,      value: "$_auctionCount", type: "Auctions"),
+                  //topCard(imagePath: Images.currency, value: "$_investCount",  type: "Investments"),
+
+                  Obx(() => topCard(imagePath: Images.currency, value: "$_investCount", type: langController.t('investments'),)),
+                  Obx(()=>  topCard(imagePath: Images.layout,   value: "$_projectCount", type: langController.t('project'),),),
+                  Obx(()=>topCard(imagePath: Images.key,  value: "$_auctionCount", type: langController.t('auctions'),),)
                 ],
               ),
             ),
 
             // Actions
-            profileBottom(
-              imagePath: Images.credit,
-              name: "Personal Information",
-              voidCallBack: () async {
-                final changed = await Get.to<bool>(
-                      () => const PersonalInfoAddView(),
-                  transition: Transition.rightToLeft,
-                  duration: const Duration(milliseconds: 320),
-                  curve: Curves.easeInOut,
-                );
-                // if user saved changes → reload profile
-                if (changed == true) {
-                  await _load();
-                }
-              },
-            ),
-            profileBottom(
-              imagePath: Images.terms,
-              name: "Update Photos",
-              voidCallBack: () async {
-                await Get.to(() => const UploadProfileView(),
-                    transition: Transition.rightToLeft,
-                    duration: const Duration(milliseconds: 320),
-                    curve: Curves.easeInOut);
-                // after photo update, refresh to get new avatar
-                await _load();
-              },
-            ),
+  Obx(()=>  profileBottom(
+    imagePath: Images.credit,
+    name: langController.t('personal_info'),
+    voidCallBack: () async {
+      final changed = await Get.to<bool>(
+            () => const PersonalInfoAddView(),
+        transition: Transition.rightToLeft,
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeInOut,
+      );
+      // if user saved changes → reload profile
+      if (changed == true) {
+        await _load();
+      }
+    },
+  ),),
+      Obx(()=>
             profileBottom(
               imagePath: Images.wishlist,
-              name: "WishList",
+              name: langController.t('wish_list'),
               voidCallBack: () {
                 Get.to(() => const WishlistViewScreen(),
                     transition: Transition.rightToLeft,
                     duration: const Duration(milliseconds: 320),
                     curve: Curves.easeInOut);
               },
-            ),
-            profileBottom(
-              imagePath: Images.lang,
-              name: "Language",
-              voidCallBack: () {
-                Get.to(() => const LanguageViewScreen(),
-                    transition: Transition.rightToLeft,
-                    duration: const Duration(milliseconds: 320),
-                    curve: Curves.easeInOut);
-              },
-            ),
-            profileBottom(
-              imagePath: Images.lock,
-              name: "Change Password",
-              voidCallBack: () {
-                Get.to(() => const ChangePasswordView(),
-                    transition: Transition.rightToLeft,
-                    duration: const Duration(milliseconds: 320),
-                    curve: Curves.easeInOut);
-              },
-            ),
+            ),),
+       Obx(()=>  profileBottom(
+         imagePath: Images.lock,
+         name: langController.t('change_password'),
+         voidCallBack: () {
+           Get.to(() => const ChangePasswordView(),
+               transition: Transition.rightToLeft,
+               duration: const Duration(milliseconds: 320),
+               curve: Curves.easeInOut);
+         },
+       ),),
+            Obx(()=>
             profileBottom(
               imagePath: Images.about,
-              name: "About App",
+              name: langController.t('about_app'),
               voidCallBack: () {
                 Get.to(() => const AboutView(),
                     transition: Transition.rightToLeft,
                     duration: const Duration(milliseconds: 320),
                     curve: Curves.easeInOut);
               },
-            ),
+            ),),
+            Obx(()=>
             profileBottom(
               imagePath: Images.privacy,
-              name: "Privacy",
+              name: langController.t('privacy'),
               voidCallBack: () {
                 Get.to(() => const PrivacyPolicyScreenView(),
                     transition: Transition.rightToLeft,
                     duration: const Duration(milliseconds: 320),
                     curve: Curves.easeInOut);
               },
-            ),
+            ),),
+            Obx(
+            ()=>
             profileBottom(
               imagePath: Images.terms,
-              name: "Terms & Conditions",
+              name: langController.t('terms'),
               voidCallBack: () {
                 Get.to(() => const TermsConditionScreenView(),
                     transition: Transition.rightToLeft,
                     duration: const Duration(milliseconds: 320),
                     curve: Curves.easeInOut);
               },
-            ),
+            ),),
 
             // Logout
             Container(
@@ -303,7 +357,7 @@ class _ProfileScreenViewState extends State<ProfileScreenView> {
                       final ok = await showDialog<bool>(
                         context: context,
                         builder: (_) => AlertDialog(
-                          title: const Text('Log out?'),
+                          title:  Obx(()=>Text(langController.t('log_out'))),
                           content: const Text('You will need to sign in again.'),
                           actions: [
                             TextButton(
@@ -312,7 +366,7 @@ class _ProfileScreenViewState extends State<ProfileScreenView> {
                             ),
                             TextButton(
                               onPressed: () => Navigator.pop(context, true),
-                              child: const Text('Log out'),
+                              child: Obx(()=>Text(langController.t('log_out'))),
                             ),
                           ],
                         ),
@@ -334,7 +388,7 @@ class _ProfileScreenViewState extends State<ProfileScreenView> {
                           transition: Transition.rightToLeft,
                           duration: const Duration(milliseconds: 300));
                     },
-                    child: const Padding(
+                    child:  Padding(
                       padding: EdgeInsets.symmetric(vertical: 20),
                       child: Row(
                         children: [
@@ -344,14 +398,7 @@ class _ProfileScreenViewState extends State<ProfileScreenView> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  'Log Out',
-                                  style: TextStyle(
-                                    color: Colors.red,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
+                           Obx(()=>Text(langController.t('log_out'),style: TextStyle(color: Colors.red,fontSize: 16,fontWeight: FontWeight.w600),)),
                                 Icon(Icons.arrow_forward_ios, color: Colors.red),
                               ],
                             ),

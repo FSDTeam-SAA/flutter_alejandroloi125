@@ -174,9 +174,33 @@ class _SignUpScreenViewState extends State<SignUpScreenView> {
                 text: loading ? "Please wait..." : "Sign up",
                 onTap: loading ? null : _submit,
               ),
+              SizedBox(height: 20,),
+              RichText(
+                textAlign: TextAlign.center,
+                text: TextSpan(
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  children: [
+                    const TextSpan(text: "Already have an account? "),
+                    TextSpan(
+                      text: "Sign in",
+                      style: TextStyle(
+                        color: AppColors.bottomColor1,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () => Get.to(
+                              () => LoginScreenView(),
+                          transition: Transition.rightToLeft,
+                          duration: const Duration(milliseconds: 350),
+                          curve: Curves.easeInOut,
+                        ),
+                    ),
+                  ],
+                ),
+              ),
 
               // Divider
-              Padding(
+         /*     Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -186,10 +210,10 @@ class _SignUpScreenViewState extends State<SignUpScreenView> {
                     Container(height: 1.5, color: Colors.grey, width: 148),
                   ],
                 ),
-              ),
+              ),*/
 
               // Social buttons (stubs)
-              const CustomOutlineContainer(
+            /*  const CustomOutlineContainer(
                 name: 'Continue With Google',
                 image: Images.googleIcon,
               ),
@@ -197,14 +221,14 @@ class _SignUpScreenViewState extends State<SignUpScreenView> {
               const CustomOutlineContainer(
                 name: 'Continue With Apple',
                 image: Images.macIcon,
-              ),
+              ),*/
             ],
           ),
         ),
       ),
 
       // Bottom link
-      bottomNavigationBar: Padding(
+/*      bottomNavigationBar: Padding(
         padding: const EdgeInsets.symmetric(vertical: 30),
         child: RichText(
           textAlign: TextAlign.center,
@@ -229,7 +253,7 @@ class _SignUpScreenViewState extends State<SignUpScreenView> {
             ],
           ),
         ),
-      ),
+      ),*/
     );
   }
 }

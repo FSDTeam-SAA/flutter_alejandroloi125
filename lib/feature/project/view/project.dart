@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/language/language_controller.dart';
 import '../../../core/network/api_service/api_client.dart';
 import '../../../core/network/api_service/token_store.dart';
 
@@ -83,6 +84,7 @@ class _ProjectBodyState extends State<_ProjectBody> {
   @override
   Widget build(BuildContext context) {
     final prov = context.watch<ProjectProvider>();
+    final langController = Get.put(LanguageController());
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F0F10),
@@ -97,7 +99,7 @@ class _ProjectBodyState extends State<_ProjectBody> {
             duration: const Duration(milliseconds: 350),
           ),
         ),
-        title: const Text('Projects', style: TextStyle(color: Colors.white)),
+        title:  Text(langController.t('project'), style: TextStyle(color: Colors.white)),
       ),
       body: SafeArea(
         child: Padding(
@@ -191,6 +193,7 @@ class _SearchBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
+    final langController = Get.put(LanguageController());
     return Row(
       children: [
         Expanded(
@@ -209,8 +212,8 @@ class _SearchBar extends StatelessWidget {
                     controller: controller,
                     onChanged: onChanged,
                     style: const TextStyle(fontSize: 15, color: Colors.white),
-                    decoration: const InputDecoration(
-                      hintText: 'Search Project',
+                    decoration:  InputDecoration(
+                      hintText: langController.t('search'),
                       border: InputBorder.none,
                       isDense: true,
                       hintStyle: TextStyle(color: Colors.white54),

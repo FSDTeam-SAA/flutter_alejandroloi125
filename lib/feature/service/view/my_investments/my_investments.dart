@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/language/language_controller.dart';
 import '../../../../providers/investment_provider.dart';
 import '../../../models/investment.dart';
 import 'my_investment_details.dart';
@@ -192,6 +193,7 @@ class _InvestmentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     const cardBg = Color(0xFF15181C);
     const accent = Color(0xFFFF8A34);
+    final langController = Get.put(LanguageController());
 
     return Container(
       decoration: BoxDecoration(
@@ -302,7 +304,7 @@ class _InvestmentCard extends StatelessWidget {
                           padding: WidgetStateProperty.all(const EdgeInsets.symmetric(vertical: 12)),
                         ),
                         onPressed: showCompleted ? null : onDelete,
-                        child: const Text('Delete', style: TextStyle(fontWeight: FontWeight.w700)),
+                        child:  Text(langController.t('delete'), style: TextStyle(fontWeight: FontWeight.w700)),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -316,7 +318,7 @@ class _InvestmentCard extends StatelessWidget {
                           elevation: 0,
                         ),
                         onPressed: onView,
-                        child: const Text('View Details'),
+                        child:  Text(langController.t('view_details')),
                       ),
                     ),
                   ],

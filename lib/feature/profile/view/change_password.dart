@@ -1,8 +1,10 @@
 // lib/feature/profile/view/change_password_view.dart
 import 'package:alejandroloi/core/common/widgets/custom_text_field.dart';
 import 'package:alejandroloi/core/common/widgets/save_botton.dart';
+import 'package:alejandroloi/core/language/language_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart';
 import 'package:provider/provider.dart';
 import '../../auth/providers/auth_provider.dart';
 
@@ -26,9 +28,13 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
   final _newCtrl = TextEditingController();
   final _confirmCtrl = TextEditingController();
 
+  final languageController = Get.put(LanguageController());
+
   @override
   void dispose() { _oldCtrl.dispose(); _newCtrl.dispose(); _confirmCtrl.dispose(); super.dispose(); }
 
+  
+  
   Future<void> _save() async {
     final ap = context.read<AuthProvider>();
     FocusScope.of(context).unfocus();
@@ -63,12 +69,13 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
   Widget build(BuildContext context) {
 
     final ap = context.watch<AuthProvider>();
+   
 
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text(
-          'Change Password',
+        title:  Text(
+          languageController.t('change_password'),
           style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700),
         ),
         iconTheme: const IconThemeData(color: Colors.white),
@@ -83,7 +90,7 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
               children: [
                 CustomTextField(
                   controller: _oldCtrl,
-                  hintText: 'Current Password',
+                  hintText: languageController.t('current_password'),
                   // If your CustomTextField supports it, uncomment:
                   // obscureText: true,
                   validator: (v) => v == null || v.isEmpty ? 'Enter current password' : null,
@@ -92,7 +99,7 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
                 const SizedBox(height: 15),
                 CustomTextField(
                   controller: _newCtrl,
-                  hintText: 'New Password',
+                  hintText: languageController.t('new_password'),
                   // obscureText: true,
                   // validator: (v) => v == null || v.length < 6 ? 'Min 6 characters' : null,
                   validator: (v) => ap.validatePassword(v),
@@ -100,14 +107,14 @@ class _ChangePasswordViewState extends State<ChangePasswordView> {
                 const SizedBox(height: 15),
                 CustomTextField(
                   controller: _confirmCtrl,
-                  hintText: 'Confirm Password',
+                  hintText: languageController.t('confirm_password'),
                   // obscureText: true,
                   // validator: (v) => v == null || v.isEmpty ? 'Re-enter new password' : null,
                   validator: (v) => ap.validateConfirm(v, _newCtrl.text),
                 ),
                 const SizedBox(height: 30),
                 bottomWidget(
-                  text: ap.loading ? 'Saving...' : 'Save',
+                  text: ap.loading ? languageController.t('saving') : languageController.t('save'),
                   onTap: ap.loading ? null : _save,
                 ),
               ],

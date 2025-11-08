@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/language/language_controller.dart';
 import '../../../../core/network/api_service/token_store.dart';
 import '../../../../providers/investment_provider.dart';
 import '../../../models/investment.dart';
@@ -120,6 +121,7 @@ class _InvestmentCard extends StatelessWidget {
     final goal = inv.fundingGoal ?? 0;
     final pct  = inv.progressPct.clamp(0, 100);
     final days = inv.daysLeft ?? _parseDays(inv.fundingDuration);
+    final langController = Get.put(LanguageController());
 
     return InkWell(
       onTap: onTap,
@@ -143,8 +145,7 @@ class _InvestmentCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Agriculture',
-                      style: TextStyle(color: _accent, fontSize: 12, fontWeight: FontWeight.w700)),
+                 //const Text('Agriculture', style: TextStyle(color: _accent, fontSize: 12, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 6),
 
                   Text(title,
@@ -197,7 +198,7 @@ class _InvestmentCard extends StatelessWidget {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                       ),
                       onPressed: onTap,
-                      child: const Text('View Details'),
+                      child:  Text(langController.t('view_details')),
                     ),
                   ),
                 ],

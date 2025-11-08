@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:get/get.dart';
 
+import '../../../../core/language/language_controller.dart';
 import '../../../../providers/investment_provider.dart';
 import '../../../models/investment.dart';
 
@@ -19,6 +20,8 @@ class _InvestmentDetailsState extends State<InvestmentDetails> {
   Investment? _inv;
   bool _loading = true;
   String? _error;
+
+  final langController = Get.put(LanguageController());
 
   @override
   void initState() {
@@ -51,6 +54,7 @@ class _InvestmentDetailsState extends State<InvestmentDetails> {
         body: Center(child: CircularProgressIndicator()),
       );
     }
+
     if (_error != null) {
       return Scaffold(
         backgroundColor: Colors.black,
@@ -88,7 +92,7 @@ class _InvestmentDetailsState extends State<InvestmentDetails> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
         ),
-        title: const Text('Investments Details', style: TextStyle(color: Colors.white)),
+        title:  Text(langController.t('investments_details'), style: TextStyle(color: Colors.white)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -98,8 +102,7 @@ class _InvestmentDetailsState extends State<InvestmentDetails> {
             _CoverHeader(i.primaryImageUrl),
 
             const SizedBox(height: 10),
-            const Text('Agriculture',
-                style: TextStyle(color: _accent, fontSize: 12, fontWeight: FontWeight.w700)),
+            //const Text('Agriculture', style: TextStyle(color: _accent, fontSize: 12, fontWeight: FontWeight.w700)),
             const SizedBox(height: 6),
 
             Text(i.name,
@@ -143,7 +146,7 @@ class _InvestmentDetailsState extends State<InvestmentDetails> {
             ),
             const SizedBox(height: 14),
 
-            const Text('About This Project',
+             Text(langController.t('about_the_project'),
                 style: TextStyle(color: Colors.white, fontSize: 16.5, fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
             Text(i.description,
@@ -151,7 +154,7 @@ class _InvestmentDetailsState extends State<InvestmentDetails> {
             const SizedBox(height: 14),
 
             if (i.images.isNotEmpty) ...[
-              const Text('Gallery',
+               Text(langController.t('gallery'),
                   style: TextStyle(color: Colors.white, fontSize: 16.5, fontWeight: FontWeight.w800)),
               const SizedBox(height: 8),
               SizedBox(
@@ -172,7 +175,7 @@ class _InvestmentDetailsState extends State<InvestmentDetails> {
               const SizedBox(height: 16),
             ],
 
-            const Text('Investment Terms',
+             Text(langController.t('investment_terms'),
                 style: TextStyle(color: Colors.white, fontSize: 16.5, fontWeight: FontWeight.w800)),
             const SizedBox(height: 8),
             Text(i.investmentTerms.isEmpty ? '—' : i.investmentTerms,

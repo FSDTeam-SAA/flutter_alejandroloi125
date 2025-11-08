@@ -1,15 +1,18 @@
 import 'package:alejandroloi/core/common/widgets/pilltabs.dart';
 import 'package:alejandroloi/feature/app_ground.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 
+import '../../../core/language/language_controller.dart';
 import 'my_auctions/my_auctions.dart';
 import 'my_investments/my_investments.dart';
 import 'my_projects/my_projects.dart';
 
 class ServiceView extends StatefulWidget {
-  const ServiceView({super.key, this.initialIndex = 0});
+   ServiceView({super.key, this.initialIndex = 0});
   final int initialIndex; // 0 = Investments, 1 = Project, 2 = Auctions
-
+  final  langController = Get.put(LanguageController());
   @override
   State<ServiceView> createState() => _ServiceViewState();
 }
@@ -36,7 +39,7 @@ class _ServiceViewState extends State<ServiceView>
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('My Services', style: TextStyle(color: Colors.white)),
+        title:  Text(widget.langController.t('my_services'), style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         leadingWidth: 48,
@@ -66,7 +69,7 @@ class _ServiceViewState extends State<ServiceView>
         children: [
           PillTabBar(
             tabController: _tabController,
-            tabNames: const ['Investments', 'Project', 'Auctions'],
+            tabNames:  [(widget.langController.t('investments')), (widget.langController.t('project')), (widget.langController.t('auctions'))],
           ),
           Expanded(
             child: TabBarView(

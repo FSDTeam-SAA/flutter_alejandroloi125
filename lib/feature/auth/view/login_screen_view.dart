@@ -140,8 +140,33 @@ class _LoginScreenViewState extends State<LoginScreenView> {
                 text: loading ? "Please wait..." : "Login",
                 onTap: loading ? null : _handleLogin,
               ),
-
               Padding(
+                padding: const EdgeInsets.symmetric(vertical: 30),
+                child: RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: const TextStyle(color: Colors.white, fontSize: 16),
+                    children: [
+                      const TextSpan(text: "Don’t have an account? "),
+                      TextSpan(
+                        text: "Sign Up",
+                        style: TextStyle(
+                          color: AppColors.bottomColor1,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () => Get.to(
+                                () => const SignUpScreenView(),
+                            transition: Transition.rightToLeft,
+                            duration: const Duration(milliseconds: 350),
+                            curve: Curves.easeInOut,
+                          ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+        /*      Padding(
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -157,7 +182,7 @@ class _LoginScreenViewState extends State<LoginScreenView> {
                 name: 'Continue With Google',
                 image: Images.googleIcon,
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 10),*/
            /*   const CustomOutlineContainer(
                 name: 'Continue With Apple',
                 image: Images.macIcon,
@@ -167,7 +192,8 @@ class _LoginScreenViewState extends State<LoginScreenView> {
         ),
       ),
 
-      bottomNavigationBar: Padding(
+      //bottomNavigationBar:
+      /* Padding(
         padding: const EdgeInsets.symmetric(vertical: 30),
         child: RichText(
           textAlign: TextAlign.center,
@@ -192,7 +218,7 @@ class _LoginScreenViewState extends State<LoginScreenView> {
             ],
           ),
         ),
-      ),
+      ),*/
     );
   }
 }

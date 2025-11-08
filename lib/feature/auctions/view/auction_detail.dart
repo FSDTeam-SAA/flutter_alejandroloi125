@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/language/language_controller.dart';
 import '../../../providers/auction_provider.dart';
 import '../../models/auction.dart' as api;
 import '../../app_ground.dart';
@@ -333,9 +334,8 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
     final title = dto.name;
     final description = dto.description.isEmpty ? '—' : dto.description;
     final imageUrl = _absolute(dto.image.isNotEmpty ? dto.image.first.url : '');
-    final currentBid =
-        dto.startingBid; // replace when you have live current bid
-
+    final currentBid = dto.startingBid; // replace when you have live current bid
+    final langController = Get.put(LanguageController());
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -350,9 +350,7 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
             }
           },
         ),
-        title: const Text(
-          'Auctions Details',
-          style: TextStyle(fontWeight: FontWeight.w800),
+        title: Text(langController.t('auctions_details'),style: TextStyle(fontWeight: FontWeight.w800),
         ),
         centerTitle: false,
       ),
@@ -593,9 +591,7 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
                                   strokeWidth: 2,
                                 ),
                               )
-                            : const Text(
-                                'Bid',
-                                style: TextStyle(fontWeight: FontWeight.w800),
+                            :  Text(langController.t('bid'), style: TextStyle(fontWeight: FontWeight.w800),
                               ),
                       ),
                     ],
@@ -604,11 +600,10 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
 
                   // Live Chat header
                   Row(
-                    children: const [
+                    children:  [
                       Icon(Icons.chat_bubble_outline_rounded),
                       SizedBox(width: 8),
-                      Text(
-                        'Live Chat',
+                      Text(langController.t('live_chat'),
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 16,
@@ -704,7 +699,7 @@ class _AuctionDetailPageState extends State<AuctionDetailPage> {
                   textInputAction: TextInputAction.send,
                   onSubmitted: (_) => _sendMessage(),
                   decoration: InputDecoration(
-                    hintText: 'Type a message...',
+                    hintText: '${langController.t('type_message')}...',
                     filled: true,
                     fillColor: Theme.of(context).colorScheme.secondary,
                     border: OutlineInputBorder(

@@ -7,6 +7,7 @@ import 'package:alejandroloi/core/common/widgets/save_botton.dart';      // bott
 import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/styles.dart';
 
+import '../../../core/language/language_controller.dart';
 import '../../../providers/investment_provider.dart';
 import '../../app_ground.dart';
 // your existing screen
@@ -26,6 +27,8 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
   final _formKey = GlobalKey<FormState>();
   AutovalidateMode _auto = AutovalidateMode.disabled;
   bool _submitting = false;
+
+
 
   // Local fields
   dynamic _image; // keep dynamic since ImagePickerSlot's type may vary (File/XFile/String)
@@ -117,10 +120,11 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
 
   @override
   Widget build(BuildContext context) {
+    final langController = Get.find<LanguageController>();
     return Scaffold(
       backgroundColor: Colors.black,
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding:  EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Form(
             key: _formKey,
@@ -128,7 +132,7 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Images', style: bodyText1),
+                Text(langController.t('images'), style: bodyText1),
                 Row(
                   children: [
                     ImagePickerSlot(
@@ -142,7 +146,7 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
                 ),
 
                 const SizedBox(height: 15),
-                Text('Investment Title', style: bodyText1),
+                Text(langController.t('investment_title'), style: bodyText1),
                 const SizedBox(height: 6),
                 CustomTextField(
                   hintText: 'Enter your Investment title',
@@ -151,7 +155,7 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
                 ),
 
                 const SizedBox(height: 15),
-                Text('Category', style: bodyText1),
+                Text(langController.t('category'), style: bodyText1),
                 const SizedBox(height: 6),
                 CustomTextField(
                   hintText: 'Enter your Category Name(e.g: Invest,Done)',
@@ -160,7 +164,7 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
                 ),
 
                 const SizedBox(height: 8),
-                Text('Description', style: bodyText1),
+                Text(langController.t('description'), style: bodyText1),
                 Container(
                   decoration: BoxDecoration(
                     color: AppColors.fieldColor,
@@ -190,7 +194,7 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
                 ),
 
                 const SizedBox(height: 8),
-                Text('Funding Goal', style: bodyText1),
+                Text(langController.t('funding_goal'), style: bodyText1),
                 CustomTextField(
                   hintText: 'Enter amount',
                   prefixIcon: Icons.attach_money,
@@ -200,7 +204,7 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
                 ),
 
                 const SizedBox(height: 8),
-                Text('Funding Duration', style: bodyText1),
+                Text(langController.t('funding_duration'), style: bodyText1),
                 CustomTextField(
                   hintText: 'Number of day(e.g: 30)',
                   prefixIcon: Icons.watch_later_outlined,
@@ -210,7 +214,7 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
                 ),
 
                 const SizedBox(height: 8),
-                Text('Location', style: bodyText1),
+                Text(langController.t('location'), style: bodyText1),
                 CustomTextField(
                   hintText: 'Enter Location',
                   prefixIcon: Icons.location_on_outlined,
@@ -219,7 +223,7 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
                 ),
 
                 const SizedBox(height: 8),
-                Text('Investment Terms', style: bodyText1),
+                Text(langController.t('investment_terms'), style: bodyText1),
                 Container(
                   decoration: BoxDecoration(
                     color: AppColors.fieldColor,
@@ -251,7 +255,7 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
 
                 const SizedBox(height: 15),
                 bottomWidget(
-                  text: _submitting ? 'Creating...' : 'Create Investment',
+                  text: _submitting ? 'Creating...' : langController.t('create_investment'),
                   onTap: _submitting ? null : _submit,
                 ),
                 const SizedBox(height: 10),

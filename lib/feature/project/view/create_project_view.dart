@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/language/language_controller.dart';
 import '../../../providers/project_provider.dart';
 import '../../app_ground.dart';
 
@@ -121,6 +122,7 @@ class _CreateProjectViewState extends State<CreateProjectView> {
 
   @override
   Widget build(BuildContext context) {
+    final langController = Get.put(LanguageController());
     return Scaffold(
       backgroundColor: Colors.black,
       body: Padding(
@@ -132,7 +134,7 @@ class _CreateProjectViewState extends State<CreateProjectView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("Project Title", style: bodyText1),
+                Text(langController.t('project_title'), style: bodyText1),
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
                   child: CustomTextField(
@@ -142,7 +144,7 @@ class _CreateProjectViewState extends State<CreateProjectView> {
                   ),
                 ),
 
-                Text("Category", style: bodyText1),
+                Text(langController.t('category'), style: bodyText1),
                 CustomTextField(
                   hintText: 'Enter your Category Name(e.g: Build,Home)',
                   controller: _categoryCtl,
@@ -151,7 +153,7 @@ class _CreateProjectViewState extends State<CreateProjectView> {
 
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text("Description", style: bodyText1),
+                  child: Text(langController.t('description'), style: bodyText1),
                 ),
                 Container(
                   decoration: BoxDecoration(
@@ -182,7 +184,7 @@ class _CreateProjectViewState extends State<CreateProjectView> {
 
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text("Budget Range", style: bodyText1),
+                  child: Text(langController.t('budget_range'), style: bodyText1),
                 ),
                 Row(
                   children: [
@@ -212,7 +214,7 @@ class _CreateProjectViewState extends State<CreateProjectView> {
 
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text("Deadline", style: bodyText1),
+                  child: Text(langController.t('deadline'), style: bodyText1),
                 ),
                 CustomTextField(
                   hintText: "Number of day(e.g:30)",
@@ -224,7 +226,7 @@ class _CreateProjectViewState extends State<CreateProjectView> {
 
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text("Location", style: bodyText1),
+                  child: Text(langController.t('location'), style: bodyText1),
                 ),
                 CustomTextField(
                   hintText: "Enter Location",
@@ -234,8 +236,8 @@ class _CreateProjectViewState extends State<CreateProjectView> {
                 ),
 
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text("Required Skills", style: bodyText1),
+                  padding:  EdgeInsets.symmetric(vertical: 8),
+                  child: Text(langController.t('required_skills'), style: bodyText1),
                 ),
                 CustomTextField(
                   hintText: "e.g. Web Design, App Development …",
@@ -246,7 +248,7 @@ class _CreateProjectViewState extends State<CreateProjectView> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   child: bottomWidget(
-                    text: _submitting ? "Creating..." : "Create Project Post",
+                    text: _submitting ? "Creating..." : langController.t('create_project'),
                     onTap: _submitting ? null : _submit,
                   ),
 

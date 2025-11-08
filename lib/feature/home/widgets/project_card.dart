@@ -1,5 +1,9 @@
 // lib/feature/home/widgets/project_card.dart
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
+
+import '../../../core/language/language_controller.dart';
 
 class ProjectMiniCard extends StatelessWidget {
   const ProjectMiniCard({
@@ -27,10 +31,11 @@ class ProjectMiniCard extends StatelessWidget {
 
   static const _orange = Color(0xFFFF8C3B);
 
+
   @override
   Widget build(BuildContext context) {
     const borderCol = Color(0xFF2B2C31);
-
+    final langController = Get.put(LanguageController());
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: onTap,
@@ -138,8 +143,8 @@ class ProjectMiniCard extends StatelessWidget {
               children: [
                 _AvatarStack(urls: avatars),
                 const Spacer(),
-                const Text(
-                  'View Details',
+                 Text(
+                  langController.t('view_details'),
                   style: TextStyle(
                     color: _orange,
                     fontWeight: FontWeight.w700,
