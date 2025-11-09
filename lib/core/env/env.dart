@@ -10,8 +10,8 @@ class AppEnv {
   /// Change this to your server base URL
   static const String baseUrl = String.fromEnvironment(
     'BASE_URL',
-    // defaultValue: 'http://31.220.50.99/api/v1',
-    defaultValue: 'http://10.10.5.89:5001/api/v1',
+    defaultValue: 'http://31.220.50.99/api/v1',
+    // defaultValue: 'http://10.10.5.89:5001/api/v1',
    // defaultValue: 'https://qfw86jj6-5004.inc1.devtunnels.ms/api/v1',
   );
 
