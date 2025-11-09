@@ -69,28 +69,7 @@ class LanguageController extends GetxController {
   }*/
 
 
-/*
-  Future<void> autoTranslateStaticTexts() async {
-    final lang = selectedLang.value;
 
-    // যদি ইংরেজি হয়, কিছু না করেই ফিরে যাও
-    if (lang == 'en') return;
-
-    // যদি ওই ভাষার cache না থাকে, তাহলে তৈরি করো
-    staticTexts.putIfAbsent(lang, () => {});
-
-    for (var entry in staticTexts['en']!.entries) {
-      final key = entry.key;
-      final englishText = entry.value;
-
-      // যদি আগেই ওই ভাষায় ওই key translate করা না থাকে, তাহলে translate করো
-      if (!staticTexts[lang]!.containsKey(key)) {
-        final translated = await _service.translateText(englishText, lang);
-        staticTexts[lang]![key] = translated;
-      }
-    }
-  }
-*/
 
 
 }

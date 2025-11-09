@@ -1,4 +1,6 @@
+import 'package:alejandroloi/core/language/language_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../providers/auction_provider.dart';
@@ -16,7 +18,8 @@ class MyEventAutionDetailScreen extends StatefulWidget {
   const MyEventAutionDetailScreen({super.key, required this.auctionId});
 
   @override
-  State<MyEventAutionDetailScreen> createState() => _MyEventAutionDetailScreenState();
+  State<MyEventAutionDetailScreen> createState() =>
+      _MyEventAutionDetailScreenState();
 }
 
 class _MyEventAutionDetailScreenState extends State<MyEventAutionDetailScreen> {
@@ -48,7 +51,10 @@ class _MyEventAutionDetailScreenState extends State<MyEventAutionDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Scaffold(backgroundColor: _bg, body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        backgroundColor: _bg,
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
     if (_error != null) {
       return Scaffold(
@@ -63,7 +69,10 @@ class _MyEventAutionDetailScreenState extends State<MyEventAutionDetailScreen> {
     }
 
     final a = _auction!;
-    final headerUrl = (a.image.isNotEmpty && a.image.first.url.isNotEmpty) ? a.image.first.url : null;
+    final headerUrl = (a.image.isNotEmpty && a.image.first.url.isNotEmpty)
+        ? a.image.first.url
+        : null;
+    final languageController = Get.find<LanguageController>();
 
     return Scaffold(
       backgroundColor: _bg,
@@ -79,11 +88,15 @@ class _MyEventAutionDetailScreenState extends State<MyEventAutionDetailScreen> {
               centerTitle: false,
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+                onPressed: () =>
+                    Navigator.of(context, rootNavigator: true).pop(),
               ),
-              title: const Text(
-                'Auction Details',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+              title: Text(
+                languageController.t('auctions_details'),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
 
@@ -102,8 +115,8 @@ class _MyEventAutionDetailScreenState extends State<MyEventAutionDetailScreen> {
                   statusText: 'Won',
                   auctionId: a.id,
                   finalBidAmount: a.startingBid.round(),
-                  imageUrl: headerUrl,      // pass to purchase screen
-                  itemTitle: a.name,        // pass to purchase screen
+                  imageUrl: headerUrl, // pass to purchase screen
+                  itemTitle: a.name, // pass to purchase screen
                 ),
               ),
             ),
@@ -132,6 +145,7 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final topInset = MediaQuery.of(context).padding.top;
+    final languageController = Get.find<LanguageController>();
 
     return AspectRatio(
       aspectRatio: 375 / 228,
@@ -147,11 +161,13 @@ class _Header extends StatelessWidget {
             child: imageUrl == null || imageUrl!.isEmpty
                 ? Image.asset('assets/images/earpod.jpg', fit: BoxFit.cover)
                 : Image.network(
-              imageUrl!,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) =>
-                  Image.asset('assets/images/earpod.jpg', fit: BoxFit.cover),
-            ),
+                    imageUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Image.asset(
+                      'assets/images/earpod.jpg',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
           ),
 
           // Gradient overlay
@@ -213,12 +229,21 @@ class _Header extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text('Eleanor Pena',
-                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: Colors.white)),
+                      Text(
+                        'Eleanor Pena',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                          color: Colors.white,
+                        ),
+                      ),
                       SizedBox(height: 2),
                       Opacity(
                         opacity: 0.85,
-                        child: Text('@eleanorpena', style: TextStyle(fontSize: 12, color: Colors.white)),
+                        child: Text(
+                          '@eleanorpena',
+                          style: TextStyle(fontSize: 12, color: Colors.white),
+                        ),
                       ),
                     ],
                   ),
@@ -264,8 +289,12 @@ class _DetailsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final languageController = Get.find<LanguageController>();
     return Container(
-      decoration: BoxDecoration(color: _card, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: _card,
+        borderRadius: BorderRadius.circular(16),
+      ),
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -275,14 +304,32 @@ class _DetailsCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(title,
-                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white)),
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(color: _pillGreen, borderRadius: BorderRadius.circular(20)),
-                child: Text(statusText,
-                    style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.white)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: _pillGreen,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  statusText,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
               ),
             ],
           ),
@@ -291,7 +338,10 @@ class _DetailsCard extends StatelessWidget {
             opacity: 0.9,
             child: Text(
               description,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 13, color: Colors.white),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontSize: 13,
+                color: Colors.white,
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -302,13 +352,22 @@ class _DetailsCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Opacity(
+                  Opacity(
                     opacity: 0.8,
-                    child: Text('Final Bid:', style: TextStyle(fontSize: 12, color: Colors.white70)),
+                    child: Text(
+                      '${languageController.t('bid')}:',
+                      style: TextStyle(fontSize: 12, color: Colors.white70),
+                    ),
                   ),
                   const SizedBox(height: 4),
-                  Text(finalBidText,
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: _accent)),
+                  Text(
+                    finalBidText,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: _accent,
+                    ),
+                  ),
                 ],
               ),
               const Spacer(),
@@ -318,7 +377,9 @@ class _DetailsCard extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _accent,
                     foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     padding: const EdgeInsets.symmetric(horizontal: 18),
                   ),
                   onPressed: () {
@@ -333,7 +394,7 @@ class _DetailsCard extends StatelessWidget {
                       ),
                     );
                   },
-                  child: const Text('Purchase'),
+                  child: Text(languageController.t('purchase')),
                 ),
               ),
             ],
@@ -354,13 +415,43 @@ class _LiveChatSection extends StatefulWidget {
 
 class _LiveChatSectionState extends State<_LiveChatSection> {
   final List<ChatMessage> _messages = [
-    ChatMessage('Ronald Richards', '\$500', '2m ago', 'assets/images/person.png'),
+    ChatMessage(
+      'Ronald Richards',
+      '\$500',
+      '2m ago',
+      'assets/images/person.png',
+    ),
     ChatMessage('Arlene McCoy', '\$800', '2m ago', 'assets/images/person.png'),
-    ChatMessage('Darrell Steward', "What's the band material?", '2m ago', 'assets/images/person.png'),
-    ChatMessage('Kathryn Murphy', '\$1000', '2m ago', 'assets/images/person.png'),
-    ChatMessage('Devon Lane', 'Beautiful !', '2m ago', 'assets/images/person.png'),
-    ChatMessage('Robert Fox', "I'll go \$1,200", '2m ago', 'assets/images/person.png'),
-    ChatMessage('Darlene Robertson', '\$1250', '2m ago', 'assets/images/person.png'),
+    ChatMessage(
+      'Darrell Steward',
+      "What's the band material?",
+      '2m ago',
+      'assets/images/person.png',
+    ),
+    ChatMessage(
+      'Kathryn Murphy',
+      '\$1000',
+      '2m ago',
+      'assets/images/person.png',
+    ),
+    ChatMessage(
+      'Devon Lane',
+      'Beautiful !',
+      '2m ago',
+      'assets/images/person.png',
+    ),
+    ChatMessage(
+      'Robert Fox',
+      "I'll go \$1,200",
+      '2m ago',
+      'assets/images/person.png',
+    ),
+    ChatMessage(
+      'Darlene Robertson',
+      '\$1250',
+      '2m ago',
+      'assets/images/person.png',
+    ),
   ];
 
   final TextEditingController _controller = TextEditingController();
@@ -373,17 +464,28 @@ class _LiveChatSectionState extends State<_LiveChatSection> {
 
   @override
   Widget build(BuildContext context) {
+    final languageController = Get.find<LanguageController>();
     return Container(
-      decoration: BoxDecoration(color: _card, borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: _card,
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Column(
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
             child: Row(
-              children: const [
+              children: [
                 Icon(Icons.chat_bubble_outline, size: 18, color: Colors.white),
                 SizedBox(width: 8),
-                Text('Live Chat', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.white)),
+                Text(
+                  languageController.t('live_chat'),
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
               ],
             ),
           ),
@@ -406,7 +508,7 @@ class _LiveChatSectionState extends State<_LiveChatSection> {
                     controller: _controller,
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
-                      hintText: 'Type a message...',
+                      hintText: languageController.t('enter_type_message'),
                       hintStyle: const TextStyle(color: Colors.white70),
                       isDense: true,
                       filled: true,
@@ -415,7 +517,10 @@ class _LiveChatSectionState extends State<_LiveChatSection> {
                         borderSide: BorderSide.none,
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
                     ),
                     onSubmitted: (_) => _send(),
                   ),
@@ -428,7 +533,9 @@ class _LiveChatSectionState extends State<_LiveChatSection> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _accent,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                     onPressed: _send,
                     child: const Icon(Icons.near_me_outlined),
@@ -446,7 +553,9 @@ class _LiveChatSectionState extends State<_LiveChatSection> {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
     setState(() {
-      _messages.add(ChatMessage('You', text, 'now', 'assets/images/person.png'));
+      _messages.add(
+        ChatMessage('You', text, 'now', 'assets/images/person.png'),
+      );
     });
     _controller.clear();
   }
@@ -467,8 +576,10 @@ class _RoundIconButton extends StatelessWidget {
       child: Container(
         height: 36,
         width: 36,
-        decoration:
-        BoxDecoration(color: Colors.black.withOpacity(0.45), borderRadius: BorderRadius.circular(18)),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.45),
+          borderRadius: BorderRadius.circular(18),
+        ),
         child: Icon(icon, size: 20, color: Colors.white),
       ),
     );
@@ -482,7 +593,10 @@ class _LivePill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(
+        color: Colors.redAccent,
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -490,17 +604,30 @@ class _LivePill extends StatelessWidget {
           Container(
             width: 14,
             height: 14,
-            decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+            ),
             alignment: Alignment.center,
             child: Container(
               width: 8,
               height: 8,
-              decoration: const BoxDecoration(color: Colors.redAccent, shape: BoxShape.circle),
+              decoration: const BoxDecoration(
+                color: Colors.redAccent,
+                shape: BoxShape.circle,
+              ),
             ),
           ),
           const SizedBox(width: 6),
-          const Text('LIVE',
-              style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700, letterSpacing: 0.5)),
+          const Text(
+            'LIVE',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.5,
+            ),
+          ),
         ],
       ),
     );
@@ -517,12 +644,18 @@ class _StatPill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-      decoration: BoxDecoration(color: Colors.black.withOpacity(0.45), borderRadius: BorderRadius.circular(16)),
+      decoration: BoxDecoration(
+        color: Colors.black.withOpacity(0.45),
+        borderRadius: BorderRadius.circular(16),
+      ),
       child: Row(
         children: [
           Icon(icon, size: 14, color: Colors.white),
           const SizedBox(width: 6),
-          Text(label, style: const TextStyle(fontSize: 12, color: Colors.white)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, color: Colors.white),
+          ),
         ],
       ),
     );
@@ -559,17 +692,32 @@ class _ChatRow extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Text(message.user,
-                        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                    child: Text(
+                      message.user,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                   Opacity(
                     opacity: 0.7,
-                    child: Text(message.time, style: const TextStyle(fontSize: 11, color: Colors.white70)),
+                    child: Text(
+                      message.time,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Colors.white70,
+                      ),
+                    ),
                   ),
                 ],
               ),
               const SizedBox(height: 4),
-              Text(message.text, style: const TextStyle(fontSize: 13, color: Colors.white)),
+              Text(
+                message.text,
+                style: const TextStyle(fontSize: 13, color: Colors.white),
+              ),
             ],
           ),
         ),
@@ -585,8 +733,10 @@ Route _slideRightToLeft(Widget page) {
     transitionDuration: const Duration(milliseconds: 320),
     reverseTransitionDuration: const Duration(milliseconds: 280),
     transitionsBuilder: (_, animation, __, child) {
-      final tween =
-      Tween(begin: const Offset(1, 0), end: Offset.zero).chain(CurveTween(curve: Curves.easeInOut));
+      final tween = Tween(
+        begin: const Offset(1, 0),
+        end: Offset.zero,
+      ).chain(CurveTween(curve: Curves.easeInOut));
       return SlideTransition(position: animation.drive(tween), child: child);
     },
   );

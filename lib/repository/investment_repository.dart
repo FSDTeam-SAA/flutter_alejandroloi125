@@ -17,6 +17,8 @@ class InvestmentRepository {
     return Exception(msg);
   }
 
+  Future<void> toggleFavorite(String projectId) => service.toggleFavorite(projectId);
+
   Future<Investment> create({
     required String name,
     required String description,
@@ -196,3 +198,4 @@ InvestmentPage _toPage(Map<String, dynamic> raw, int page, int limit) {
     items: items,
   );
 }
+

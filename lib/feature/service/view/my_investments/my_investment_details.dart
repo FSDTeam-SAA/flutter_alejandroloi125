@@ -1,23 +1,24 @@
 // lib/service/view/my_investments/my_investment_details.dart
+import 'package:alejandroloi/core/language/language_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 
 import '../../../app_ground.dart';
+import '../../../models/investment.dart';
 
-/// Local-only detail screen (no Provider/API).
-/// Pass the [investmentId] for routing compatibility and optionally a
-/// fully-populated [detail] object to render real data.
+/// Local-only detail screen (can use real [Investment] or local [InvestmentDetail] fallback)
 class MyInvestmentDetailScreen extends StatelessWidget {
   const MyInvestmentDetailScreen({
     super.key,
     required this.investmentId,
-    this.detail,
+    this.detail, // optional local fallback content
+    this.investment, // pass a real Investment to show live data
   });
 
   final String investmentId;
   final InvestmentDetail? detail;
+  final Investment? investment;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +27,7 @@ class MyInvestmentDetailScreen extends StatelessWidget {
     const border = Color(0xFF242931);
     const accent = Color(0xFFFF8A34);
 
-    // Fallback demo content if nothing is passed in.
+    // -------- Local fallback (unchanged) --------
     final it =
         detail ??
         InvestmentDetail(
@@ -46,33 +47,65 @@ class MyInvestmentDetailScreen extends StatelessWidget {
           ],
         );
 
-    final category = (it.category ?? '').trim().isEmpty ? '—' : it.category!;
-    final title = (it.name ?? '—').trim();
-    final location = (it.location ?? '').trim().isEmpty ? '—' : it.location!;
-    final description = (it.description ?? '').trim().isEmpty
+    // --- Author / counters from API (createdBy + counts) ---
+    final authorName = (investment?.ownerName ?? 'Eleanor Pena').trim();
+    final authorUsername = (investment?.ownerUsername ?? 'eleanorp')
+        .trim(); // no '@'
+    final authorAvatar =
+        investment?.ownerAvatarUrl ??
+        'https://images.unsplash.com/photo-1544005313-94ddf0286df2';
+
+    final likeCount = investment?.likeCount ?? 0;
+    final likesText = _abbr(likeCount);
+
+    // -------- Content (prefer Investment, fallback to local) --------
+    final title = (investment?.name ?? it.name ?? '—').trim();
+
+    final category =
+        ((investment?.category.join(', ') ?? it.category ?? '').trim().isEmpty)
         ? '—'
-        : it.description!.trim();
-    final goalText = it.fundingGoal != null
-        ? '\$${_comma(it.fundingGoal!)}'
-        : '—';
-    final daysLeftText = it.daysLeft != null ? '${it.daysLeft} days left' : '—';
+        : (investment?.category.join(', ') ?? it.category!);
 
-    final progress = ((it.progressPct ?? 0).toDouble() / 100)
-        .clamp(0, 1)
-        .toDouble();
+    final location =
+        ((investment?.location ?? it.location ?? '').trim().isEmpty)
+        ? '—'
+        : (investment?.location ?? it.location!);
 
-    final heroImageUrl = it.imageUrl;
-    final heroImageAsset = it.imageAsset;
+    final description =
+        ((investment?.description ?? it.description ?? '').trim().isEmpty)
+        ? '—'
+        : (investment?.description ?? it.description!);
 
-    final termsBullets = _splitBullets(it.terms);
+    final goal = investment?.fundingGoal ?? it.fundingGoal;
+    final goalText = goal != null ? '\$${_comma(goal)}' : '—';
 
-    final g1 = (it.gallery.isNotEmpty
-        ? it.gallery[0]
-        : 'https://images.unsplash.com/photo-1524404794195-0f93a1c1a5a5?q=80&w=1200&auto=format&fit=crop');
-    final g2 = (it.gallery.length > 1
-        ? it.gallery[1]
-        : 'https://images.unsplash.com/photo-1509395176047-4a66953fd231?q=80&w=1200&auto=format&fit=crop');
+    final progressPct = investment?.progressPct ?? it.progressPct ?? 0;
+    final progress = (progressPct.toDouble() / 100).clamp(0, 1).toDouble();
 
+    final dleft = investment?.daysLeft ?? it.daysLeft;
+    final daysLeftText = dleft != null ? '$dleft days left' : '—';
+
+    // hero + gallery
+    final heroImageUrl = investment?.primaryImageUrl ?? it.imageUrl;
+    final heroImageAsset = it.imageAsset; // keep local asset fallback
+    final gallery =
+        (investment?.images
+                .map((e) => e.url)
+                .where((u) => u.isNotEmpty)
+                .toList() ??
+            []) +
+        it.gallery;
+
+    final g1 = gallery.isNotEmpty
+        ? gallery[0]
+        : 'https://images.unsplash.com/photo-1524404794195-0f93a1c1a5a5?q=80&w=1200&auto=format&fit=crop';
+    final g2 = gallery.length > 1
+        ? gallery[1]
+        : 'https://images.unsplash.com/photo-1509395176047-4a66953fd231?q=80&w=1200&auto=format&fit=crop';
+
+    // ---- with this ----
+    final termsText = ((investment?.investmentTerms ?? it.terms) ?? '').trim();
+    final langController = Get.put(LanguageController());
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
         statusBarColor: Colors.transparent,
@@ -80,9 +113,9 @@ class MyInvestmentDetailScreen extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.black,
-          surfaceTintColor: Colors.black, // avoid Material3 light tint
+          surfaceTintColor: Colors.black,
           elevation: 0,
-          systemOverlayStyle: SystemUiOverlayStyle.light, // white status-bar icons
+          systemOverlayStyle: SystemUiOverlayStyle.light,
           iconTheme: const IconThemeData(color: Colors.white),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back_ios_new_rounded),
@@ -94,9 +127,9 @@ class MyInvestmentDetailScreen extends StatelessWidget {
               }
             },
           ),
-          title: const Text(
-            'Investment Details',
-            style: TextStyle(fontWeight: FontWeight.w800,color: Colors.white),
+          title: Text(
+            langController.t('investment_details'),
+            style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
           ),
           centerTitle: false,
         ),
@@ -133,14 +166,14 @@ class MyInvestmentDetailScreen extends StatelessWidget {
                             aspectRatio: 16 / 9,
                             child: heroImageAsset != null
                                 ? Image.asset(
-                                    heroImageAsset,
+                                    heroImageAsset!,
                                     fit: BoxFit.cover,
                                     errorBuilder: (_, __, ___) =>
                                         _brokenImage(),
                                   )
                                 : (heroImageUrl != null
                                       ? Image.network(
-                                          heroImageUrl,
+                                          heroImageUrl!,
                                           fit: BoxFit.cover,
                                           loadingBuilder: (c, w, ev) =>
                                               ev == null
@@ -159,20 +192,18 @@ class MyInvestmentDetailScreen extends StatelessWidget {
                           top: 8,
                           left: 8,
                           right: 8,
-                          child: Row(
-                            children: [
-                              // _CircleIconButton(
-                              //   icon: Icons.arrow_back_ios_new,
-                              //   onTap: () => Navigator.pop(context),
-                              // ),
-                              const Spacer(),
-                            ],
-                          ),
+                          child: Row(children: const [Spacer()]),
                         ),
-                        const Positioned(
+                        Positioned(
                           left: 12,
                           bottom: 10,
-                          child: _AuthorChip(),
+                          child: _AuthorChip(
+                            name: authorName,
+                            username: authorUsername,
+                            avatarUrl: authorAvatar,
+                            // viewsText: '21k', // investors count (e.g. 21k)
+                            likesText: likesText, // likeCount   (e.g. 142)
+                          ),
                         ),
                       ],
                     ),
@@ -215,7 +246,7 @@ class MyInvestmentDetailScreen extends StatelessWidget {
                           const SizedBox(height: 18),
 
                           // About
-                          const _SectionTitle('About This Project'),
+                          _SectionTitle(langController.t('about_the_project')),
                           const SizedBox(height: 8),
                           _Para(description),
                           const SizedBox(height: 10),
@@ -223,7 +254,7 @@ class MyInvestmentDetailScreen extends StatelessWidget {
                           const SizedBox(height: 16),
 
                           // Gallery
-                          const _SectionTitle('Gallery'),
+                          _SectionTitle(langController.t('gallery')),
                           const SizedBox(height: 8),
                           Row(
                             children: [
@@ -234,15 +265,15 @@ class MyInvestmentDetailScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
 
-                          // Terms
-                          const _SectionTitle('Investment Terms'),
+                          // ---- with this ----
+                          _SectionTitle(langController.t('investment_terms')),
                           const SizedBox(height: 6),
-                          for (final b in termsBullets) _Bullet(b),
+                          _Para(termsText.isNotEmpty ? termsText : '—'),
 
                           const SizedBox(height: 16),
 
-                          // Investors (static demo to keep layout)
-                          const _SectionTitle('Investor'),
+                          // Investors (static demo)
+                          _SectionTitle(langController.t('investor')),
                           const SizedBox(height: 8),
                           const InvestorTile(
                             name: 'Eleanor Pena',
@@ -251,12 +282,6 @@ class MyInvestmentDetailScreen extends StatelessWidget {
                             avatar: 'https://picsum.photos/200',
                           ),
                           const SizedBox(height: 10),
-                          const InvestorTile(
-                            name: 'Wade Warren',
-                            subtitle: '1 Investment',
-                            amount: '\$500',
-                            avatar: 'https://picsum.photos/201',
-                          ),
                         ],
                       ),
                     ),
@@ -278,57 +303,42 @@ class MyInvestmentDetailScreen extends StatelessWidget {
   );
 }
 
-// ====== atoms & molecules (unchanged visuals) ======
-
-class _CircleIconButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _CircleIconButton({required this.icon, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.black.withOpacity(0.35),
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Icon(icon, size: 18, color: Colors.white),
-        ),
-      ),
-    );
-  }
-}
+// ===== atoms & molecules =====
 
 class _AuthorChip extends StatelessWidget {
-  const _AuthorChip();
+  final String name;
+  final String username; // without '@'
+  final String avatarUrl;
+  // final String viewsText; // left pill: investors count
+  final String likesText; // right pill: like count
+
+  const _AuthorChip({
+    super.key,
+    required this.name,
+    required this.username,
+    required this.avatarUrl,
+    // required this.viewsText,
+    required this.likesText,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const CircleAvatar(
-          radius: 14,
-          backgroundImage: NetworkImage(
-            'https://images.unsplash.com/photo-1544005313-94ddf0286df2',
-          ),
-        ),
+        CircleAvatar(radius: 14, backgroundImage: NetworkImage(avatarUrl)),
         const SizedBox(width: 8),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Eleanor Pena',
+              name,
               style: TextStyle(
                 color: Colors.white.withOpacity(0.95),
                 fontWeight: FontWeight.w600,
               ),
             ),
             Text(
-              '@eleanorp',
+              '@$username',
               style: TextStyle(
                 color: Colors.white.withOpacity(0.7),
                 fontSize: 12,
@@ -337,9 +347,9 @@ class _AuthorChip extends StatelessWidget {
           ],
         ),
         const SizedBox(width: 8),
-        const _TinyPill(text: '4.8'),
+        // _TinyPill(text: viewsText),
         const SizedBox(width: 6),
-        const _TinyPill(text: '21k'),
+        _TinyPill(text: likesText),
       ],
     );
   }
@@ -347,7 +357,6 @@ class _AuthorChip extends StatelessWidget {
 
 class _TinyPill extends StatelessWidget {
   final String text;
-
   const _TinyPill({required this.text});
 
   @override
@@ -374,7 +383,6 @@ class _TinyPill extends StatelessWidget {
 class _Badge extends StatelessWidget {
   final String text;
   final Color color;
-
   const _Badge({required this.text, required this.color});
 
   @override
@@ -401,7 +409,6 @@ class _Badge extends StatelessWidget {
 class _InfoBar extends StatelessWidget {
   final IconData icon;
   final String label;
-
   const _InfoBar({required this.icon, required this.label});
 
   @override
@@ -438,7 +445,6 @@ class _ProgressBar extends StatelessWidget {
   final double value;
   final Color background;
   final Color fill;
-
   const _ProgressBar({
     required this.value,
     required this.background,
@@ -502,7 +508,6 @@ class _MetricsRow extends StatelessWidget {
 class _Metric extends StatelessWidget {
   final String top;
   final String bottom;
-
   const _Metric({required this.top, required this.bottom});
 
   @override
@@ -529,7 +534,6 @@ class _Metric extends StatelessWidget {
 
 class _SectionTitle extends StatelessWidget {
   final String text;
-
   const _SectionTitle(this.text);
 
   @override
@@ -547,7 +551,6 @@ class _SectionTitle extends StatelessWidget {
 
 class _Para extends StatelessWidget {
   final String text;
-
   const _Para(this.text);
 
   @override
@@ -561,7 +564,6 @@ class _Para extends StatelessWidget {
 
 class _RoundedImage extends StatelessWidget {
   final String url;
-
   const _RoundedImage(this.url);
 
   @override
@@ -603,6 +605,7 @@ class InvestorTile extends StatelessWidget {
     const cardBg = Color(0xFF1A1F26);
     const border = Color(0xFF2A313A);
     const accent = Color(0xFFFF6A00);
+    final langController = Get.put(LanguageController());
 
     return Container(
       decoration: BoxDecoration(
@@ -653,8 +656,8 @@ class InvestorTile extends StatelessWidget {
           const SizedBox(height: 14),
           Row(
             children: [
-              const Text(
-                'Investment Amount:',
+              Text(
+                langController.t('investment_amount'),
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 14,
@@ -680,7 +683,6 @@ class InvestorTile extends StatelessWidget {
 
 class _Bullet extends StatelessWidget {
   final String text;
-
   const _Bullet(this.text);
 
   @override
@@ -715,7 +717,7 @@ class _Bullet extends StatelessWidget {
   }
 }
 
-/// Lightweight local model (no Provider/API).
+/// Lightweight local model (no Provider/API) used only for demo fallback.
 class InvestmentDetail {
   final String? name;
   final String? category;
@@ -771,4 +773,20 @@ List<String> _splitBullets(String? s) {
       .map((e) => e.trim())
       .where((e) => e.isNotEmpty)
       .toList();
+}
+
+String _abbr(int? n) {
+  final v = n ?? 0;
+  if (v >= 1000000)
+    return '${(v / 1000000).toStringAsFixed(v % 1000000 == 0 ? 0 : 1)}M';
+  if (v >= 1000) return '${(v / 1000).toStringAsFixed(v % 1000 == 0 ? 0 : 1)}k';
+  return v.toString();
+}
+
+// helper
+String _firstNonEmpty(List<String?> opts, String fallback) {
+  for (final s in opts) {
+    if (s != null && s.trim().isNotEmpty) return s.trim();
+  }
+  return fallback;
 }

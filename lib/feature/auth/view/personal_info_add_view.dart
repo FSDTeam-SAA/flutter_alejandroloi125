@@ -2,6 +2,7 @@
 import 'dart:io';
 import 'package:alejandroloi/core/common/widgets/custom_text_field.dart';
 import 'package:alejandroloi/core/common/widgets/save_botton.dart';
+import 'package:alejandroloi/core/language/language_controller.dart';
 import 'package:alejandroloi/core/util/styles.dart';
 import 'package:country_picker/country_picker.dart';
 import 'package:flutter/material.dart';
@@ -228,6 +229,7 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
         }
       });
     }
+    final languageController = Get.put(LanguageController());
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -238,11 +240,10 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
           onPressed: () => Get.back(),
         ),
         backgroundColor: Colors.transparent,
-        title: const Text(
-          "Personal Information",
+        title: Text(
+          languageController.t('personal_info'),
           style: TextStyle(color: Colors.white),
         ),
-
       ),
       body: AbsorbPointer(
         absorbing: loading,
@@ -252,14 +253,11 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
             padding: const EdgeInsets.all(16.0),
             child: ListView(
               children: [
-                Text(
-                  "To create your new account, provide your information.",
-                  style: text16,
-                ),
+                Text(languageController.t("to_create_you"), style: text16),
 
                 const SizedBox(height: 14),
-                const Text(
-                  "Name",
+                Text(
+                  languageController.t("name"),
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
@@ -273,8 +271,8 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
                 ),
 
                 const SizedBox(height: 14),
-                const Text(
-                  "Age",
+                Text(
+                  languageController.t("age"),
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
@@ -289,8 +287,8 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
                 ),
 
                 const SizedBox(height: 14),
-                const Text(
-                  "Gender",
+                Text(
+                  languageController.t("gender"),
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
@@ -325,8 +323,8 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
                 ),
 
                 const SizedBox(height: 14),
-                const Text(
-                  "Nationality",
+                Text(
+                  languageController.t("nationality"),
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
@@ -351,8 +349,8 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
                 ),
 
                 const SizedBox(height: 14),
-                const Text(
-                  "Address",
+                Text(
+                  languageController.t("address"),
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w600,
@@ -373,7 +371,7 @@ class _PersonalInfoAddViewState extends State<PersonalInfoAddView> {
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 50),
         child: bottomWidget(
-          text: loading ? "Updating..." : "Update",
+          text: loading ? "Updating..." : languageController.t('update'),
           onTap: loading ? null : _submit,
         ),
       ),

@@ -34,7 +34,6 @@ class LiveAuctionCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final priceColor = Theme.of(context).colorScheme.primary;
 
     // Keep total height < 200:
     //  image 118 + text area ~60–70 = < 190

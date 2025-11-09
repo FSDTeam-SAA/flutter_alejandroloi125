@@ -166,6 +166,17 @@ class _DetailBodyState extends State<_DetailBody> {
         ? data.skills
         : const ['Web Design', 'Ecommerce', 'Shopify', 'WordPress', 'UI/UX'];
 
+    // --- just before the Row(...) for the owner, compute these:
+    final ownerName   = (data.createdBy?.name?.trim().isNotEmpty ?? false)
+        ? data.createdBy!.name!
+        : 'Project Owner';
+    final ownerAvatar = data.ownerAvatarUrl ??
+        'https://i.pravatar.cc/100?img=12'; // fallback
+
+    final ownerPhoto = _proj!.createdBy?.avatarUrl ?? 'https://i.pravatar.cc/100?img=12';
+
+
+
     return Theme(
       data: theme,
       child: Scaffold(
@@ -240,40 +251,69 @@ class _DetailBodyState extends State<_DetailBody> {
 
               Row(
                 children: [
-                  const CircleAvatar(
-                    radius: 22,
-                    backgroundImage: NetworkImage('https://i.pravatar.cc/100?img=12'),
-                  ),
-                  const SizedBox(width: 12),
+
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Project Owner', style: TextStyle(fontWeight: FontWeight.w700)),
-                        const SizedBox(height: 2),
+
+
                         Row(
                           children: [
-                            const _Stars(rating: 4.8),
-                            const SizedBox(width: 8),
-                            Flexible(
-                              child: Text(
-                                '3 Projects • Success Rate 100%',
-                                style: const TextStyle(fontSize: 12, color: Colors.white70),
-                                overflow: TextOverflow.ellipsis,
+
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+
+                                  Row(
+                                    children: [
+                                      CircleAvatar(radius: 22, backgroundImage: NetworkImage(ownerPhoto)),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(ownerName, style: const TextStyle(fontWeight: FontWeight.w700)), // CHANGED
+                                            const SizedBox(height: 2),
+                                            Row(
+                                              children: [
+                                                const SizedBox(width: 8),
+                                                Flexible(
+                                                  child: Text(
+                                                    '3 Projects • Success Rate 100%',
+                                                    style: const TextStyle(fontSize: 12, color: Colors.white70),
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      // posted on … (unchanged)
+                                    ],
+                                  ),
+
+                                ],
                               ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Text('Posted on', style: TextStyle(color: muted, fontSize: 12)),
+                                Text(posted, style: const TextStyle(fontWeight: FontWeight.w700)),
+                              ],
                             ),
                           ],
                         ),
+
+
                       ],
                     ),
                   ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text('Posted on', style: TextStyle(color: muted, fontSize: 12)),
-                      Text(posted, style: const TextStyle(fontWeight: FontWeight.w700)),
-                    ],
-                  ),
+
                 ],
               ),
               const SizedBox(height: 14),
@@ -329,30 +369,41 @@ class _DetailBodyState extends State<_DetailBody> {
               ),
               const SizedBox(height: 18),
 
-              const SectionHeader(text: 'Project Proposal'),
+
+              SectionHeader(
+                text: 'Project Proposals',
+                trailing: Text(
+                  '${data.proposals.length}',
+                  style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.w700),
+                ),
+              ),
               const SizedBox(height: 8),
-              const ProposalCard(
-                name: 'Eleanor Pena',
-                avatarUrl: 'https://i.pravatar.cc/120?img=15',
-                tagline: '2 Projects • Success Rate 100%',
-                rating: 4.9,
-                text:
-                'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum metus eu egestas pharetra.',
-                budget: '\$1200',
-                delivery: '14 days',
-              ),
+
+              if (data.proposals.isEmpty)
+                const _Para('No proposals yet.')
+              else
+                Column(
+                  children: [
+                    for (final p in data.proposals) ...[
+                      ProposalCard(
+                        name: (p.user.name?.trim().isNotEmpty ?? false) ? p.user.name! : 'Anonymous',
+                        avatarUrl: p.user.avatarUrl ??
+                            'https://i.pravatar.cc/120?img=15', // fallback
+                        // You can customize this line with real stats later:
+                        tagline: 'Budget • Delivery',
+                        text: (p.coverLetter.trim().isNotEmpty)
+                            ? p.coverLetter
+                            : '—',
+                        budget: '\$${_fmt(p.budget)}',
+                        delivery: '${p.deliveryDays} days',
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+                  ],
+                ),
+
               const SizedBox(height: 10),
-              const ProposalCard(
-                name: 'Eleanor Pena',
-                avatarUrl: 'https://i.pravatar.cc/120?img=18',
-                tagline: '3 Projects • Success Rate 100%',
-                rating: 4.8,
-                text:
-                'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc interdum metus eu egestas pharetra.',
-                budget: '\$1200',
-                delivery: '14 days',
-              ),
-              const SizedBox(height: 24),
+
             ],
           ),
         ),
@@ -471,14 +522,14 @@ class ProposalCard extends StatelessWidget {
     required this.name,
     required this.avatarUrl,
     required this.tagline,
-    required this.rating,
+    // required this.rating,
     required this.text,
     required this.budget,
     required this.delivery,
   });
 
   final String name, avatarUrl, tagline, text, budget, delivery;
-  final double rating;
+  // final double rating;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -500,7 +551,7 @@ class ProposalCard extends StatelessWidget {
                 Text(name, style: const TextStyle(fontWeight: FontWeight.w700)),
                 const SizedBox(height: 2),
                 Row(children: [
-                  const _Stars(rating: 4.8, compact: true),
+                  // const _Stars(rating: 4.8, compact: true),
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(tagline,

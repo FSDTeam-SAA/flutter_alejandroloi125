@@ -7,16 +7,14 @@ import 'package:provider/provider.dart';
 
 import '../../../../constants/api_paths.dart';
 import '../../../../core/env/env.dart';
+import '../../../../core/language/language_controller.dart';
 import '../../../../core/network/api_service/api_client.dart';
 import '../../../app_ground.dart';
 
 class MyAuctionDetailScreen extends StatefulWidget {
   final String auctionId;
 
-  const MyAuctionDetailScreen({
-    super.key,
-    required this.auctionId,
-  });
+  const MyAuctionDetailScreen({super.key, required this.auctionId});
 
   @override
   State<MyAuctionDetailScreen> createState() => _MyAuctionDetailScreenState();
@@ -67,7 +65,8 @@ class _MyAuctionDetailScreenState extends State<MyAuctionDetailScreen> {
         _desc = (data['description'] ?? '').toString();
         _image = img.isEmpty ? 'assets/images/earpod.jpg' : img;
 
-        final bidNum = data['currentBid'] ??
+        final bidNum =
+            data['currentBid'] ??
             data['starting_bid'] ??
             data['startingBid'] ??
             data['price'];
@@ -75,7 +74,10 @@ class _MyAuctionDetailScreenState extends State<MyAuctionDetailScreen> {
 
         final date = (sched['date'] ?? data['date'] ?? '').toString();
         final time = (sched['time'] ?? data['time'] ?? '').toString();
-        _scheduleText = [date, time].where((s) => s.trim().isNotEmpty).join(' ');
+        _scheduleText = [
+          date,
+          time,
+        ].where((s) => s.trim().isNotEmpty).join(' ');
         if (_scheduleText.isEmpty) _scheduleText = '—';
 
         final dur = data['duration']?.toString() ?? '';
@@ -100,8 +102,10 @@ class _MyAuctionDetailScreenState extends State<MyAuctionDetailScreen> {
     }
   }
 
-  static Map<String, dynamic>? _pickMap(dynamic root,
-      {required List<String> keys}) {
+  static Map<String, dynamic>? _pickMap(
+    dynamic root, {
+    required List<String> keys,
+  }) {
     if (root is Map) {
       if (root['data'] is Map) return Map<String, dynamic>.from(root['data']);
       for (final k in keys) {
@@ -157,7 +161,8 @@ class _MyAuctionDetailScreenState extends State<MyAuctionDetailScreen> {
     if (u.startsWith('http://') || u.startsWith('https://')) return u;
     final base = AppEnv.baseUrl;
     if (base.isEmpty) return u;
-    if (base.endsWith('/') && u.startsWith('/')) return '$base${u.substring(1)}';
+    if (base.endsWith('/') && u.startsWith('/'))
+      return '$base${u.substring(1)}';
     if (!base.endsWith('/') && !u.startsWith('/')) return '$base/$u';
     return '$base$u';
   }
@@ -168,10 +173,12 @@ class _MyAuctionDetailScreenState extends State<MyAuctionDetailScreen> {
     const cardBg = Color(0xFF15181C);
     const border = Color(0xFF242931);
     const accent = Color(0xFFFF8A34);
-
+    final langController = Get.put(LanguageController());
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value:
-      SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
+      ),
+
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.black,
@@ -189,8 +196,8 @@ class _MyAuctionDetailScreenState extends State<MyAuctionDetailScreen> {
               }
             },
           ),
-          title: const Text(
-            'Auctions Details',
+          title: Text(
+            langController.t('auctions_details'),
             style: TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
           ),
           centerTitle: false,
@@ -200,323 +207,360 @@ class _MyAuctionDetailScreenState extends State<MyAuctionDetailScreen> {
           child: _loading
               ? const Center(child: CircularProgressIndicator())
               : (_error != null
-              ? Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Text(_error!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.white70)),
-            ),
-          )
-              : ListView(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: cardBg,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: border),
-                  boxShadow: const [
-                    BoxShadow(
-                        color: Colors.black54,
-                        blurRadius: 12,
-                        offset: Offset(0, 6)),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // ===== Header image + overlays =====
-                    Stack(
-                      children: [
-                        ClipRRect(
-                          borderRadius: const BorderRadius.vertical(
-                              top: Radius.circular(14)),
-                          child: AspectRatio(
-                            aspectRatio: 16 / 9,
-                            child: _image.startsWith('http')
-                                ? Image.network(
-                              _image,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
-                                  _broken(),
-                              loadingBuilder:
-                                  (ctx, child, progress) {
-                                if (progress == null) {
-                                  return child;
-                                }
-                                return Container(
-                                  color:
-                                  const Color(0x11000000),
-                                  alignment: Alignment.center,
-                                  child: const SizedBox(
-                                    height: 22,
-                                    width: 22,
-                                    child:
-                                    CircularProgressIndicator(
-                                        strokeWidth: 2),
-                                  ),
-                                );
-                              },
-                            )
-                                : Image.asset(
-                              _image.isEmpty
-                                  ? 'assets/images/earpod.jpg'
-                                  : _image,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) =>
-                                  _broken(),
-                            ),
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Text(
+                            _error!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Colors.white70),
                           ),
                         ),
-
-                        // soft bottom gradient
-                        Positioned.fill(
-                          child: IgnorePointer(
-                            child: DecoratedBox(
-                              decoration: BoxDecoration(
-                                borderRadius:
-                                const BorderRadius.vertical(
-                                    top: Radius.circular(14)),
-                                gradient: LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [
-                                    Colors.transparent,
-                                    Colors.black.withOpacity(0.08),
-                                    Colors.black.withOpacity(0.26),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        // top actions
-                        Positioned(
-                          top: 10,
-                          left: 10,
-                          right: 10,
-                          child: Row(
-                            children: [
-                              const Spacer(),
-                              _CircleIconButton(
-                                  icon: Icons.share_outlined,
-                                  onTap: () {}),
-                              const SizedBox(width: 8),
-                              _CircleIconButton(
-                                  icon: Icons.more_horiz,
-                                  onTap: () {}),
-                            ],
-                          ),
-                        ),
-
-                        // LIVE pill
-                        Positioned(
-                          top: 44,
-                          left: 58,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 6),
+                      )
+                    : ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                        children: [
+                          Container(
                             decoration: BoxDecoration(
-                              color: Colors.red.withOpacity(.96),
-                              borderRadius:
-                              BorderRadius.circular(999),
+                              color: cardBg,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: border),
                               boxShadow: const [
                                 BoxShadow(
-                                    color: Colors.black45,
-                                    blurRadius: 6,
-                                    offset: Offset(0, 2)),
-                              ],
-                            ),
-                            child: const Row(
-                              children: [
-                                Icon(Icons.fiber_manual_record,
-                                    size: 12, color: Colors.white),
-                                SizedBox(width: 6),
-                                Text('LIVE',
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight:
-                                        FontWeight.w800)),
-                              ],
-                            ),
-                          ),
-                        ),
-
-                        // author chip + stats (placeholder)
-                        Positioned(
-                          left: 12,
-                          bottom: 10,
-                          right: 12,
-                          child: Row(
-                            children: [
-                              const CircleAvatar(
-                                radius: 14,
-                                backgroundImage: NetworkImage(
-                                  'https://images.unsplash.com/photo-1544005313-94ddf0286df2',
+                                  color: Colors.black54,
+                                  blurRadius: 12,
+                                  offset: Offset(0, 6),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              Column(
-                                crossAxisAlignment:
-                                CrossAxisAlignment.start,
-                                children: [
-                                  Text('Eleanor Pena',
-                                      style: TextStyle(
-                                          color: Colors.white
-                                              .withOpacity(.95),
-                                          fontWeight:
-                                          FontWeight.w700)),
-                                  Text('@eleanorpena',
-                                      style: TextStyle(
-                                          color: Colors.white
-                                              .withOpacity(.7),
-                                          fontSize: 12)),
-                                ],
-                              ),
-                              const Spacer(),
-                              const _TinyPill(
-                                  icon: Icons.remove_red_eye_outlined,
-                                  text: '142'),
-                              const SizedBox(width: 6),
-                              const _TinyPill(
-                                  icon: Icons.favorite_border,
-                                  text: '86'),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                // ===== Header image + overlays =====
+                                Stack(
+                                  children: [
+                                    ClipRRect(
+                                      borderRadius: const BorderRadius.vertical(
+                                        top: Radius.circular(14),
+                                      ),
+                                      child: AspectRatio(
+                                        aspectRatio: 16 / 9,
+                                        child: _image.startsWith('http')
+                                            ? Image.network(
+                                                _image,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (_, __, ___) =>
+                                                    _broken(),
+                                                loadingBuilder:
+                                                    (ctx, child, progress) {
+                                                      if (progress == null) {
+                                                        return child;
+                                                      }
+                                                      return Container(
+                                                        color: const Color(
+                                                          0x11000000,
+                                                        ),
+                                                        alignment:
+                                                            Alignment.center,
+                                                        child: const SizedBox(
+                                                          height: 22,
+                                                          width: 22,
+                                                          child:
+                                                              CircularProgressIndicator(
+                                                                strokeWidth: 2,
+                                                              ),
+                                                        ),
+                                                      );
+                                                    },
+                                              )
+                                            : Image.asset(
+                                                _image.isEmpty
+                                                    ? 'assets/images/earpod.jpg'
+                                                    : _image,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (_, __, ___) =>
+                                                    _broken(),
+                                              ),
+                                      ),
+                                    ),
 
-                    // ===== Body =====
-                    Padding(
-                      padding:
-                      const EdgeInsets.fromLTRB(14, 12, 14, 0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            crossAxisAlignment:
-                            CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  _title,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18.5,
-                                    fontWeight: FontWeight.w800,
+                                    // soft bottom gradient
+                                    Positioned.fill(
+                                      child: IgnorePointer(
+                                        child: DecoratedBox(
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                const BorderRadius.vertical(
+                                                  top: Radius.circular(14),
+                                                ),
+                                            gradient: LinearGradient(
+                                              begin: Alignment.topCenter,
+                                              end: Alignment.bottomCenter,
+                                              colors: [
+                                                Colors.transparent,
+                                                Colors.black.withOpacity(0.08),
+                                                Colors.black.withOpacity(0.26),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+
+                                    // top actions
+                                    Positioned(
+                                      top: 10,
+                                      left: 10,
+                                      right: 10,
+                                      child: Row(
+                                        children: [
+                                          const Spacer(),
+                                          _CircleIconButton(
+                                            icon: Icons.share_outlined,
+                                            onTap: () {},
+                                          ),
+                                          const SizedBox(width: 8),
+                                          _CircleIconButton(
+                                            icon: Icons.more_horiz,
+                                            onTap: () {},
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    // LIVE pill
+                                    Positioned(
+                                      top: 44,
+                                      left: 58,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red.withOpacity(.96),
+                                          borderRadius: BorderRadius.circular(
+                                            999,
+                                          ),
+                                          boxShadow: const [
+                                            BoxShadow(
+                                              color: Colors.black45,
+                                              blurRadius: 6,
+                                              offset: Offset(0, 2),
+                                            ),
+                                          ],
+                                        ),
+                                        child: const Row(
+                                          children: [
+                                            Icon(
+                                              Icons.fiber_manual_record,
+                                              size: 12,
+                                              color: Colors.white,
+                                            ),
+                                            SizedBox(width: 6),
+                                            Text(
+                                              'LIVE',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+
+                                    // author chip + stats (placeholder)
+                                    Positioned(
+                                      left: 12,
+                                      bottom: 10,
+                                      right: 12,
+                                      child: Row(
+                                        children: [
+                                          const CircleAvatar(
+                                            radius: 14,
+                                            backgroundImage: NetworkImage(
+                                              'https://images.unsplash.com/photo-1544005313-94ddf0286df2',
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Eleanor Pena',
+                                                style: TextStyle(
+                                                  color: Colors.white
+                                                      .withOpacity(.95),
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                              ),
+                                              Text(
+                                                '@eleanorpena',
+                                                style: TextStyle(
+                                                  color: Colors.white
+                                                      .withOpacity(.7),
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const Spacer(),
+                                          const _TinyPill(
+                                            icon: Icons.remove_red_eye_outlined,
+                                            text: '142',
+                                          ),
+                                          const SizedBox(width: 6),
+                                          const _TinyPill(
+                                            icon: Icons.favorite_border,
+                                            text: '86',
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+
+                                // ===== Body =====
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    14,
+                                    12,
+                                    14,
+                                    0,
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              _title,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 18.5,
+                                                fontWeight: FontWeight.w800,
+                                              ),
+                                            ),
+                                          ),
+                                          const _TimerPill(text: 'Ends soon'),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 8),
+                                      Text(
+                                        _desc.isEmpty ? '—' : _desc,
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(.75),
+                                          height: 1.35,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            'Current Bid ',
+                                            style: TextStyle(
+                                              color: Colors.white.withOpacity(
+                                                .85,
+                                              ),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          Text(
+                                            _currentBid.isEmpty
+                                                ? '\$0'
+                                                : _currentBid,
+                                            style: const TextStyle(
+                                              color: accent,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 12),
+                                    ],
                                   ),
                                 ),
-                              ),
-                              const _TimerPill(text: 'Ends soon'),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _desc.isEmpty
-                                ? '—'
-                                : _desc,
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(.75),
-                              height: 1.35,
+
+                                const Divider(height: 1, color: border),
+
+                                // schedule + duration
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    14,
+                                    12,
+                                    14,
+                                    2,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      _InfoPill(
+                                        icon: Icons.event,
+                                        text: _scheduleText,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      _InfoPill(
+                                        icon: Icons.schedule,
+                                        text: _durationText,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                const SizedBox(height: 10),
+                                const Divider(height: 1, color: border),
+
+                                _SectionHeaderWithIcon(
+                                  icon: Icons.chat_bubble_outline,
+                                  text: langController.t('live_chat'),
+                                ),
+
+                                // demo chat list
+                                const Padding(
+                                  padding: EdgeInsets.fromLTRB(14, 0, 14, 14),
+                                  child: Column(
+                                    children: [
+                                      _ChatItem(
+                                        avatar:
+                                            'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91',
+                                        name: 'Ronald Richards',
+                                        timeAgo: '2m ago',
+                                        message: '\$500',
+                                      ),
+                                      _ChatItem(
+                                        avatar:
+                                            'https://images.unsplash.com/photo-1527980965255-d3b416303d12',
+                                        name: 'Arlene McCoy',
+                                        timeAgo: '2m ago',
+                                        message: '\$800',
+                                      ),
+                                      _ChatItem(
+                                        avatar:
+                                            'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c',
+                                        name: 'Darrell Steward',
+                                        timeAgo: '2m ago',
+                                        message: "What's the band material?",
+                                      ),
+                                      _ChatItem(
+                                        avatar:
+                                            'https://images.unsplash.com/photo-1544005313-94ddf0286df2',
+                                        name: 'Kathryn Murphy',
+                                        timeAgo: '2m ago',
+                                        message: '\$1000',
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          Row(
-                            children: [
-                              Text(
-                                'Current Bid ',
-                                style: TextStyle(
-                                  color:
-                                  Colors.white.withOpacity(.85),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              Text(
-                                _currentBid.isEmpty
-                                    ? '\$0'
-                                    : _currentBid,
-                                style: const TextStyle(
-                                  color: accent,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
                         ],
-                      ),
-                    ),
-
-                    const Divider(height: 1, color: border),
-
-                    // schedule + duration
-                    Padding(
-                      padding:
-                      const EdgeInsets.fromLTRB(14, 12, 14, 2),
-                      child: Row(
-                        children: [
-                          _InfoPill(
-                              icon: Icons.event, text: _scheduleText),
-                          const SizedBox(width: 12),
-                          _InfoPill(
-                              icon: Icons.schedule,
-                              text: _durationText),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 10),
-                    const Divider(height: 1, color: border),
-
-                    const _SectionHeaderWithIcon(
-                      icon: Icons.chat_bubble_outline,
-                      text: 'Live Chat',
-                    ),
-
-                    // demo chat list
-                    const Padding(
-                      padding: EdgeInsets.fromLTRB(14, 0, 14, 14),
-                      child: Column(
-                        children: [
-                          _ChatItem(
-                            avatar:
-                            'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91',
-                            name: 'Ronald Richards',
-                            timeAgo: '2m ago',
-                            message: '\$500',
-                          ),
-                          _ChatItem(
-                            avatar:
-                            'https://images.unsplash.com/photo-1527980965255-d3b416303d12',
-                            name: 'Arlene McCoy',
-                            timeAgo: '2m ago',
-                            message: '\$800',
-                          ),
-                          _ChatItem(
-                            avatar:
-                            'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c',
-                            name: 'Darrell Steward',
-                            timeAgo: '2m ago',
-                            message: "What's the band material?",
-                          ),
-                          _ChatItem(
-                            avatar:
-                            'https://images.unsplash.com/photo-1544005313-94ddf0286df2',
-                            name: 'Kathryn Murphy',
-                            timeAgo: '2m ago',
-                            message: '\$1000',
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          )),
+                      )),
         ),
       ),
     );
@@ -708,14 +752,20 @@ class _ChatItem extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(name,
-                          style: const TextStyle(
-                              color: Colors.white, fontWeight: FontWeight.w700)),
+                      child: Text(
+                        name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
                     ),
                     Text(
                       timeAgo,
                       style: TextStyle(
-                          color: Colors.white.withOpacity(.7), fontSize: 12),
+                        color: Colors.white.withOpacity(.7),
+                        fontSize: 12,
+                      ),
                     ),
                   ],
                 ),

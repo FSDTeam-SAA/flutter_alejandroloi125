@@ -26,6 +26,8 @@ class InvestmentProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+
+
   // ---- validators (same as before) ----
   String? vRequired(String? v, String name) =>
       (v == null || v.trim().isEmpty) ? '$name is required' : null;
@@ -94,6 +96,8 @@ class InvestmentProvider extends ChangeNotifier {
       ..clear()
       ..addAll(map.values);
   }
+
+
 
 
 

@@ -1,21 +1,33 @@
+import 'package:alejandroloi/core/language/language_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class PrivacyPolicyScreenView extends StatelessWidget {
   const PrivacyPolicyScreenView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final languageController = Get.put(LanguageController());
+
     return Scaffold(
       backgroundColor: Colors.black,
-      appBar: AppBar(title: Text("Privacy Policy",style: TextStyle(color: Colors.white,fontSize: 24,fontWeight: FontWeight.w700),),
+      appBar: AppBar(
+        title: Text(
+          languageController.t('privacy'),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         iconTheme: IconThemeData(color: Colors.white),
         backgroundColor: Colors.black,
-
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
-          child: Text("""AVISO DE PRIVACIDAD INTEGRAL
+          child: Text(
+            """AVISO DE PRIVACIDAD INTEGRAL
 En cumplimiento con lo dispuesto por la Ley Federal de Protección de Datos Personales en Posesión de los Particulares, el presente Aviso de Privacidad tiene por objeto informar al titular de los datos personales sobre la manera en que se recaban, utilizan, almacenan, transfieren y protegen los datos personales por parte de ALEJANDRO LOIS PÉREZ, quien actúa bajo el nombre comercial de INVERX, en lo sucesivo denominado “EL RESPONSABLE”.
 1. IDENTIDAD Y DOMICILIO DEL RESPONSABLE
 EL RESPONSABLE, opera comercialmente bajo la denominación INVERX, con domicilio en Puebla, México. Para todos los efectos relacionados con el presente Aviso de Privacidad, se entenderá que INVERX es responsable del tratamiento de los datos personales que recabe a través de su aplicación digital, sitio web y demás medios electrónicos o físicos.
@@ -49,8 +61,10 @@ INVERX se reserva el derecho de realizar modificaciones o actualizaciones al pre
 Para la interpretación y cumplimiento del presente Aviso de Privacidad, las partes se someten expresamente a las leyes y tribunales competentes de la ciudad de Puebla, México, renunciando a cualquier otro fuero que pudiera corresponderles por razón de su domicilio presente o futuro.
 
 El presente Aviso de Privacidad fue actualizado por última vez en [FECHA DE ACTUALIZACIÓN] y se encuentra disponible para todos los usuarios de la aplicación INVERX en su versión vigente.
-"""
-            ,style: TextStyle(fontSize: 14,color: Color(0xFFE0E0E0),),textAlign: TextAlign.justify,),
+""",
+            style: TextStyle(fontSize: 14, color: Color(0xFFE0E0E0)),
+            textAlign: TextAlign.justify,
+          ),
         ),
       ),
     );

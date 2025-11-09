@@ -3,26 +3,27 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../core/language/language_controller.dart';
 import '../../../../providers/project_provider.dart';
 import '../../../models/project.dart';
 import 'my_project_details.dart';
 
 // ======= Design tokens (from the mock) =======
-const _pageBg        = Color(0xFF0D0F12);
-const _cardBg        = Color(0xFF1A1B1E);
-const _cardStroke    = Color(0xFF2B2C31);
-const _bodyText      = Colors.white;
-const _mutedText     = Colors.white70;
-const _accentOrange  = Color(0xFFFF8A34);
+const _pageBg = Color(0xFF0D0F12);
+const _cardBg = Color(0xFF1A1B1E);
+const _cardStroke = Color(0xFF2B2C31);
+const _bodyText = Colors.white;
+const _mutedText = Colors.white70;
+const _accentOrange = Color(0xFFFF8A34);
 
 // Status chips
-const _progressFg    = _accentOrange;         // label
-const _progressBg    = Color(0xFFFFE8D9);     // peach bg
-const _progressBd    = Color(0xFFFFD2B8);     // peach border
+const _progressFg = _accentOrange; // label
+const _progressBg = Color(0xFFFFE8D9); // peach bg
+const _progressBd = Color(0xFFFFD2B8); // peach border
 
-const _successFg     = Color(0xFF34D6C3);     // teal label (completed)
-const _successBg     = Color(0xFFE8FAF6);     // light teal bg
-const _successBd     = Color(0xFFBFF3EA);     // light teal border
+const _successFg = Color(0xFF34D6C3); // teal label (completed)
+const _successBg = Color(0xFFE8FAF6); // light teal bg
+const _successBd = Color(0xFFBFF3EA); // light teal border
 
 class MyProjectScreen extends StatefulWidget {
   const MyProjectScreen({super.key});
@@ -74,6 +75,7 @@ class _MyProjectScreenState extends State<MyProjectScreen> {
   Widget build(BuildContext context) {
     final prov = context.watch<ProjectProvider>();
     final items = prov.items;
+    final langController = Get.put(LanguageController());
 
     return Scaffold(
       backgroundColor: _pageBg,
@@ -94,14 +96,19 @@ class _MyProjectScreenState extends State<MyProjectScreen> {
                   padding: const EdgeInsets.all(24),
                   children: [
                     const SizedBox(height: 40),
-                    const Icon(Icons.error_outline,
-                        color: Colors.white54, size: 48),
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.white54,
+                      size: 48,
+                    ),
                     const SizedBox(height: 12),
                     Text(
                       prov.error!,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                          color: Colors.white70, fontSize: 16),
+                        color: Colors.white70,
+                        fontSize: 16,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     OutlinedButton(
@@ -118,8 +125,7 @@ class _MyProjectScreenState extends State<MyProjectScreen> {
                   padding: const EdgeInsets.all(24),
                   children: const [
                     SizedBox(height: 40),
-                    Icon(Icons.inbox_outlined,
-                        color: Colors.white54, size: 48),
+                    Icon(Icons.inbox_outlined, color: Colors.white54, size: 48),
                     SizedBox(height: 12),
                     Text(
                       'No projects yet',
@@ -132,7 +138,10 @@ class _MyProjectScreenState extends State<MyProjectScreen> {
 
               return ListView.separated(
                 controller: _scroll,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 itemCount: items.length + (prov.page < prov.pages ? 1 : 0),
                 separatorBuilder: (_, __) => const SizedBox(height: 14),
                 itemBuilder: (context, index) {
@@ -179,42 +188,54 @@ class _MyProjectScreenState extends State<MyProjectScreen> {
                     statusLabel: statusLabel,
                     statusKind: completed
                         ? _StatusKind.completed
-                        : (cancelled ? _StatusKind.cancelled : _StatusKind.progress),
+                        : (cancelled
+                              ? _StatusKind.cancelled
+                              : _StatusKind.progress),
                     // actions
                     showDelete: !completed,
                     onDelete: () async {
-                      final ok = await showDialog<bool>(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          title: const Text('Delete project?'),
-                          content: const Text('This action cannot be undone.'),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx, false),
-                              child: const Text('Cancel'),
+                      final ok =
+                          await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) => AlertDialog(
+                              title: Text(langController.t('delete_project')),
+                              content: const Text(
+                                'This action cannot be undone.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, false),
+                                  child: Text(langController.t('cancel')),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(ctx, true),
+                                  child: Text(langController.t('delete')),
+                                ),
+                              ],
                             ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx, true),
-                              child: const Text('Delete'),
-                            ),
-                          ],
-                        ),
-                      ) ?? false;
+                          ) ??
+                          false;
                       if (!ok) return;
 
                       await context.read<ProjectProvider>().delete(p.id);
                       final err = context.read<ProjectProvider>().error;
                       if (err == null) {
-                        Get.snackbar('Deleted', 'Project removed',
-                            snackPosition: SnackPosition.BOTTOM);
+                        Get.snackbar(
+                          'Deleted',
+                          'Project removed',
+                          snackPosition: SnackPosition.BOTTOM,
+                        );
                       } else {
-                        Get.snackbar('Error', err,
-                            snackPosition: SnackPosition.BOTTOM);
+                        Get.snackbar(
+                          'Error',
+                          err,
+                          snackPosition: SnackPosition.BOTTOM,
+                        );
                       }
                     },
                     onView: () {
                       Get.to(
-                            () => MyProjectDetailScreen(
+                        () => MyProjectDetailScreen(
                           projectId: p.id,
                           project: _toMyProjectData(p),
                         ),
@@ -244,7 +265,7 @@ class _MyProjectScreenState extends State<MyProjectScreen> {
     budgetMax: p.maxBudget,
     durationDays: p.deadlineDays,
     location: p.location,
-    proposalsCount: 8,
+    // proposalsCount: 8,
     createdAt: DateTime.now(),
     skills: p.skills,
   );
@@ -306,10 +327,15 @@ class _ProjectCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (fg, bg, bd) = switch (statusKind) {
-      _StatusKind.progress   => (_progressFg, _progressBg, _progressBd),
-      _StatusKind.completed  => (_successFg,  _successBg,  _successBd),
-      _StatusKind.cancelled  => (Colors.white70, const Color(0xFF2A2B30), _cardStroke),
+      _StatusKind.progress => (_progressFg, _progressBg, _progressBd),
+      _StatusKind.completed => (_successFg, _successBg, _successBd),
+      _StatusKind.cancelled => (
+        Colors.white70,
+        const Color(0xFF2A2B30),
+        _cardStroke,
+      ),
     };
+    final langController = Get.put(LanguageController());
 
     return Container(
       decoration: BoxDecoration(
@@ -393,48 +419,52 @@ class _ProjectCard extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 // Buttons row
-                if (showDelete) Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: onDelete,
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: _accentOrange, width: 2),
-                          foregroundColor: _accentOrange,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                if (showDelete)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: onDelete,
+                          style: OutlinedButton.styleFrom(
+                            side: const BorderSide(
+                              color: _accentOrange,
+                              width: 2,
+                            ),
+                            foregroundColor: _accentOrange,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            textStyle: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
                           ),
-                          textStyle: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                          ),
+                          child: Text(langController.t('delete')),
                         ),
-                        child: const Text('Delete'),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: onView,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _accentOrange,
-                          foregroundColor: Colors.black,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: ElevatedButton(
+                          onPressed: onView,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: _accentOrange,
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            textStyle: const TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 15,
+                            ),
+                            elevation: 0,
                           ),
-                          textStyle: const TextStyle(
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15,
-                          ),
-                          elevation: 0,
+                          child: Text(langController.t('view_details')),
                         ),
-                        child: const Text('View Details'),
                       ),
-                    ),
-                  ],
-                )
+                    ],
+                  )
                 else
                   SizedBox(
                     width: double.infinity,
@@ -453,7 +483,7 @@ class _ProjectCard extends StatelessWidget {
                         ),
                         elevation: 0,
                       ),
-                      child: const Text('View Details'),
+                      child: Text(langController.t('view_details')),
                     ),
                   ),
               ],
@@ -503,13 +533,21 @@ class _TwoCols extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const labelStyle = TextStyle(color: _mutedText, fontSize: 13.5, height: 1.25);
+    const labelStyle = TextStyle(
+      color: _mutedText,
+      fontSize: 13.5,
+      height: 1.25,
+    );
     return Row(
       children: [
         Expanded(
           child: Row(
             children: [
-              const Icon(Icons.attach_money_rounded, size: 18, color: _mutedText),
+              const Icon(
+                Icons.attach_money_rounded,
+                size: 18,
+                color: _mutedText,
+              ),
               const SizedBox(width: 6),
               Flexible(child: Text(leftText, style: labelStyle)),
             ],

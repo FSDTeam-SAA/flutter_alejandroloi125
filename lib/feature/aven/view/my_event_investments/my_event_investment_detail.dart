@@ -29,8 +29,9 @@ class _InvestmentDetailsState extends State<InvestmentDetails> {
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       setState(() => _loading = true);
       try {
-        final inv =
-        await context.read<InvestmentProvider>().getById(widget.investmentId);
+        final inv = await context.read<InvestmentProvider>().getById(
+          widget.investmentId,
+        );
         if (!mounted) return;
         setState(() {
           _inv = inv;
@@ -70,7 +71,10 @@ class _InvestmentDetailsState extends State<InvestmentDetails> {
       return const Scaffold(
         backgroundColor: Colors.black,
         body: Center(
-          child: Text('Investment not found', style: TextStyle(color: Colors.white70)),
+          child: Text(
+            'Investment not found',
+            style: TextStyle(color: Colors.white70),
+          ),
         ),
       );
     }
@@ -92,7 +96,10 @@ class _InvestmentDetailsState extends State<InvestmentDetails> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Get.back(),
         ),
-        title:  Text(langController.t('investments_details'), style: TextStyle(color: Colors.white)),
+        title: Text(
+          langController.t('investments_details'),
+          style: TextStyle(color: Colors.white),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
@@ -103,23 +110,55 @@ class _InvestmentDetailsState extends State<InvestmentDetails> {
 
             const SizedBox(height: 10),
             //const Text('Agriculture', style: TextStyle(color: _accent, fontSize: 12, fontWeight: FontWeight.w700)),
+            Text(
+              i.name,
+              style: TextStyle(
+                color: _accent,
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
             const SizedBox(height: 6),
 
-            Text(i.name,
-                style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
+            Text(
+              i.name,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
             const SizedBox(height: 6),
-            Text(i.description, style: const TextStyle(color: Colors.white70, fontSize: 13.5)),
+            Text(
+              i.description,
+              style: const TextStyle(color: Colors.white70, fontSize: 13.5),
+            ),
             const SizedBox(height: 10),
 
             if (i.location.isNotEmpty)
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(color: Colors.white12, borderRadius: BorderRadius.circular(20)),
-                child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  const Icon(Icons.place, color: Colors.white70, size: 14),
-                  const SizedBox(width: 6),
-                  Text(i.location, style: const TextStyle(color: Colors.white, fontSize: 12.5)),
-                ]),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white12,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.place, color: Colors.white70, size: 14),
+                    const SizedBox(width: 6),
+                    Text(
+                      i.location,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12.5,
+                      ),
+                    ),
+                  ],
+                ),
               ),
 
             const SizedBox(height: 12),
@@ -130,7 +169,10 @@ class _InvestmentDetailsState extends State<InvestmentDetails> {
                 _DividerDot(),
                 _StatCell(title: '—', subtitle: 'Backers'),
                 _DividerDot(),
-                _StatCell(title: daysLeft == null ? '-' : '$daysLeft', subtitle: 'Days left'),
+                _StatCell(
+                  title: daysLeft == null ? '-' : '$daysLeft',
+                  subtitle: 'Days left',
+                ),
               ],
             ),
             const SizedBox(height: 12),
@@ -146,16 +188,34 @@ class _InvestmentDetailsState extends State<InvestmentDetails> {
             ),
             const SizedBox(height: 14),
 
-             Text(langController.t('about_the_project'),
-                style: TextStyle(color: Colors.white, fontSize: 16.5, fontWeight: FontWeight.w800)),
+            Text(
+              langController.t('about_the_project'),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16.5,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
             const SizedBox(height: 8),
-            Text(i.description,
-                style: const TextStyle(color: Colors.white70, fontSize: 13.5, height: 1.45)),
+            Text(
+              i.description,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 13.5,
+                height: 1.45,
+              ),
+            ),
             const SizedBox(height: 14),
 
             if (i.images.isNotEmpty) ...[
-               Text(langController.t('gallery'),
-                  style: TextStyle(color: Colors.white, fontSize: 16.5, fontWeight: FontWeight.w800)),
+              Text(
+                langController.t('gallery'),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16.5,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               const SizedBox(height: 8),
               SizedBox(
                 height: 90,
@@ -167,7 +227,12 @@ class _InvestmentDetailsState extends State<InvestmentDetails> {
                     final img = i.images[idx].url;
                     return ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.network(img, width: 140, height: 90, fit: BoxFit.cover),
+                      child: Image.network(
+                        img,
+                        width: 140,
+                        height: 90,
+                        fit: BoxFit.cover,
+                      ),
                     );
                   },
                 ),
@@ -175,17 +240,35 @@ class _InvestmentDetailsState extends State<InvestmentDetails> {
               const SizedBox(height: 16),
             ],
 
-             Text(langController.t('investment_terms'),
-                style: TextStyle(color: Colors.white, fontSize: 16.5, fontWeight: FontWeight.w800)),
+            Text(
+              langController.t('investment_terms'),
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16.5,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
             const SizedBox(height: 8),
-            Text(i.investmentTerms.isEmpty ? '—' : i.investmentTerms,
-                style: const TextStyle(color: Colors.white70, fontSize: 13.5, height: 1.45)),
+            Text(
+              i.investmentTerms.isEmpty ? '—' : i.investmentTerms,
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 13.5,
+                height: 1.45,
+              ),
+            ),
 
             // NEW: Investors list (red box in your mock)
             if (investors.isNotEmpty) ...[
               const SizedBox(height: 18),
-              const Text('Investor',
-                  style: TextStyle(color: Colors.white, fontSize: 16.5, fontWeight: FontWeight.w800)),
+              const Text(
+                'Investor',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16.5,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               const SizedBox(height: 8),
               Column(
                 children: investors.map((iv) => _InvestorTile(iv)).toList(),
@@ -215,19 +298,17 @@ class _CoverHeader extends StatelessWidget {
                 : Image.network(url!, fit: BoxFit.cover),
           ),
         ),
-        // Positioned(
-        //   top: 8,
-        //   left: 8,
-        //   child: _round(ActionIcon.back, () => Get.back()),
-        // ),
+
         Positioned(
           top: 8,
           right: 8,
-          child: Row(children: [
-            _round(ActionIcon.share, () {}),
-            const SizedBox(width: 8),
-            _round(ActionIcon.heart, () {}),
-          ]),
+          child: Row(
+            children: [
+              _round(ActionIcon.share, () {}),
+              const SizedBox(width: 8),
+              _round(ActionIcon.heart, () {}),
+            ],
+          ),
         ),
       ],
     );
@@ -245,8 +326,10 @@ class _CoverHeader extends StatelessWidget {
       child: Container(
         height: 32,
         width: 32,
-        decoration:
-        BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(16)),
+        decoration: BoxDecoration(
+          color: Colors.black45,
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: Icon(data, color: Colors.white, size: 18),
       ),
     );
@@ -262,12 +345,24 @@ class _StatCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Expanded(
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(title,
-            style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w800)),
-        const SizedBox(height: 2),
-        Text(subtitle, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-      ]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -296,28 +391,37 @@ class _Investor {
 
   factory _Investor.fromMap(Map<String, dynamic> m) {
     // nested user object (common)
-    final user = (m['user'] is Map) ? Map<String, dynamic>.from(m['user']) : <String, dynamic>{};
+    final user = (m['user'] is Map)
+        ? Map<String, dynamic>.from(m['user'])
+        : <String, dynamic>{};
 
     String pickName(Map<String, dynamic> mm) =>
         (mm['fullName'] ??
-            mm['name'] ??
-            mm['username'] ??
-            (user['fullName'] ?? user['name'] ?? user['username']) ??
-            '—')
+                mm['name'] ??
+                mm['username'] ??
+                (user['fullName'] ?? user['name'] ?? user['username']) ??
+                '—')
             .toString();
 
     String pickAvatar(Map<String, dynamic> mm) =>
         (mm['avatar'] ??
-            mm['image'] ??
-            mm['photo'] ??
-            user['avatar'] ??
-            user['image'] ??
-            user['photo'] ??
-            '')
+                mm['image'] ??
+                mm['photo'] ??
+                user['avatar'] ??
+                user['image'] ??
+                user['photo'] ??
+                '')
             .toString();
 
     int pickAmount(Map<String, dynamic> mm) {
-      final keys = ['amount', 'investment_amount', 'value', 'investAmount', 'invested', 'price'];
+      final keys = [
+        'amount',
+        'investment_amount',
+        'value',
+        'investAmount',
+        'invested',
+        'price',
+      ];
       for (final k in keys) {
         final v = mm[k];
         final n = _asInt(v);
@@ -327,9 +431,12 @@ class _Investor {
     }
 
     String? pickWhen(Map<String, dynamic> mm) =>
-        (mm['createdAt'] ?? mm['date'] ?? mm['time'] ?? '').toString().trim().isEmpty
-            ? null
-            : (mm['createdAt'] ?? mm['date'] ?? mm['time']).toString();
+        (mm['createdAt'] ?? mm['date'] ?? mm['time'] ?? '')
+            .toString()
+            .trim()
+            .isEmpty
+        ? null
+        : (mm['createdAt'] ?? mm['date'] ?? mm['time']).toString();
 
     return _Investor(
       name: pickName(m),
@@ -350,36 +457,59 @@ class _InvestorTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+      ),
       child: Row(
         children: [
           _Avatar(url: data.avatarUrl, name: data.name),
           const SizedBox(width: 10),
           Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(data.name,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        data.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                            color: Colors.white, fontWeight: FontWeight.w700, fontSize: 13.5)),
-                  ),
-                  if (data.when != null)
-                    Text(data.when!,
-                        style: const TextStyle(color: Colors.white38, fontSize: 11)),
-                ],
-              ),
-              const SizedBox(height: 4),
-              const Text('Investment Amount:',
-                  style: TextStyle(color: Colors.white60, fontSize: 12)),
-            ]),
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13.5,
+                        ),
+                      ),
+                    ),
+                    if (data.when != null)
+                      Text(
+                        data.when!,
+                        style: const TextStyle(
+                          color: Colors.white38,
+                          fontSize: 11,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Investment Amount:',
+                  style: TextStyle(color: Colors.white60, fontSize: 12),
+                ),
+              ],
+            ),
           ),
           const SizedBox(width: 8),
-          Text('\$${_comma(data.amount)}',
-              style: const TextStyle(
-                  color: _accent, fontSize: 13.5, fontWeight: FontWeight.w700)),
+          Text(
+            '\$${_comma(data.amount)}',
+            style: const TextStyle(
+              color: _accent,
+              fontSize: 13.5,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
         ],
       ),
     );
@@ -400,7 +530,13 @@ class _Avatar extends StatelessWidget {
     return CircleAvatar(
       radius: 18,
       backgroundColor: Colors.white12,
-      child: Text(initial, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+      child: Text(
+        initial,
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
     );
   }
 }
@@ -460,7 +596,8 @@ List<_Investor> _extractInvestors(Investment inv) {
   }
 
   // 1) Try common dynamic properties on the model instance
-  List? list = tryProp('investors') ??
+  List? list =
+      tryProp('investors') ??
       tryProp('backers') ??
       tryProp('investments') ??
       tryProp('funders') ??
@@ -476,7 +613,8 @@ List<_Investor> _extractInvestors(Investment inv) {
           return (v is List) ? v : null;
         }
 
-        list = pick('investors') ??
+        list =
+            pick('investors') ??
             pick('backers') ??
             pick('investments') ??
             pick('funders') ??
@@ -492,7 +630,9 @@ List<_Investor> _extractInvestors(Investment inv) {
       final v = m[k];
       return (v is List) ? v : null;
     }
-    list = pick('investors') ??
+
+    list =
+        pick('investors') ??
         pick('backers') ??
         pick('investments') ??
         pick('funders') ??

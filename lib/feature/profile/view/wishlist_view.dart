@@ -1,5 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+
+import '../../../core/language/language_controller.dart';
 
 // ---- palette (match your app) ----
 const _bg = Color(0xFF0B0B0B);
@@ -42,16 +45,15 @@ class _WishlistViewState extends State<WishlistViewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final languageController = Get.put(LanguageController());
     return Scaffold(
       backgroundColor: _bg,
       appBar: AppBar(
         backgroundColor: _bg,
         elevation: 0,
-        leading: _BackCircle(
-          onTap: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'Wishlist',
+        leading: _BackCircle(onTap: () => Navigator.pop(context)),
+        title: Text(
+          languageController.t('wish_list'),
           style: TextStyle(
             color: _text,
             fontSize: 20,
@@ -65,6 +67,7 @@ class _WishlistViewState extends State<WishlistViewScreen> {
   }
 
   Widget _list() {
+    final languageController = Get.put(LanguageController());
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(12, 12, 12, 24),
       itemCount: _items.length,
@@ -149,33 +152,34 @@ class _WishlistViewState extends State<WishlistViewScreen> {
                                 onPressed: _moving.contains(item.id)
                                     ? null
                                     : () async {
-                                  setState(() => _moving.add(item.id));
-                                  await Future.delayed(
-                                    const Duration(milliseconds: 600),
-                                  );
-                                  setState(() {
-                                    _moving.remove(item.id);
-                                    _items.remove(item);
-                                  });
-                                  // TODO: actually move to cart in your app state
-                                },
+                                        setState(() => _moving.add(item.id));
+                                        await Future.delayed(
+                                          const Duration(milliseconds: 600),
+                                        );
+                                        setState(() {
+                                          _moving.remove(item.id);
+                                          _items.remove(item);
+                                        });
+                                        // TODO: actually move to cart in your app state
+                                      },
                                 child: _moving.contains(item.id)
                                     ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor:
-                                    AlwaysStoppedAnimation(Colors.white),
-                                  ),
-                                )
-                                    : const Text(
-                                  'Move to Cart',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 14,
-                                  ),
-                                ),
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation(
+                                            Colors.white,
+                                          ),
+                                        ),
+                                      )
+                                    : Text(
+                                        languageController.t('move_to_cart'),
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 14,
+                                        ),
+                                      ),
                               ),
                             ),
                           ),
@@ -187,7 +191,7 @@ class _WishlistViewState extends State<WishlistViewScreen> {
                             onTap: () => setState(() => _items.remove(item)),
                           ),
                         ],
-                      )
+                      ),
                     ],
                   ),
                 ),
@@ -325,7 +329,7 @@ class _EmptyState extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),
-            )
+            ),
           ],
         ),
       ),
@@ -340,8 +344,10 @@ Route wishlistRightToLeft(Widget page) {
     transitionDuration: const Duration(milliseconds: 320),
     reverseTransitionDuration: const Duration(milliseconds: 280),
     transitionsBuilder: (_, animation, __, child) {
-      final tween = Tween(begin: const Offset(1, 0), end: Offset.zero)
-          .chain(CurveTween(curve: Curves.easeInOut));
+      final tween = Tween(
+        begin: const Offset(1, 0),
+        end: Offset.zero,
+      ).chain(CurveTween(curve: Curves.easeInOut));
       return SlideTransition(position: animation.drive(tween), child: child);
     },
   );

@@ -166,14 +166,14 @@ class _ResetPasswordSecurityCodeState extends State<ResetPasswordSecurityCode> {
             ),
 
             const SizedBox(height: 10),
-            Center(
-              child: Text(
-                _seconds > 0
-                    ? 'Resend code in ${_seconds}s'
-                    : 'You can resend now',
-                style: bodyText1.copyWith(color: const Color(0xFFB5B7BA)),
-              ),
-            ),
+            // Center(
+            //   child: Text(
+            //     _seconds > 0
+            //         ? 'Resend code in ${_seconds}s'
+            //         : 'You can resend now',
+            //     style: bodyText1.copyWith(color: const Color(0xFFB5B7BA)),
+            //   ),
+            // ),
             const SizedBox(height: 20),
 
             SizedBox(

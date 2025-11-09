@@ -10,7 +10,6 @@ import 'package:alejandroloi/core/common/widgets/save_botton.dart';
 import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/styles.dart';
 
-
 import 'package:provider/provider.dart';
 
 import '../../../providers/auction_provider.dart';
@@ -77,7 +76,8 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
             primary: AppColors.bottomColor1,
             surface: AppColors.fieldColor,
             onSurface: Colors.white,
-          ), dialogTheme: DialogThemeData(backgroundColor: Colors.black),
+          ),
+          dialogTheme: DialogThemeData(backgroundColor: Colors.black),
         ),
         child: child!,
       ),
@@ -100,7 +100,8 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
             primary: AppColors.bottomColor1,
             surface: AppColors.fieldColor,
             onSurface: Colors.white,
-          ), dialogTheme: DialogThemeData(backgroundColor: Colors.black),
+          ),
+          dialogTheme: DialogThemeData(backgroundColor: Colors.black),
         ),
         child: child!,
       ),
@@ -132,27 +133,33 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
     if (!ok) {
       setState(() => _auto = AutovalidateMode.onUserInteraction);
       Get.snackbar(
-          backgroundColor: Colors.white,
-          colorText: Colors.black,
-          'Fix errors', 'Please correct the highlighted fields',
-          snackPosition: SnackPosition.TOP);
+        backgroundColor: Colors.white,
+        colorText: Colors.black,
+        'Fix errors',
+        'Please correct the highlighted fields',
+        snackPosition: SnackPosition.TOP,
+      );
       return;
     }
     if (_image == null) {
       Get.snackbar(
         backgroundColor: Colors.white,
-          colorText: Colors.black,
+        colorText: Colors.black,
 
-          'Image required', 'Please add a photo',
-          snackPosition: SnackPosition.TOP);
+        'Image required',
+        'Please add a photo',
+        snackPosition: SnackPosition.TOP,
+      );
       return;
     }
     if (_auctionMinutes == null) {
       Get.snackbar(
-          backgroundColor: Colors.white,
-          colorText: Colors.black,
-          'Duration required', 'Please choose a duration',
-          snackPosition: SnackPosition.TOP);
+        backgroundColor: Colors.white,
+        colorText: Colors.black,
+        'Duration required',
+        'Please choose a duration',
+        snackPosition: SnackPosition.TOP,
+      );
       return;
     }
 
@@ -182,20 +189,26 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
       final res = await prov.createAuction(req);
 
       Get.offAll(
-            () => const AppGround(initialIndex: 1, servicesInitialTab: 2),
+        () => const AppGround(initialIndex: 1, servicesInitialTab: 2),
         transition: Transition.rightToLeft,
         duration: const Duration(milliseconds: 350),
         curve: Curves.easeInOut,
       );
       Get.snackbar(
-          backgroundColor: Colors.white,
-          colorText: Colors.white,
-          'Success', res.message, snackPosition: SnackPosition.TOP);
+        backgroundColor: Colors.white,
+        colorText: Colors.black,
+        'Success',
+        res.message,
+        snackPosition: SnackPosition.TOP,
+      );
     } catch (e) {
       Get.snackbar(
-          backgroundColor: Colors.white,
-          colorText: Colors.white,
-          'Failed', e.toString(), snackPosition: SnackPosition.TOP);
+        backgroundColor: Colors.white,
+        colorText: Colors.black,
+        'Failed',
+        e.toString(),
+        snackPosition: SnackPosition.TOP,
+      );
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -232,7 +245,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                       onSelected: (val) {
                         if (val == null) return;
                         setState(() => _image = val);
-                                            },
+                      },
                     ),
                     const SizedBox(width: 15),
                     const ImagePickerSlot(),
@@ -243,7 +256,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                 Text(langController.t('auction_title'), style: bodyText1),
                 CustomTextField(
                   controller: _titleCtrl,
-                  hintText: "Enter your Auction title",
+                  hintText: langController.t('enter_auction_title'),
                   validator: (v) => _req(v, 'Title'),
                 ),
 
@@ -251,7 +264,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                 Text(langController.t('category'), style: bodyText1),
                 CustomTextField(
                   controller: _categoryCtrl,
-                  hintText: 'Enter your Category Name (e.g: Auction,Done)',
+                  hintText: langController.t('enter_category'),
                   validator: (v) => _req(v, 'Category'),
                 ),
 
@@ -268,8 +281,8 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                       controller: _descCtrl,
                       maxLines: 5,
                       style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        hintText: "Describe your Auction in detail",
+                      decoration: InputDecoration(
+                        hintText: langController.t('enter_auctions_details'),
                         border: InputBorder.none,
                         hintStyle: TextStyle(
                           color: Color(0xFFBFBFBF),
@@ -283,10 +296,10 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                 ),
 
                 const SizedBox(height: 8),
-                Text(langController.t('starting_bid'), style: bodyText1),
+                Text(langController.t('funding_goal'), style: bodyText1),
                 CustomTextField(
                   controller: _startingBidCtrl,
-                  hintText: "Enter amount",
+                  hintText: langController.t('enter_amount'),
                   prefixIcon: Icons.attach_money,
                   keyboardType: TextInputType.number,
                   validator: (v) => _numReq(v, 'Starting bid'),
@@ -298,7 +311,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                   children: [
                     Expanded(
                       child: _DurationPill(
-                        label: '10 minutes',
+                        label: langController.t('10min'),
                         minutes: 10,
                         selectedMinutes: _auctionMinutes,
                         onTap: () => setState(() => _auctionMinutes = 10),
@@ -307,7 +320,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: _DurationPill(
-                        label: '20 minutes',
+                        label: langController.t('20min'),
                         minutes: 20,
                         selectedMinutes: _auctionMinutes,
                         onTap: () => setState(() => _auctionMinutes = 20),
@@ -320,7 +333,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                   children: [
                     Expanded(
                       child: _DurationPill(
-                        label: '30 minutes',
+                        label: langController.t('30min'),
                         minutes: 30,
                         selectedMinutes: _auctionMinutes,
                         onTap: () => setState(() => _auctionMinutes = 30),
@@ -329,7 +342,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: _DurationPill(
-                        label: '1 hour',
+                        label: langController.t('1hr'),
                         minutes: 60,
                         selectedMinutes: _auctionMinutes,
                         onTap: () => setState(() => _auctionMinutes = 60),
@@ -342,7 +355,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                 Text(langController.t('location'), style: bodyText1),
                 CustomTextField(
                   controller: _locationCtrl,
-                  hintText: "Enter location",
+                  hintText: langController.t('enter_location'),
                   prefixIcon: Icons.location_on_outlined,
                   validator: (v) => _req(v, 'Location'),
                 ),
@@ -356,7 +369,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                         child: AbsorbPointer(
                           child: CustomTextField(
                             controller: _dateCtrl,
-                            hintText: "Date",
+                            hintText: langController.t('date'),
                             prefixIcon: Icons.calendar_today_outlined,
                             showBorder: true,
                             validator: (v) => _req(v, 'Date'),
@@ -371,7 +384,7 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
                         child: AbsorbPointer(
                           child: CustomTextField(
                             controller: _timeCtrl,
-                            hintText: "Time",
+                            hintText: langController.t('time'),
                             prefixIcon: Icons.watch_later_outlined,
                             showBorder: true,
                             validator: (v) => _req(v, 'Time'),
@@ -384,7 +397,9 @@ class _CreateAuctionsViewState extends State<CreateAuctionsView> {
 
                 const SizedBox(height: 15),
                 bottomWidget(
-                  text: _submitting ? "${langController.t('creating')}..." : langController.t('create_auction'),
+                  text: _submitting
+                      ? "${langController.t('creating')}..."
+                      : langController.t('create_auction'),
                   onTap: _submitting ? null : _submit,
                 ),
                 const SizedBox(height: 10),
@@ -414,8 +429,9 @@ class _DurationPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final selected = selectedMinutes == minutes;
     final border = selected ? const Color(0xFFFF8A34) : Colors.white24;
-    final fill =
-    selected ? const Color(0xFFFF8A34).withOpacity(0.12) : Colors.transparent;
+    final fill = selected
+        ? const Color(0xFFFF8A34).withOpacity(0.12)
+        : Colors.transparent;
     final text = selected ? const Color(0xFFFF8A34) : Colors.white70;
 
     return InkWell(

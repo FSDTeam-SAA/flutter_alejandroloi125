@@ -48,12 +48,15 @@ class _MyInvestmentScreenState extends State<MyInvestmentScreen> {
   Widget build(BuildContext context) {
     final prov = context.watch<InvestmentProvider>();
 
+
     return Scaffold(
+
       backgroundColor: const Color(0xFF0D0F12),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _refresh,
           child: Builder(
+
             builder: (_) {
               if (prov.loading && prov.items.isEmpty) {
                 return const Center(child: CircularProgressIndicator());
@@ -64,9 +67,15 @@ class _MyInvestmentScreenState extends State<MyInvestmentScreen> {
                   padding: const EdgeInsets.all(16),
                   children: [
                     const SizedBox(height: 80),
-                    Text(prov.error!, style: const TextStyle(color: Colors.redAccent)),
+                    Text(
+                      prov.error!,
+                      style: const TextStyle(color: Colors.redAccent),
+                    ),
                     const SizedBox(height: 12),
-                    TextButton(onPressed: () => prov.fetch(page: 1), child: const Text('Retry')),
+                    TextButton(
+                      onPressed: () => prov.fetch(page: 1),
+                      child: const Text('Retry'),
+                    ),
                   ],
                 );
               }
@@ -77,7 +86,10 @@ class _MyInvestmentScreenState extends State<MyInvestmentScreen> {
                   children: const [
                     SizedBox(height: 80),
                     Center(
-                      child: Text('No investments yet', style: TextStyle(color: Colors.white70)),
+                      child: Text(
+                        'No investments yet',
+                        style: TextStyle(color: Colors.white70),
+                      ),
                     ),
                   ],
                 );
@@ -86,7 +98,10 @@ class _MyInvestmentScreenState extends State<MyInvestmentScreen> {
               final uiItems = prov.items.map(_mapToItem).toList();
 
               return ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 itemCount: uiItems.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 16),
                 itemBuilder: (_, i) {
@@ -97,15 +112,22 @@ class _MyInvestmentScreenState extends State<MyInvestmentScreen> {
                       ? const Color(0xFF58D38C)
                       : const Color(0xFFFF8A34);
 
-                  final progress = ((it.progressPct ?? 0) / 100).clamp(0, 1).toDouble();
-                  final goalText = it.fundingGoal != null ? '\$${_comma(it.fundingGoal!)}' : '\$—';
-                  final daysLeftText = it.daysLeft != null ? '${it.daysLeft} days left' : '—';
+                  final progress = ((it.progressPct ?? 0) / 100)
+                      .clamp(0, 1)
+                      .toDouble();
+                  final goalText = it.fundingGoal != null
+                      ? '\$${_comma(it.fundingGoal!)}'
+                      : '\$—';
+                  final daysLeftText = it.daysLeft != null
+                      ? '${it.daysLeft} days left'
+                      : '—';
 
                   return _InvestmentCard(
                     status: status,
                     statusColor: statusColor,
                     networkImageUrl: it.imageUrl,
-                    fallbackAsset: it.imageAsset ?? 'assets/images/agriculture.jpg',
+                    fallbackAsset:
+                        it.imageAsset ?? 'assets/images/agriculture.jpg',
                     category: it.category ?? '',
                     title: it.name ?? '—',
                     description: it.description ?? '—',
@@ -114,32 +136,51 @@ class _MyInvestmentScreenState extends State<MyInvestmentScreen> {
                     daysLeftText: daysLeftText,
                     showCompleted: status.toLowerCase().contains('complete'),
                     onDelete: () async {
-                      final ok = await showDialog<bool>(
-                        context: context,
-                        builder: (_) => AlertDialog(
-                          title: const Text('Delete investment?'),
-                          content: const Text('This action cannot be undone.'),
-                          actions: [
-                            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-                            TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
-                          ],
-                        ),
-                      ) ?? false;
+                      final ok =
+                          await showDialog<bool>(
+                            context: context,
+                            builder: (_) => AlertDialog(
+                              title: const Text('Delete investment?'),
+                              content: const Text(
+                                'This action cannot be undone.',
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context, true),
+                                  child: const Text('Delete'),
+                                ),
+                              ],
+                            ),
+                          ) ??
+                          false;
                       if (!ok) return;
 
                       await context.read<InvestmentProvider>().delete(it.id);
                       final err = context.read<InvestmentProvider>().error;
                       if (err != null) {
-                        Get.snackbar('Error', err, snackPosition: SnackPosition.TOP);
+                        Get.snackbar(
+                          'Error',
+                          err,
+                          snackPosition: SnackPosition.TOP,
+                        );
                       } else {
-                        Get.snackbar('Deleted', 'Investment removed', snackPosition: SnackPosition.TOP);
+                        Get.snackbar(
+                          'Deleted',
+                          'Investment removed',
+                          snackPosition: SnackPosition.TOP,
+                        );
                       }
                     },
                     onView: () {
                       Get.to(
-                            () => MyInvestmentDetailScreen(
+                        () => MyInvestmentDetailScreen(
                           investmentId: it.id,
-                          detail: it.toDetail(), // keeps existing design/content
+                          detail: it.toDetail(),
                         ),
                         transition: Transition.rightToLeft,
                         duration: const Duration(milliseconds: 300),
@@ -200,31 +241,50 @@ class _InvestmentCard extends StatelessWidget {
         color: cardBg,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: const Color(0xFF242931)),
-        boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 12, offset: Offset(0, 6))],
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black54,
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         children: [
           Stack(
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
                 child: AspectRatio(
                   aspectRatio: 16 / 9,
                   child: networkImageUrl == null
-                      ? Image.asset(fallbackAsset, fit: BoxFit.cover, errorBuilder: (_, __, ___) => _brokenImage())
+                      ? Image.asset(
+                          fallbackAsset,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _brokenImage(),
+                        )
                       : Image.network(
-                    networkImageUrl!,
-                    fit: BoxFit.cover,
-                    loadingBuilder: (c, w, ev) => ev == null ? w : const Center(child: CircularProgressIndicator()),
-                    errorBuilder: (_, __, ___) => _brokenImage(),
-                  ),
+                          networkImageUrl!,
+                          fit: BoxFit.cover,
+                          loadingBuilder: (c, w, ev) => ev == null
+                              ? w
+                              : const Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                          errorBuilder: (_, __, ___) => _brokenImage(),
+                        ),
                 ),
               ),
               Positioned(
                 top: 10,
                 left: 10,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withOpacity(0.15),
                     borderRadius: BorderRadius.circular(12),
@@ -232,7 +292,12 @@ class _InvestmentCard extends StatelessWidget {
                   ),
                   child: Text(
                     status,
-                    style: TextStyle(color: statusColor, fontWeight: FontWeight.w600, fontSize: 12, letterSpacing: 0.2),
+                    style: TextStyle(
+                      color: statusColor,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                      letterSpacing: 0.2,
+                    ),
                   ),
                 ),
               ),
@@ -245,15 +310,32 @@ class _InvestmentCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(category, style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
+                Text(
+                  category,
+                  style: TextStyle(
+                    color: const Color(0xFFFF6A00),
+                    fontSize: 12,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(title, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
                 const SizedBox(height: 6),
                 Text(
                   description,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 12.5, height: 1.35),
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.75),
+                    fontSize: 12.5,
+                    height: 1.35,
+                  ),
                 ),
                 const SizedBox(height: 12),
 
@@ -272,12 +354,20 @@ class _InvestmentCard extends StatelessWidget {
                       children: [
                         Text(
                           '${(progress * 100).round()}% of $goalText',
-                          style: const TextStyle(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w700),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
                         const Spacer(),
                         Text(
                           daysLeftText,
-                          style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12.5, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.6),
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ],
                     ),
@@ -290,21 +380,46 @@ class _InvestmentCard extends StatelessWidget {
                     Expanded(
                       child: OutlinedButton(
                         style: ButtonStyle(
-                          backgroundColor: WidgetStateProperty.all(Colors.transparent),
-                          side: WidgetStateProperty.resolveWith<BorderSide>((states) {
-                            final disabled = states.contains(WidgetState.disabled);
-                            return BorderSide(color: const Color(0xFFFF6A00).withOpacity(disabled ? 0.45 : 1), width: 1.5);
+                          backgroundColor: WidgetStateProperty.all(
+                            Colors.transparent,
+                          ),
+                          side: WidgetStateProperty.resolveWith<BorderSide>((
+                            states,
+                          ) {
+                            final disabled = states.contains(
+                              WidgetState.disabled,
+                            );
+                            return BorderSide(
+                              color: const Color(
+                                0xFFFF6A00,
+                              ).withOpacity(disabled ? 0.45 : 1),
+                              width: 1.5,
+                            );
                           }),
-                          foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-                            final disabled = states.contains(WidgetState.disabled);
-                            return const Color(0xFFFF6A00).withOpacity(disabled ? 0.45 : 1);
-                          }),
-                          overlayColor: WidgetStateProperty.all(const Color(0xFFFF6A00).withOpacity(0.08)),
-                          shape: WidgetStateProperty.all(RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
-                          padding: WidgetStateProperty.all(const EdgeInsets.symmetric(vertical: 12)),
+                          foregroundColor:
+                              WidgetStateProperty.resolveWith<Color>((states) {
+                                final disabled = states.contains(
+                                  WidgetState.disabled,
+                                );
+                                return const Color(
+                                  0xFFFF6A00,
+                                ).withOpacity(disabled ? 0.45 : 1);
+                              }),
+                          overlayColor: WidgetStateProperty.all(
+                            const Color(0xFFFF6A00).withOpacity(0.08),
+                          ),
+                          shape: WidgetStateProperty.all(
+                            RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          padding: WidgetStateProperty.all(
+                            const EdgeInsets.symmetric(vertical: 12),
+                          ),
                         ),
                         onPressed: showCompleted ? null : onDelete,
                         child:  Text(langController.t('delete'), style: TextStyle(fontWeight: FontWeight.w700)),
+                      
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -313,7 +428,9 @@ class _InvestmentCard extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: accent,
                           foregroundColor: Colors.black,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           elevation: 0,
                         ),
@@ -331,8 +448,11 @@ class _InvestmentCard extends StatelessWidget {
     );
   }
 
-  Widget _brokenImage() =>
-      Container(color: Colors.black26, alignment: Alignment.center, child: const Icon(Icons.broken_image_outlined, color: Colors.white70));
+  Widget _brokenImage() => Container(
+    color: Colors.black26,
+    alignment: Alignment.center,
+    child: const Icon(Icons.broken_image_outlined, color: Colors.white70),
+  );
 }
 
 class _ProgressBar extends StatelessWidget {
@@ -397,7 +517,8 @@ class InvestmentItem {
     category: category,
     location: location,
     description: description,
-    terms: 'Min ticket: \$100\nTarget ROI: 8–12%\nLock-up: 12 months\nDividends paid quarterly',
+    terms:
+        'Min ticket: \$100\nTarget ROI: 8–12%\nLock-up: 12 months\nDividends paid quarterly',
     fundingGoal: fundingGoal,
     progressPct: progressPct,
     daysLeft: daysLeft,

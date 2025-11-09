@@ -212,6 +212,8 @@ class _SignUpScreenViewState extends State<SignUpScreenView> {
                 ),
               ),*/
 
+              const SizedBox(height: 10),
+
               // Social buttons (stubs)
             /*  const CustomOutlineContainer(
                 name: 'Continue With Google',
@@ -222,6 +224,10 @@ class _SignUpScreenViewState extends State<SignUpScreenView> {
                 name: 'Continue With Apple',
                 image: Images.macIcon,
               ),*/
+              // const CustomOutlineContainer(
+              //   name: 'Continue With Apple',
+              //   image: Images.macIcon,
+              // ),
             ],
           ),
         ),

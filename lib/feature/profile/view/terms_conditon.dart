@@ -1,21 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
+
+import '../../../core/language/language_controller.dart';
 
 class TermsConditionScreenView extends StatelessWidget {
   const TermsConditionScreenView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(backgroundColor: Colors.black,
-      appBar: AppBar(title: Text("Terms & Conditions",style: TextStyle(color: Colors.white,fontSize: 24,fontWeight: FontWeight.w700),),
+    final languageController = Get.put(LanguageController());
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        title: Text(
+          languageController.t('terms'),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
         iconTheme: IconThemeData(color: Colors.white),
         backgroundColor: Colors.black,
-
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
-          child: Text("""TÉRMINOS Y CONDICIONES DE USO DE LA APP
+          child: Text(
+            """TÉRMINOS Y CONDICIONES DE USO DE LA APP
 
 1. Introducción
 
@@ -106,8 +119,10 @@ En virtud de esa responsabilidad, podrán realizar compensaciones, retenciones u
 
 
 
-"""
-            ,style: TextStyle(fontSize: 14,color: Color(0xFFE0E0E0),),textAlign: TextAlign.justify,),
+""",
+            style: TextStyle(fontSize: 14, color: Color(0xFFE0E0E0)),
+            textAlign: TextAlign.justify,
+          ),
         ),
       ),
     );

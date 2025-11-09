@@ -8,6 +8,7 @@ import 'package:alejandroloi/providers/investment_provider.dart';
 import '../../../core/language/language_controller.dart';
 import '../../models/investment.dart';
 import '../invest.dart';
+import '../providers/investment_detail_provider.dart';
 
 // ===== Theme (match the mock) =====
 const _bg = Color(0xFF0F0F12);
@@ -83,9 +84,27 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
     }
   }
 
+
+
   @override
   Widget build(BuildContext context) {
     final langController = Get.put(LanguageController());
+
+    final p = context.watch<InvestmentDetailProvider>();
+
+    if (p.state == LoadState.loading) {
+      return const Scaffold(
+        backgroundColor: _bg,
+        body: Center(child: CircularProgressIndicator(color: _accent)),
+      );
+    }
+    if (p.state == LoadState.error) {
+      // keep your same error UI; just show p.error and call init() on Retry
+    }
+
+    // final inv = p.inv!; // from provider
+
+
     if (_loading) {
       return const Scaffold(
         backgroundColor: _bg,
@@ -155,6 +174,15 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
         'https://images.unsplash.com/photo-1524404794195-0f93a1c1a5a5?q=80&w=1200&auto=format&fit=crop';
     final goal = inv.fundingGoal ?? 25000; // mock shows $25,000
     final progress = inv.progressPct.clamp(0, 100);
+
+    final authorName     = inv.ownerName ?? 'Unknown';
+    final authorUsername = inv.ownerUsername ?? '';
+    final authorAvatar   = inv.ownerAvatarUrl ?? 'https://i.pravatar.cc/100?img=24';
+    final likeCount      = inv.likeCount ?? 0;
+    final viewCount      = inv.viewCount ?? 0; // if you don't have this yet, will show 0
+
+
+
     final daysLeft = _daysLeft(inv.fundingDuration) == 0
         ? 10
         : _daysLeft(inv.fundingDuration);
@@ -196,7 +224,17 @@ class _InvestmentDetailScreenState extends State<InvestmentDetailScreen> {
             const SizedBox(height: 10),
 
             // ===== HERO =====
-            _HeroCard(image: imageUrl),
+            _HeroCard(
+                image: imageUrl,
+              authorName: authorName,
+              authorUsername: authorUsername,
+              authorAvatar: authorAvatar,
+              likeCount: likeCount,
+              // viewCount: viewCount,
+              isFav: inv.isFavorite,
+              favBusy: p.favBusy,
+              onTapHeart: p.favBusy ? null : () => p.toggleFavorite(widget.investmentId),
+            ),
             const SizedBox(height: 14),
 
             // ===== CONTENT CARD =====
@@ -425,7 +463,32 @@ class _TopBar extends StatelessWidget {
 
 class _HeroCard extends StatelessWidget {
   final String image;
-  const _HeroCard({required this.image});
+  // NEW:
+  final String authorName;
+  final String authorAvatar;
+  final String authorUsername; // without '@'
+  final int likeCount;
+  // final int viewCount;
+  // const _HeroCard({required this.image});
+
+  final VoidCallback? onTapHeart; // NEW
+  final bool isFav;               // NEW
+  final bool favBusy;             // NEW
+
+  const _HeroCard({
+    required this.image,
+    required this.authorName,
+    required this.authorAvatar,
+    required this.authorUsername,
+    required this.likeCount,
+    // required this.viewCount,
+
+    this.onTapHeart,
+    this.isFav = false,
+    this.favBusy = false,
+
+
+  });
 
   bool get _isNetwork {
     final u = Uri.tryParse(image);
@@ -480,7 +543,11 @@ class _HeroCard extends StatelessWidget {
               children: [
                 // _roundBtn(const Icon(CupertinoIcons.back), onPressed: () => Get.back()),
                 const Spacer(),
-                _roundBtn(const Icon(CupertinoIcons.heart)),
+                // _roundBtn(const Icon(CupertinoIcons.heart)),
+                _roundBtn(
+                  Icon(isFav ? CupertinoIcons.heart_fill : CupertinoIcons.heart),
+                  onPressed: favBusy ? null : onTapHeart,
+                ),
               ],
             ),
           ),
@@ -502,40 +569,23 @@ class _HeroCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const CircleAvatar(
-                    radius: 12,
-                    backgroundImage: NetworkImage(
-                      'https://i.pravatar.cc/100?img=24',
-                    ),
-                  ),
+                  CircleAvatar(radius: 12, backgroundImage: NetworkImage(authorAvatar)),
                   const SizedBox(width: 8),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Eleanor_Pen',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
-                        ),
-                      ),
-                      Text(
-                        '@eleanorp',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.white.withOpacity(.9),
-                        ),
-                      ),
+                      Text(authorName,
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+                      if (authorUsername.isNotEmpty)
+                        Text('@$authorUsername',
+                            style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(.9))),
                     ],
                   ),
                   const SizedBox(width: 8),
-                  const _TinyPill(icon: CupertinoIcons.eye, label: '2.1k'),
+                  // const _TinyPill(icon: CupertinoIcons.eye, label: '2.1k'),
+                  // _TinyPill(icon: CupertinoIcons.eye, label: _abbr(viewCount)),
                   const SizedBox(width: 6),
-                  const _TinyPill(
-                    icon: CupertinoIcons.hand_thumbsup,
-                    label: '142',
-                  ),
+                  _TinyPill(icon: CupertinoIcons.hand_thumbsup, label: _abbr(likeCount)),
                 ],
               ),
             ),
@@ -593,29 +643,18 @@ class _TinyPill extends StatelessWidget {
         children: [
           Icon(icon, size: 12, color: Colors.white.withOpacity(.95)),
           const SizedBox(width: 5),
-          const Text(
-            // label dynamic below via RichText to keep style strict
-            '',
-            style: TextStyle(
-              fontSize: 0,
-            ), // placeholder (we'll render with RichText)
-          ),
-          RichText(
-            text: TextSpan(
-              text: label,
+          Text(label,
               style: const TextStyle(
-                fontSize: 11,
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                letterSpacing: .1,
-              ),
-            ),
-          ),
+                fontSize: 11, color: Colors.white,
+                fontWeight: FontWeight.w600, letterSpacing: .1,
+              )),
         ],
       ),
     );
   }
 }
+
+
 
 class _LocationPill extends StatelessWidget {
   final String label;
@@ -640,7 +679,7 @@ class _LocationPill extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            label,
+            label.toUpperCase(),
             style: const TextStyle(
               fontSize: 12,
               color: Colors.white,
@@ -864,6 +903,13 @@ int _daysLeft(String? fundingDuration) {
   if (s.contains('day')) return n;
   return n;
 }
+
+String _abbr(int n) {
+  if (n >= 1000000) return '${(n / 1000000).toStringAsFixed((n % 1000000 == 0) ? 0 : 1)}M';
+  if (n >= 1000)    return '${(n / 1000).toStringAsFixed((n % 1000 == 0) ? 0 : 1)}k';
+  return n.toString();
+}
+
 
 // Removes leading/trailing quotes or smart quotes so text never shows stray “ or ”
 String _scrubQuotes(String s) =>

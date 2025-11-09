@@ -3,8 +3,9 @@ import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
 import 'package:get/get_navigation/src/snackbar/snackbar.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';            // ⬅️ Add this
+import 'package:flutter_stripe/flutter_stripe.dart'; // ⬅️ Add this
 
+import '../../../../core/language/language_controller.dart';
 import '../../../../core/network/payment_service.dart';
 import '../../../../feature/auth/providers/auth_provider.dart';
 
@@ -42,6 +43,7 @@ class _MyEventAuctionPurchaseState extends State<MyEventAuctionPurchase> {
 
   @override
   Widget build(BuildContext context) {
+    final languageController = Get.find<LanguageController>();
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
@@ -57,19 +59,32 @@ class _MyEventAuctionPurchaseState extends State<MyEventAuctionPurchase> {
                     children: [
                       _RoundIconButton(
                         icon: Icons.arrow_back,
-                        onTap: () => Navigator.of(context, rootNavigator: true).maybePop(),
+                        onTap: () => Navigator.of(
+                          context,
+                          rootNavigator: true,
+                        ).maybePop(),
                       ),
                       const SizedBox(width: 12),
-                      const Text(
-                        'Auctions Purchase',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 18),
+                      Text(
+                        languageController.t('auction_purchase'),
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 18,
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 20),
 
-                  const Text('Auction Won!',
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16)),
+                  const Text(
+                    'Auction Won!',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
+                  ),
                   const SizedBox(height: 6),
                   const Opacity(
                     opacity: .85,
@@ -82,7 +97,10 @@ class _MyEventAuctionPurchaseState extends State<MyEventAuctionPurchase> {
 
                   // Product summary
                   Container(
-                    decoration: BoxDecoration(color: _card, borderRadius: BorderRadius.circular(12)),
+                    decoration: BoxDecoration(
+                      color: _card,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                     padding: const EdgeInsets.all(12),
                     child: Row(
                       children: [
@@ -100,10 +118,19 @@ class _MyEventAuctionPurchaseState extends State<MyEventAuctionPurchase> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(widget.itemTitle ?? 'Winning Item',
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+                              Text(
+                                widget.itemTitle ?? 't',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
                               const SizedBox(height: 6),
-                              _KVRow(label: 'Final Bid:', value: _money(widget.amount), valueAccent: true),
+                              _KVRow(
+                                label: 'Final Bid:',
+                                value: _money(widget.amount),
+                                valueAccent: true,
+                              ),
                               const SizedBox(height: 6),
                               const _EndedWhen('Ended recently'),
                             ],
@@ -116,13 +143,27 @@ class _MyEventAuctionPurchaseState extends State<MyEventAuctionPurchase> {
                   const SizedBox(height: 18),
 
                   // Summary
-                  const _SectionHeader('Order Summary'),
-                  const SizedBox(height: 8),
-                  _SummaryRow('Winning Bid:', _money(widget.amount)),
-                  _SummaryRow('Shipping:', _money(_shipping)),
-                  _SummaryRow('Tax:', _money(_tax)),
-                  const Divider(height: 20, thickness: 1, color: Colors.white12),
-                  _SummaryRow('Total:', _money(_total), bold: true),
+                  _SectionHeader(languageController.t('order_summary')),
+                  SizedBox(height: 8),
+                  _SummaryRow(
+                    languageController.t('winning_bid'),
+                    _money(widget.amount),
+                  ),
+                  _SummaryRow(
+                    languageController.t('shipping_fee'),
+                    _money(_shipping),
+                  ),
+                  _SummaryRow(languageController.t('tax'), _money(_tax)),
+                  const Divider(
+                    height: 20,
+                    thickness: 1,
+                    color: Colors.white12,
+                  ),
+                  _SummaryRow(
+                    languageController.t('total'),
+                    _money(_total),
+                    bold: true,
+                  ),
 
                   const SizedBox(height: 14),
 
@@ -137,13 +178,17 @@ class _MyEventAuctionPurchaseState extends State<MyEventAuctionPurchase> {
                     ),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Icon(Icons.info_outline, color: _accent, size: 18),
                         SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'By completing this purchase, you agree to our Terms of Service.',
-                            style: TextStyle(color: Colors.white, fontSize: 12.5, height: 1.3),
+                            languageController.t('terms_note'),
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 12.5,
+                              height: 1.3,
+                            ),
                           ),
                         ),
                       ],
@@ -160,10 +205,15 @@ class _MyEventAuctionPurchaseState extends State<MyEventAuctionPurchase> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _accent,
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                       onPressed: _paying ? null : _pay,
-                      child: Text('Pay ${_money(_total)}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                      child: Text(
+                        '${languageController.t('pay_now')} ${_money(_total)}',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
                     ),
                   ),
                 ],
@@ -194,10 +244,12 @@ class _MyEventAuctionPurchaseState extends State<MyEventAuctionPurchase> {
         // );
 
         Get.snackbar(
-            backgroundColor: Colors.white,
-            colorText: Colors.black,
-            'Error','Please sign in to continue',
-            snackPosition: SnackPosition.TOP);
+          backgroundColor: Colors.white,
+          colorText: Colors.black,
+          'Error',
+          'Please sign in to continue',
+          snackPosition: SnackPosition.TOP,
+        );
 
         return;
       }
@@ -232,20 +284,28 @@ class _MyEventAuctionPurchaseState extends State<MyEventAuctionPurchase> {
       // );
 
       Get.snackbar(
-          backgroundColor: Colors.white,
-          colorText: Colors.white,
-          'success','Payment successful',
-          snackPosition: SnackPosition.TOP);
+        backgroundColor: Colors.white,
+        colorText: Colors.white,
+        'success',
+        'Payment successful',
+        snackPosition: SnackPosition.TOP,
+      );
 
       Navigator.of(context, rootNavigator: true).pop();
     } on StripeException catch (e) {
       final canceled = e.error.code == FailureCode.Canceled;
-      final message = e.error.localizedMessage ?? (canceled ? 'Payment cancelled' : 'Payment failed');
+      final message =
+          e.error.localizedMessage ??
+          (canceled ? 'Payment cancelled' : 'Payment failed');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
       if (mounted) setState(() => _paying = false);
     }
@@ -283,16 +343,15 @@ class _SafeImage extends StatelessWidget {
         fit: fit,
         errorBuilder: (_, __, ___) =>
             Image.asset(assetFallback, width: width, height: height, fit: fit),
-        loadingBuilder: (c, child, prog) =>
-        (prog == null)
+        loadingBuilder: (c, child, prog) => (prog == null)
             ? child
             : SizedBox(
-          width: width,
-          height: height,
-          child: const Center(
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        ),
+                width: width,
+                height: height,
+                child: const Center(
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
       );
     }
     return Image.asset(assetFallback, width: width, height: height, fit: fit);
@@ -312,7 +371,10 @@ class _RoundIconButton extends StatelessWidget {
       child: Container(
         height: 36,
         width: 36,
-        decoration: BoxDecoration(color: Colors.black.withOpacity(0.45), borderRadius: BorderRadius.circular(18)),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.45),
+          borderRadius: BorderRadius.circular(18),
+        ),
         child: Icon(icon, size: 20, color: Colors.white),
       ),
     );
@@ -322,17 +384,30 @@ class _RoundIconButton extends StatelessWidget {
 class _KVRow extends StatelessWidget {
   final String label, value;
   final bool valueAccent;
-  const _KVRow({required this.label, required this.value, this.valueAccent = false});
+  const _KVRow({
+    required this.label,
+    required this.value,
+    this.valueAccent = false,
+  });
   @override
   Widget build(BuildContext context) {
-    return Row(children: [
-      Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-      const SizedBox(width: 4),
-      Text(
-        value,
-        style: TextStyle(color: valueAccent ? _accent : Colors.white, fontSize: 12, fontWeight: FontWeight.w700),
-      ),
-    ]);
+    return Row(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: TextStyle(
+            color: valueAccent ? _accent : Colors.white,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -341,11 +416,13 @@ class _EndedWhen extends StatelessWidget {
   const _EndedWhen(this.text);
   @override
   Widget build(BuildContext context) {
-    return Row(children: [
-      const Icon(Icons.access_time, size: 14, color: Colors.white70),
-      const SizedBox(width: 5),
-      Text(text, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-    ]);
+    return Row(
+      children: [
+        const Icon(Icons.access_time, size: 14, color: Colors.white70),
+        const SizedBox(width: 5),
+        Text(text, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+      ],
+    );
   }
 }
 
@@ -355,13 +432,26 @@ class _SectionHeader extends StatelessWidget {
   const _SectionHeader(this.title, {this.sub});
   @override
   Widget build(BuildContext context) {
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 15)),
-      if (sub != null) ...[
-        const SizedBox(height: 4),
-        Text(sub!, style: const TextStyle(color: Colors.white70, fontSize: 12.5)),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+            fontSize: 15,
+          ),
+        ),
+        if (sub != null) ...[
+          const SizedBox(height: 4),
+          Text(
+            sub!,
+            style: const TextStyle(color: Colors.white70, fontSize: 12.5),
+          ),
+        ],
       ],
-    ]);
+    );
   }
 }
 
@@ -371,11 +461,19 @@ class _SummaryRow extends StatelessWidget {
   const _SummaryRow(this.left, this.right, {this.bold = false});
   @override
   Widget build(BuildContext context) {
-    final style =
-    TextStyle(color: Colors.white, fontSize: 14, fontWeight: bold ? FontWeight.w700 : FontWeight.w600);
+    final style = TextStyle(
+      color: Colors.white,
+      fontSize: 14,
+      fontWeight: bold ? FontWeight.w700 : FontWeight.w600,
+    );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(children: [Expanded(child: Text(left, style: style)), Text(right, style: style)]),
+      child: Row(
+        children: [
+          Expanded(child: Text(left, style: style)),
+          Text(right, style: style),
+        ],
+      ),
     );
   }
 }

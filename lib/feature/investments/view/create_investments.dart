@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:alejandroloi/core/common/widgets/custom_image.dart';     // ImagePickerSlot
+import 'package:alejandroloi/core/common/widgets/custom_image.dart'; // ImagePickerSlot
 import 'package:alejandroloi/core/common/widgets/custom_text_field.dart';
-import 'package:alejandroloi/core/common/widgets/save_botton.dart';      // bottomWidget
+import 'package:alejandroloi/core/common/widgets/save_botton.dart'; // bottomWidget
 import 'package:alejandroloi/core/util/app_colors.dart';
 import 'package:alejandroloi/core/util/styles.dart';
 
@@ -28,10 +28,9 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
   AutovalidateMode _auto = AutovalidateMode.disabled;
   bool _submitting = false;
 
-
-
   // Local fields
-  dynamic _image; // keep dynamic since ImagePickerSlot's type may vary (File/XFile/String)
+  dynamic
+  _image; // keep dynamic since ImagePickerSlot's type may vary (File/XFile/String)
   String _title = '';
   String _category = '';
   String _desc = '';
@@ -54,16 +53,17 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
     return null;
   }
 
-
-
   Future<void> _submit() async {
     final okForm = _formKey.currentState?.validate() ?? false;
     if (!okForm) {
       setState(() => _auto = AutovalidateMode.onUserInteraction);
       Get.snackbar(
-          backgroundColor: Colors.white,
-          colorText: Colors.black,
-          'Fix errors', 'Please correct the highlighted fields', snackPosition: SnackPosition.TOP);
+        backgroundColor: Colors.white,
+        colorText: Colors.black,
+        'Fix errors',
+        'Please correct the highlighted fields',
+        snackPosition: SnackPosition.TOP,
+      );
       return;
     }
     if (_submitting) return;
@@ -97,26 +97,34 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
       Get.back(result: true);
 
       Get.snackbar(
-          backgroundColor: Colors.white,
-          colorText: Colors.black,
-          'Success', 'Investment created successfully', snackPosition: SnackPosition.TOP);
+        backgroundColor: Colors.white,
+        colorText: Colors.black,
+        'Success',
+        'Investment created successfully',
+        snackPosition: SnackPosition.TOP,
+      );
 
       // RIGHT: go to AppGround, select Services bottom tab + Investments inner tab
       Get.offAll(
-            () => const AppGround(
-          initialIndex: 1,        // bottom bar: 0=Home, 1=Services, 2=Event, 3=Profile
-          servicesInitialTab: 0,  // ServiceView's pills: 0=Investments, 1=Project, 2=Auctions
+        () => const AppGround(
+          initialIndex: 1, // bottom bar: 0=Home, 1=Services, 2=Event, 3=Profile
+          servicesInitialTab:
+              0, // ServiceView's pills: 0=Investments, 1=Project, 2=Auctions
         ),
         transition: Transition.rightToLeft,
         duration: Duration(milliseconds: 350),
         curve: Curves.easeInOut,
       );
-
     } else {
-      Get.snackbar(backgroundColor: Colors.white,'Error', inv.error ?? 'Create failed', snackPosition: SnackPosition.TOP,colorText: Colors.black);
+      Get.snackbar(
+        backgroundColor: Colors.white,
+        'Error',
+        inv.error ?? 'Create failed',
+        snackPosition: SnackPosition.TOP,
+        colorText: Colors.black,
+      );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -124,7 +132,7 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: Padding(
-        padding:  EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Form(
             key: _formKey,
@@ -149,7 +157,7 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
                 Text(langController.t('investment_title'), style: bodyText1),
                 const SizedBox(height: 6),
                 CustomTextField(
-                  hintText: 'Enter your Investment title',
+                  hintText: langController.t('enter_investment_title'),
                   onChanged: (v) => _title = v,
                   validator: (v) => _requiredField(v, 'Title'),
                 ),
@@ -158,7 +166,7 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
                 Text(langController.t('category'), style: bodyText1),
                 const SizedBox(height: 6),
                 CustomTextField(
-                  hintText: 'Enter your Category Name(e.g: Invest,Done)',
+                  hintText: langController.t('enter_category'),
                   onChanged: (v) => _category = v,
                   validator: (v) => _requiredField(v, 'Category'),
                 ),
@@ -178,8 +186,8 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
                       keyboardType: TextInputType.multiline,
                       style: const TextStyle(color: Colors.white),
                       cursorColor: Colors.white,
-                      decoration: const InputDecoration(
-                        hintText: 'Describe your Investment in detail',
+                      decoration: InputDecoration(
+                        hintText: langController.t('entert_description'),
                         border: InputBorder.none,
                         hintStyle: TextStyle(
                           color: Color(0xFFBFBFBF),
@@ -196,7 +204,7 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
                 const SizedBox(height: 8),
                 Text(langController.t('funding_goal'), style: bodyText1),
                 CustomTextField(
-                  hintText: 'Enter amount',
+                  hintText: langController.t('enter_amount'),
                   prefixIcon: Icons.attach_money,
                   keyboardType: TextInputType.number,
                   onChanged: (v) => _fundingGoal = v,
@@ -206,17 +214,18 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
                 const SizedBox(height: 8),
                 Text(langController.t('funding_duration'), style: bodyText1),
                 CustomTextField(
-                  hintText: 'Number of day(e.g: 30)',
+                  hintText: langController.t('number_of_days'),
                   prefixIcon: Icons.watch_later_outlined,
                   keyboardType: TextInputType.number,
                   onChanged: (v) => _durationDays = v,
-                  validator: (v) => _numberRequired(v, 'Funding duration (days)', min: 1),
+                  validator: (v) =>
+                      _numberRequired(v, 'Funding duration (days)', min: 1),
                 ),
 
                 const SizedBox(height: 8),
                 Text(langController.t('location'), style: bodyText1),
                 CustomTextField(
-                  hintText: 'Enter Location',
+                  hintText: langController.t('enter_location'),
                   prefixIcon: Icons.location_on_outlined,
                   onChanged: (v) => _location = v,
                   validator: (v) => _requiredField(v, 'Location'),
@@ -237,9 +246,9 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
                       keyboardType: TextInputType.multiline,
                       style: const TextStyle(color: Colors.white),
                       cursorColor: Colors.white,
-                      decoration: const InputDecoration(
-                        hintText:
-                        'Describe the investment terms and potential returns.',
+                      decoration: InputDecoration(
+                        hintText: langController.t('describe_investment_terms'),
+
                         hintStyle: TextStyle(
                           color: Color(0xFFBFBFBF),
                           fontWeight: FontWeight.w400,
@@ -255,7 +264,9 @@ class _CreateInvestmentsViewState extends State<CreateInvestmentsView> {
 
                 const SizedBox(height: 15),
                 bottomWidget(
-                  text: _submitting ? 'Creating...' : langController.t('create_investment'),
+                  text: _submitting
+                      ? 'Creating...'
+                      : langController.t('create_investment'),
                   onTap: _submitting ? null : _submit,
                 ),
                 const SizedBox(height: 10),

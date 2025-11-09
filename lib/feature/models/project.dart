@@ -1,4 +1,123 @@
 // lib/feature/project/model/project.dart
+
+// ---------- Common helpers ----------
+int _asInt(dynamic v) {
+  if (v is num) return v.toInt();
+  if (v is String) {
+    final m = RegExp(r'-?\d+').firstMatch(v.trim());
+    if (m != null) return int.tryParse(m.group(0)!) ?? 0;
+  }
+  return 0;
+}
+
+// ---------- Owner (createdBy) models ----------
+class Avatar {
+  final String? url;
+  final String? publicId;
+  const Avatar({this.url, this.publicId});
+
+  factory Avatar.fromDynamic(dynamic v) {
+    if (v is Map) {
+      final m = Map<String, dynamic>.from(v as Map);
+      return Avatar(
+        url: (m['url'] ?? m['imageUrl'] ?? m['link'])?.toString(),
+        publicId: (m['public_id'] ?? m['publicId'])?.toString(),
+      );
+    }
+    if (v is String && v.isNotEmpty) {
+      return Avatar(url: v);
+    }
+    return const Avatar();
+  }
+}
+
+class CreatedBy {
+  final String? id;
+  final String? name;
+  final String? username;
+  final Avatar avatar;
+
+  const CreatedBy({this.id, this.name, this.username, required this.avatar});
+
+  String? get avatarUrl => avatar.url;
+
+  factory CreatedBy.fromDynamic(dynamic v) {
+    final m = (v is Map) ? Map<String, dynamic>.from(v as Map) : const <String, dynamic>{};
+    return CreatedBy(
+      id: (m['_id'] ?? m['id'])?.toString(),
+      name: (m['name'] ?? '').toString(),
+      username: (m['username'] ?? '').toString(),
+      avatar: Avatar.fromDynamic(m['avatar']),
+    );
+  }
+}
+
+// ---------- Proposal models ----------
+class AvatarRef {
+  final String? url;
+  final String? publicId;
+  const AvatarRef({this.url, this.publicId});
+
+  factory AvatarRef.fromDynamic(dynamic v) {
+    if (v is Map) {
+      final m = Map<String, dynamic>.from(v as Map);
+      return AvatarRef(
+        url: (m['url'] ?? m['imageUrl'] ?? m['link'])?.toString(),
+        publicId: (m['public_id'] ?? m['publicId'])?.toString(),
+      );
+    }
+    if (v is String && v.isNotEmpty) {
+      return AvatarRef(url: v);
+    }
+    return const AvatarRef();
+  }
+}
+
+class UserMini {
+  final String? id;
+  final String? name;
+  final String? username;
+  final AvatarRef avatar;
+  const UserMini({this.id, this.name, this.username, required this.avatar});
+
+  String? get avatarUrl => avatar.url;
+
+  factory UserMini.fromDynamic(dynamic v) {
+    final m = (v is Map) ? Map<String, dynamic>.from(v as Map) : const <String, dynamic>{};
+    return UserMini(
+      id: (m['_id'] ?? m['id'] ?? '').toString(),
+      name: (m['name'] ?? '').toString(),
+      username: (m['username'] ?? '').toString(),
+      avatar: AvatarRef.fromDynamic(m['avatar']),
+    );
+  }
+}
+
+class ProjectProposal {
+  final UserMini user;
+  final String coverLetter;
+  final int budget;
+  final int deliveryDays;
+  final String status;
+
+  const ProjectProposal({
+    required this.user,
+    required this.coverLetter,
+    required this.budget,
+    required this.deliveryDays,
+    required this.status,
+  });
+
+  factory ProjectProposal.fromJson(Map<String, dynamic> j) => ProjectProposal(
+    user: UserMini.fromDynamic(j['userId']),
+    coverLetter: (j['cover_letter'] ?? '').toString(),
+    budget: _asInt(j['budget']),
+    deliveryDays: _asInt(j['delivery_timer']),
+    status: (j['status'] ?? '').toString(),
+  );
+}
+
+// ---------- Project ----------
 class Project {
   final String id;
   final String title;
@@ -11,6 +130,11 @@ class Project {
   final List<String> skills;
   final String? status;
 
+  final CreatedBy? createdBy;
+  final List<ProjectProposal> proposals;
+
+  String? get ownerAvatarUrl => createdBy?.avatarUrl;
+
   Project({
     required this.id,
     required this.title,
@@ -22,10 +146,12 @@ class Project {
     required this.location,
     required this.skills,
     this.status,
+    this.createdBy,
+    this.proposals = const [],
   });
 
   factory Project.fromJson(Map<String, dynamic> j) {
-    // category can come as string or [string]
+    // category can be a string or a list of strings
     String category;
     final c = j['category'];
     if (c is List) {
@@ -34,35 +160,7 @@ class Project {
       category = (c ?? '').toString();
     }
 
-    // deadline can be number-of-days or a string like "10 day"
-    // int days = 0;
-    // if (j['duration'] != null) {
-    //   days = (j['duration'] as num).toInt();
-    // } else if (j['duration'] is num) {
-    //   days = (j['duration'] as num).toInt();
-    // } else if (j['duration'] is String) {
-    //   final s = (j['duration'] as String);
-    //   final m = RegExp(r'\d+').firstMatch(s);
-    //   days = m == null ? 0 : int.parse(m.group(0)!);
-    // }
-
-    // ---- helpers ----
-    int _asInt(dynamic v) {
-      if (v is num) return v.toInt();
-      if (v is String) {
-        // pull first integer inside the string (e.g. "30", "30 days")
-        final m = RegExp(r'-?\d+').firstMatch(v.trim());
-        if (m != null) return int.tryParse(m.group(0)!) ?? 0;
-      }
-      return 0;
-    }
-
-    // duration / deadlineDays may be "30" or "30 days" or a number
-    final deadlineDays = _asInt(
-      j['duration'] ?? j['deadline'] ?? j['deadlineDays'],
-    );
-
-    // skills can be list or comma string
+    // skills can be list or comma-separated string
     List<String> skills = [];
     final sk = j['skills'];
     if (sk is List) {
@@ -71,17 +169,31 @@ class Project {
       skills = sk.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
     }
 
+    // proposals array
+    List<ProjectProposal> proposals = [];
+    final pp = j['project_proposal'];
+    if (pp is List) {
+      proposals = pp
+          .where((e) => e is Map)
+          .map<ProjectProposal>((e) => ProjectProposal.fromJson(
+        Map<String, dynamic>.from(e as Map),
+      ))
+          .toList();
+    }
+
     return Project(
       id: (j['_id'] ?? j['id'] ?? '').toString(),
       title: (j['title'] ?? j['name'] ?? '').toString(),
       description: (j['description'] ?? '').toString(),
       category: category,
-      minBudget: (j['min_budget'] ?? j['budget_min'] ?? 0 as num).toInt(),
-      maxBudget: (j['max_budget'] ?? j['budget_max'] ?? 0 as num).toInt(),
-      deadlineDays: deadlineDays,
+      minBudget: _asInt(j['min_budget'] ?? j['budget_min']),
+      maxBudget: _asInt(j['max_budget'] ?? j['budget_max']),
+      deadlineDays: _asInt(j['duration'] ?? j['deadline'] ?? j['deadlineDays']),
       location: (j['location'] ?? '').toString(),
       skills: skills,
       status: j['status']?.toString(),
+      createdBy: CreatedBy.fromDynamic(j['createdBy']),
+      proposals: proposals,
     );
   }
 }

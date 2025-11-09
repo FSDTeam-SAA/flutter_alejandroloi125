@@ -2,7 +2,7 @@ import 'package:alejandroloi/core/common/widgets/pilltabs.dart';
 import 'package:alejandroloi/feature/app_ground.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
+
 
 import '../../../core/language/language_controller.dart';
 import 'my_auctions/my_auctions.dart';

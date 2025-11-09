@@ -1,4 +1,5 @@
 // lib/feature/auction/view/my_auction_screen.dart
+import 'package:alejandroloi/core/language/language_controller.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -238,6 +239,8 @@ class _MyAuctionScreenState extends State<MyAuctionScreen> {
   Widget build(BuildContext context) {
     final items = _items;
 
+    final langController = Get.put(LanguageController());
+
     return Scaffold(
       backgroundColor: const Color(0xFF0D0F12),
       // REMOVED the local AppBar to avoid the extra dark header area.
@@ -431,6 +434,7 @@ class _AuctionCard extends StatelessWidget {
     const cardBg = Color(0xFF15181C);
     const border = Color(0xFF242931);
     const accent = Color(0xFFFF8A34);
+    final langController = Get.put(LanguageController());
 
     return Container(
       decoration: BoxDecoration(
@@ -553,7 +557,7 @@ class _AuctionCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                         onPressed: onDelete,
-                        child: const Text('Delete'),
+                        child: Text(langController.t('delete')),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -569,7 +573,7 @@ class _AuctionCard extends StatelessWidget {
                           elevation: 0,
                         ),
                         onPressed: onView,
-                        child: const Text('View Details'),
+                        child: Text(langController.t('view_details')),
                       ),
                     ),
                   ],

@@ -71,9 +71,12 @@ class _CreateProjectViewState extends State<CreateProjectView> {
       // );
 
       Get.snackbar(
-      backgroundColor: Colors.white,
-      colorText: Colors.black,
-      'Success', 'Please fix the errors above', snackPosition: SnackPosition.TOP);
+        backgroundColor: Colors.white,
+        colorText: Colors.black,
+        'Success',
+        'Please fix the errors above',
+        snackPosition: SnackPosition.TOP,
+      );
       return;
     }
 
@@ -98,14 +101,16 @@ class _CreateProjectViewState extends State<CreateProjectView> {
 
     if (ok) {
       Get.snackbar(
-          backgroundColor:  Colors.white,
-          colorText: Colors.black,
-          'Success', 'Project created successfully',
-          snackPosition: SnackPosition.TOP);
+        backgroundColor: Colors.white,
+        colorText: Colors.black,
+        'Success',
+        'Project created successfully',
+        snackPosition: SnackPosition.TOP,
+      );
 
       // Go to bottom-tab "Services" and the inner "Project" tab selected
       Get.offAll(
-            () => const AppGround(initialIndex: 1, servicesInitialTab: 1),
+        () => const AppGround(initialIndex: 1, servicesInitialTab: 1),
         transition: Transition.rightToLeft,
         duration: const Duration(milliseconds: 350),
         curve: Curves.easeInOut,
@@ -113,10 +118,13 @@ class _CreateProjectViewState extends State<CreateProjectView> {
     } else {
       final err = prov.error ?? 'Create failed';
       Get.snackbar(
-          backgroundColor: Colors.white,
-          colorText: Colors.black,
+        backgroundColor: Colors.white,
+        colorText: Colors.black,
 
-          'Error', err, snackPosition: SnackPosition.TOP);
+        'Error',
+        err,
+        snackPosition: SnackPosition.TOP,
+      );
     }
   }
 
@@ -136,9 +144,9 @@ class _CreateProjectViewState extends State<CreateProjectView> {
               children: [
                 Text(langController.t('project_title'), style: bodyText1),
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  padding: EdgeInsets.symmetric(vertical: 8),
                   child: CustomTextField(
-                    hintText: "What Service do you need?",
+                    hintText: langController.t('enter_project_title'),
                     controller: _titleCtl,
                     validator: (v) => _required(v, 'Title'),
                   ),
@@ -146,14 +154,17 @@ class _CreateProjectViewState extends State<CreateProjectView> {
 
                 Text(langController.t('category'), style: bodyText1),
                 CustomTextField(
-                  hintText: 'Enter your Category Name(e.g: Build,Home)',
+                  hintText: langController.t('enter_category'),
                   controller: _categoryCtl,
                   validator: (v) => _required(v, 'Category'),
                 ),
 
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text(langController.t('description'), style: bodyText1),
+                  child: Text(
+                    langController.t('description'),
+                    style: bodyText1,
+                  ),
                 ),
                 Container(
                   decoration: BoxDecoration(
@@ -169,8 +180,8 @@ class _CreateProjectViewState extends State<CreateProjectView> {
                       keyboardType: TextInputType.multiline,
                       style: const TextStyle(color: Colors.white),
                       validator: (v) => _required(v, 'Description'),
-                      decoration: const InputDecoration(
-                        hintText: "Describe your Project in detail",
+                      decoration: InputDecoration(
+                        hintText: langController.t('entert_description'),
                         border: InputBorder.none,
                         hintStyle: TextStyle(
                           color: Color(0xFFBFBFBF),
@@ -184,28 +195,37 @@ class _CreateProjectViewState extends State<CreateProjectView> {
 
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Text(langController.t('budget_range'), style: bodyText1),
+                  child: Text(
+                    langController.t('budget_range'),
+                    style: bodyText1,
+                  ),
                 ),
                 Row(
                   children: [
                     Expanded(
                       child: CustomTextField(
-                        hintText: "Min",
+                        hintText: langController.t('min'),
                         prefixIcon: Icons.attach_money,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: false),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: false,
+                        ),
                         controller: _minBudgetCtl,
-                        validator: (v) => _numberRequired(v, 'Min budget', min: 0),
+                        validator: (v) =>
+                            _numberRequired(v, 'Min budget', min: 0),
                         showBorder: false,
                       ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: CustomTextField(
-                        hintText: "Max",
+                        hintText: langController.t('max'),
                         prefixIcon: Icons.attach_money,
-                        keyboardType: const TextInputType.numberWithOptions(decimal: false),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: false,
+                        ),
                         controller: _maxBudgetCtl,
-                        validator: (v) => _numberRequired(v, 'Max budget', min: 0),
+                        validator: (v) =>
+                            _numberRequired(v, 'Max budget', min: 0),
                         showBorder: false,
                       ),
                     ),
@@ -217,11 +237,14 @@ class _CreateProjectViewState extends State<CreateProjectView> {
                   child: Text(langController.t('deadline'), style: bodyText1),
                 ),
                 CustomTextField(
-                  hintText: "Number of day(e.g:30)",
+                  hintText: langController.t('number_of_days'),
                   prefixIcon: Icons.watch_later_outlined,
-                  keyboardType: const TextInputType.numberWithOptions(decimal: false),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: false,
+                  ),
                   controller: _durationCtl,
-                  validator: (v) => _numberRequired(v, 'Deadline (days)', min: 1),
+                  validator: (v) =>
+                      _numberRequired(v, 'Deadline (days)', min: 1),
                 ),
 
                 Padding(
@@ -229,18 +252,21 @@ class _CreateProjectViewState extends State<CreateProjectView> {
                   child: Text(langController.t('location'), style: bodyText1),
                 ),
                 CustomTextField(
-                  hintText: "Enter Location",
+                  hintText: langController.t('enter_location'),
                   prefixIcon: Icons.location_on_outlined,
                   controller: _locationCtl,
                   validator: (v) => _required(v, 'Location'),
                 ),
 
                 Padding(
-                  padding:  EdgeInsets.symmetric(vertical: 8),
-                  child: Text(langController.t('required_skills'), style: bodyText1),
+                  padding: EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    langController.t('required_skills'),
+                    style: bodyText1,
+                  ),
                 ),
                 CustomTextField(
-                  hintText: "e.g. Web Design, App Development …",
+                  hintText: langController.t('enter_your_skills'),
                   prefixIcon: Icons.grid_view_rounded,
                   controller: _skillsCtl,
                 ),
@@ -248,10 +274,11 @@ class _CreateProjectViewState extends State<CreateProjectView> {
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 15),
                   child: bottomWidget(
-                    text: _submitting ? "Creating..." : langController.t('create_project'),
+                    text: _submitting
+                        ? "Creating..."
+                        : langController.t('create_project'),
                     onTap: _submitting ? null : _submit,
                   ),
-
                 ),
                 const SizedBox(height: 10),
               ],

@@ -1,7 +1,10 @@
 // lib/core/common/widgets/custom_image.dart
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
+
+import '../../language/language_controller.dart';
 
 class ImagePickerSlot extends StatefulWidget {
   final double width;
@@ -43,55 +46,58 @@ class _ImagePickerSlotState extends State<ImagePickerSlot> {
 
   @override
   Widget build(BuildContext context) {
+    final langController = Get.find<LanguageController>();
     return InkWell(
       onTap: _image == null ? _pickImage : null,
       child: _image != null
           ? Stack(
-        clipBehavior: Clip.none,
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.file(
-              _image!,
+              clipBehavior: Clip.none,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    _image!,
+                    width: widget.width,
+                    height: widget.height,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                Positioned(
+                  top: -6,
+                  right: -6,
+                  child: InkWell(
+                    onTap: _removeImage,
+                    child: const CircleAvatar(
+                      radius: 14,
+                      backgroundColor: Colors.red,
+                      child: Icon(Icons.close, color: Colors.white, size: 16),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          : Container(
               width: widget.width,
               height: widget.height,
-              fit: BoxFit.cover,
-            ),
-          ),
-          Positioned(
-            top: -6,
-            right: -6,
-            child: InkWell(
-              onTap: _removeImage,
-              child: const CircleAvatar(
-                radius: 14,
-                backgroundColor: Colors.red,
-                child: Icon(Icons.close, color: Colors.white, size: 16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.add_photo_alternate, size: 32, color: Colors.grey),
+                  SizedBox(height: 6),
+                  Text(
+                    langController.t('add_images'),
+                    style: TextStyle(color: Colors.grey),
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
-      )
-          : Container(
-        width: widget.width,
-        height: widget.height,
-        decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add_photo_alternate, size: 32, color: Colors.grey),
-            SizedBox(height: 6),
-            Text("Add Image", style: TextStyle(color: Colors.grey)),
-          ],
-        ),
-      ),
     );
   }
 }
-
 
 // import 'dart:io';
 // import 'package:flutter/material.dart';

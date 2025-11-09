@@ -313,7 +313,12 @@ class ProjectCard extends StatelessWidget {
           const SizedBox(height: 10),
           Row(
             children: [
-              const _AvatarStack(urls: []),
+              _AvatarStack( // <<< CHANGE HERE (remove const and pass URLs)
+                urls: [
+                  if (project.ownerAvatarUrl != null && project.ownerAvatarUrl!.isNotEmpty)
+                    project.ownerAvatarUrl!,
+                ],
+              ),
               const Spacer(),
               InkWell(
                 borderRadius: BorderRadius.circular(8),

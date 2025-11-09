@@ -24,6 +24,14 @@ class Investment {
   final String investmentTerms;
   final List<InvestmentImage> images;
 
+  final String? ownerName;          // NEW
+  final String? ownerAvatarUrl;     // NEW
+
+  final String? ownerUsername;     // NEW
+  final int? likeCount;            // NEW
+  final int? viewCount;            // NEW
+  final bool isFavorite; // NEW
+
   const Investment({
     required this.id,
     required this.name,
@@ -34,9 +42,82 @@ class Investment {
     required this.location,
     required this.investmentTerms,
     required this.images,
+    this.ownerName,                 // NEW
+    this.ownerAvatarUrl,            // NEW
+    this.ownerUsername,            // NEW
+    this.likeCount,                // NEW
+    this.viewCount,                // NEW
+    this.isFavorite = false, // default
+
   });
 
+  // ---- ADD THIS: copyWith ----
+  Investment copyWith({
+    String? id,
+    String? name,
+    String? description,
+    List<String>? category,
+    int? fundingGoal,
+    String? fundingDuration,
+    String? location,
+    String? investmentTerms,
+    List<InvestmentImage>? images,
+    String? ownerName,
+    String? ownerAvatarUrl,
+    String? ownerUsername,
+    int? likeCount,
+    int? viewCount,
+    bool? isFavorite,
+  }) {
+    return Investment(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      description: description ?? this.description,
+      category: category ?? this.category,
+      fundingGoal: fundingGoal ?? this.fundingGoal,
+      fundingDuration: fundingDuration ?? this.fundingDuration,
+      location: location ?? this.location,
+      investmentTerms: investmentTerms ?? this.investmentTerms,
+      images: images ?? this.images,
+      ownerName: ownerName ?? this.ownerName,
+      ownerAvatarUrl: ownerAvatarUrl ?? this.ownerAvatarUrl,
+      ownerUsername: ownerUsername ?? this.ownerUsername,
+      likeCount: likeCount ?? this.likeCount,
+      viewCount: viewCount ?? this.viewCount,
+      isFavorite: isFavorite ?? this.isFavorite,
+    );
+  }
+
   factory Investment.fromJson(Map<String, dynamic> j) {
+
+    // -------- parse createdBy safely --------
+    String? ownerName;
+    String? ownerAvatarUrl;
+    String? ownerUsername;
+
+
+    final createdBy = j['createdBy'];
+    if (createdBy is Map) {
+      ownerName = (createdBy['name'] ?? '').toString().trim().isEmpty
+          ? null
+          : (createdBy['name'] ?? '').toString();
+
+      ownerUsername = (createdBy['username'] ?? '').toString().trim().isEmpty
+          ? null
+          : createdBy['username'].toString();
+
+      final av = createdBy['avatar'];
+      if (av is Map) {
+        final url = (av['url'] ?? av['imageUrl'] ?? av['link'] ?? '').toString();
+        ownerAvatarUrl = url.isEmpty ? null : url;
+      } else if (av is String) {
+        ownerAvatarUrl = av.isEmpty ? null : av; // in case backend ever returns a plain string
+      }
+    }
+
+
+
+
     List<String> cat(dynamic v) {
       if (v is List) return v.map((e) => e.toString()).toList();
       if (v is String) {
@@ -72,6 +153,9 @@ class Investment {
       investmentTerms: (j['investment_terms'] ?? '').toString(),
       // accept multiple keys for images
       images: imgs(j['imageLink'] ?? j['image'] ?? j['images']),
+      ownerName: ownerName,                 // NEW
+      ownerAvatarUrl: ownerAvatarUrl,       // NEW
+      isFavorite: j['isFavorite'] == true, // server optional
     );
   }
 
@@ -120,90 +204,3 @@ class Investment {
 }
 
 
-// // lib/feature/investment/models/investment.dart
-// class InvestmentImage {
-//   final String url;
-//   final String filename;
-//   final String publicId;
-//   const InvestmentImage({required this.url, required this.filename, required this.publicId});
-//
-//   factory InvestmentImage.fromJson(Map<String, dynamic> j) => InvestmentImage(
-//     url: (j['url'] ?? j['imageUrl'] ?? j['link'] ?? '').toString(),
-//     filename: (j['filename'] ?? j['name'] ?? '').toString(),
-//     publicId: (j['public_id'] ?? j['publicId'] ?? '').toString(),
-//   );
-// }
-//
-// class Investment {
-//   final String id;
-//   final String name;
-//   final String description;
-//   final List<String> category;
-//   final int? fundingGoal;
-//   final String? fundingDuration;
-//   final String location;
-//   final String investmentTerms;
-//   final List<InvestmentImage> images;
-//
-//   const Investment({
-//     required this.id,
-//     required this.name,
-//     required this.description,
-//     required this.category,
-//     required this.fundingGoal,
-//     required this.fundingDuration,
-//     required this.location,
-//     required this.investmentTerms,
-//     required this.images,
-//   });
-//
-//   factory Investment.fromJson(Map<String, dynamic> j) {
-//     List<String> cat(dynamic v) {
-//       if (v is List) return v.map((e) => e.toString()).toList();
-//       if (v is String) return v.split(',').map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
-//       return const [];
-//     }
-//
-//     List<InvestmentImage> imgs(dynamic v) {
-//       if (v is List) {
-//         return v.whereType<Map>().map((m) => InvestmentImage.fromJson(Map<String, dynamic>.from(m))).toList();
-//       }
-//       return const [];
-//     }
-//
-//     int? intOr(dynamic v) => v is num ? v.toInt() : int.tryParse('$v');
-//
-//
-//
-//     return Investment(
-//       id: (j['_id'] ?? j['id'] ?? '').toString(),
-//       name: (j['name'] ?? '').toString(),
-//       description: (j['description'] ?? '').toString(),
-//       category: cat(j['category']),
-//       fundingGoal: intOr(j['funding_goal']),
-//       fundingDuration: (j['funding_duration'] ?? '').toString(),
-//       location: (j['location'] ?? '').toString(),
-//       investmentTerms: (j['investment_terms'] ?? '').toString(),
-//       // server returns `imageLink` list of objects (preferred), but accept legacy `image`
-//       // images: imgs(j['imageLink'] ?? j['image']),
-//       images: imgs(j['imageLink'] ?? j['image'] ?? j['images']),
-//
-//     );
-//   }
-//
-//   String? get primaryImageUrl => images.isNotEmpty ? images.first.url : null;
-//
-//
-//
-//
-//   int get progressPct {
-//     // you can compute based on raised/goal later; default 0
-//     final goal = fundingGoal ?? 0;
-//     if (goal <= 0) return 0;
-//     return 0;
-//   }
-//
-//   int? get daysLeft => null; // leave as-is for your UI; compute if needed
-// }
-//
-//
