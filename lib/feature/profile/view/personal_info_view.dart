@@ -2,7 +2,7 @@ import 'package:alejandroloi/core/common/widgets/custom_text_field.dart';
 import 'package:alejandroloi/core/language/language_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
+
 
 class PersonalInfoView extends StatefulWidget {
   PersonalInfoView({super.key});

@@ -29,6 +29,7 @@ class ApiPaths {
 
 
 
+
   static String getInvestmentById(String id) =>
       '/investment/get-investment/$id';
   static String updateInvestment(String id) =>

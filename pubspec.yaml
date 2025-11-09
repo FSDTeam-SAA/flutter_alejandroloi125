@@ -36,6 +36,8 @@ dependencies:
   dio: ^5.9.0
   pretty_dio_logger: ^1.4.0
   collection: ^1.19.1
+  flutter_launcher_icons: ^0.14.4
+  socket_io_client: ^2.0.3
 
 
 
@@ -79,6 +81,15 @@ flutter:
   #       - asset: fonts/TrajanPro.ttf
   #       - asset: fonts/TrajanPro_Bold.ttf
   #         weight: 700
+
+
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icons/alejandroloi.jpg"
+
+
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package

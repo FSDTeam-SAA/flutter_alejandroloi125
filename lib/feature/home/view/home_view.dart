@@ -22,6 +22,7 @@ import 'package:get/get.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/language/language_controller.dart';
+import '../../alart/view/alart_view.dart';
 import '../../investments/view/investment_detail.dart';
 
 class HomeScreenView extends StatefulWidget {
@@ -344,7 +345,13 @@ class _HomeScreenViewState extends State<HomeScreenView> {
                   color: Colors.white,
                   size: 30,
                 ),
-                onPressed: () {},
+                onPressed: () {
+                  Get.to(
+                        () => const AlartScreenView(),
+                    transition: Transition.rightToLeft,
+                    duration: const Duration(milliseconds: 300),
+                  );
+                },
               ),
             ],
           ),
